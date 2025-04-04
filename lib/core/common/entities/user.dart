@@ -1,15 +1,18 @@
-class User {
-  final int id;
-  final String username;
-  final String password;
-  final String role;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  User({
-    required this.id,
-    required this.username,
-    required this.password,
-    required this.role,
-  });
+part 'user.freezed.dart';
+part 'user.g.dart';
+
+@freezed
+abstract class User with _$User {
+  const factory User({
+    required int id,
+    required String username,
+    required String password,
+    required String role,
+  }) = _User;
+
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }
 
 enum UserRole { admin, user }

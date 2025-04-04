@@ -1,4 +1,3 @@
-import 'package:bookstore_management_system/core/common/widgets/destination_view.dart';
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:bookstore_management_system/features/auth/presentation/pages/signup_page.dart';
 import 'package:bookstore_management_system/features/auth/presentation/widgets/auth_field.dart';
@@ -6,8 +5,8 @@ import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
   static route() => MaterialPageRoute(builder: (context) => const LoginPage());
-  final Destination? destination;
-  const LoginPage({super.key, this.destination});
+
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();

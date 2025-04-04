@@ -1,3 +1,12 @@
 {
-    "cmake.sourceDirectory": "F:/flutter/bookstore_management_system/windows"
+    "cmake.sourceDirectory": "F:/flutter/bookstore_management_system/windows",
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "bookshop",
+            "database": "/Users/beck/Library/Containers/com.example.bookstoreManagementSystem/Data/Documents/bookshop.sqlite"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
 }
