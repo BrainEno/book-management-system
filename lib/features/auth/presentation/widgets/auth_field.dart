@@ -94,8 +94,18 @@ class AuthField extends StatelessWidget {
           context,
         ), // Focused error border remains red
       ),
-      validator:
-          (value) => value == null || value.isEmpty ? "请输入$hintText!" : null,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "请输入$hintText!";
+        }
+        if (hintText == "用户名" && value.length < 3) {
+          return "用户名必须至少包含 3 个字符";
+        }
+        if (hintText == "密码" && value.length < 6) {
+          return "密码必须至少包含 6 个字符";
+        }
+        return null;
+      },
     );
   }
 

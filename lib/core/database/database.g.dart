@@ -68,6 +68,41 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _publisherMeta = const VerificationMeta(
+    'publisher',
+  );
+  @override
+  late final GeneratedColumn<String> publisher = GeneratedColumn<String>(
+    'publisher',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -76,6 +111,9 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     isbn,
     category,
     price,
+    publisher,
+    createdAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -132,6 +170,26 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     } else if (isInserting) {
       context.missing(_priceMeta);
     }
+    if (data.containsKey('publisher')) {
+      context.handle(
+        _publisherMeta,
+        publisher.isAcceptableOrUnknown(data['publisher']!, _publisherMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_publisherMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -171,6 +229,21 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
             DriftSqlType.double,
             data['${effectivePrefix}price'],
           )!,
+      publisher:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}publisher'],
+          )!,
+      createdAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}created_at'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
     );
   }
 
@@ -187,6 +260,9 @@ class Book extends DataClass implements Insertable<Book> {
   final String isbn;
   final String category;
   final double price;
+  final String publisher;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   const Book({
     required this.id,
     required this.title,
@@ -194,6 +270,9 @@ class Book extends DataClass implements Insertable<Book> {
     required this.isbn,
     required this.category,
     required this.price,
+    required this.publisher,
+    required this.createdAt,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -204,6 +283,9 @@ class Book extends DataClass implements Insertable<Book> {
     map['isbn'] = Variable<String>(isbn);
     map['category'] = Variable<String>(category);
     map['price'] = Variable<double>(price);
+    map['publisher'] = Variable<String>(publisher);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -215,6 +297,9 @@ class Book extends DataClass implements Insertable<Book> {
       isbn: Value(isbn),
       category: Value(category),
       price: Value(price),
+      publisher: Value(publisher),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -230,6 +315,9 @@ class Book extends DataClass implements Insertable<Book> {
       isbn: serializer.fromJson<String>(json['isbn']),
       category: serializer.fromJson<String>(json['category']),
       price: serializer.fromJson<double>(json['price']),
+      publisher: serializer.fromJson<String>(json['publisher']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -242,6 +330,9 @@ class Book extends DataClass implements Insertable<Book> {
       'isbn': serializer.toJson<String>(isbn),
       'category': serializer.toJson<String>(category),
       'price': serializer.toJson<double>(price),
+      'publisher': serializer.toJson<String>(publisher),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -252,6 +343,9 @@ class Book extends DataClass implements Insertable<Book> {
     String? isbn,
     String? category,
     double? price,
+    String? publisher,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) => Book(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -259,6 +353,9 @@ class Book extends DataClass implements Insertable<Book> {
     isbn: isbn ?? this.isbn,
     category: category ?? this.category,
     price: price ?? this.price,
+    publisher: publisher ?? this.publisher,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Book copyWithCompanion(BooksCompanion data) {
     return Book(
@@ -268,6 +365,9 @@ class Book extends DataClass implements Insertable<Book> {
       isbn: data.isbn.present ? data.isbn.value : this.isbn,
       category: data.category.present ? data.category.value : this.category,
       price: data.price.present ? data.price.value : this.price,
+      publisher: data.publisher.present ? data.publisher.value : this.publisher,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -279,13 +379,26 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('author: $author, ')
           ..write('isbn: $isbn, ')
           ..write('category: $category, ')
-          ..write('price: $price')
+          ..write('price: $price, ')
+          ..write('publisher: $publisher, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, author, isbn, category, price);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    author,
+    isbn,
+    category,
+    price,
+    publisher,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -295,7 +408,10 @@ class Book extends DataClass implements Insertable<Book> {
           other.author == this.author &&
           other.isbn == this.isbn &&
           other.category == this.category &&
-          other.price == this.price);
+          other.price == this.price &&
+          other.publisher == this.publisher &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class BooksCompanion extends UpdateCompanion<Book> {
@@ -305,6 +421,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<String> isbn;
   final Value<String> category;
   final Value<double> price;
+  final Value<String> publisher;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   const BooksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -312,6 +431,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.isbn = const Value.absent(),
     this.category = const Value.absent(),
     this.price = const Value.absent(),
+    this.publisher = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   BooksCompanion.insert({
     this.id = const Value.absent(),
@@ -320,11 +442,15 @@ class BooksCompanion extends UpdateCompanion<Book> {
     required String isbn,
     required String category,
     required double price,
+    required String publisher,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : title = Value(title),
        author = Value(author),
        isbn = Value(isbn),
        category = Value(category),
-       price = Value(price);
+       price = Value(price),
+       publisher = Value(publisher);
   static Insertable<Book> custom({
     Expression<int>? id,
     Expression<String>? title,
@@ -332,6 +458,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<String>? isbn,
     Expression<String>? category,
     Expression<double>? price,
+    Expression<String>? publisher,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -340,6 +469,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (isbn != null) 'isbn': isbn,
       if (category != null) 'category': category,
       if (price != null) 'price': price,
+      if (publisher != null) 'publisher': publisher,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -350,6 +482,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<String>? isbn,
     Value<String>? category,
     Value<double>? price,
+    Value<String>? publisher,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
   }) {
     return BooksCompanion(
       id: id ?? this.id,
@@ -358,6 +493,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       isbn: isbn ?? this.isbn,
       category: category ?? this.category,
       price: price ?? this.price,
+      publisher: publisher ?? this.publisher,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -382,6 +520,15 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (price.present) {
       map['price'] = Variable<double>(price.value);
     }
+    if (publisher.present) {
+      map['publisher'] = Variable<String>(publisher.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -393,7 +540,10 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('author: $author, ')
           ..write('isbn: $isbn, ')
           ..write('category: $category, ')
-          ..write('price: $price')
+          ..write('price: $price, ')
+          ..write('publisher: $publisher, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -427,6 +577,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _passwordMeta = const VerificationMeta(
     'password',
@@ -439,6 +590,57 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
   late final GeneratedColumn<String> role = GeneratedColumn<String>(
@@ -448,8 +650,39 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _saltMeta = const VerificationMeta('salt');
   @override
-  List<GeneratedColumn> get $columns => [id, username, password, role];
+  late final GeneratedColumn<String> salt = GeneratedColumn<String>(
+    'salt',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<int> status = GeneratedColumn<int>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    username,
+    password,
+    email,
+    phone,
+    name,
+    createdAt,
+    updatedAt,
+    role,
+    salt,
+    status,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -481,6 +714,36 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_passwordMeta);
     }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     if (data.containsKey('role')) {
       context.handle(
         _roleMeta,
@@ -488,6 +751,20 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       );
     } else if (isInserting) {
       context.missing(_roleMeta);
+    }
+    if (data.containsKey('salt')) {
+      context.handle(
+        _saltMeta,
+        salt.isAcceptableOrUnknown(data['salt']!, _saltMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_saltMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
     }
     return context;
   }
@@ -513,10 +790,42 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
             DriftSqlType.string,
             data['${effectivePrefix}password'],
           )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      createdAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}created_at'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
       role:
           attachedDatabase.typeMapping.read(
             DriftSqlType.string,
             data['${effectivePrefix}role'],
+          )!,
+      salt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}salt'],
+          )!,
+      status:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}status'],
           )!,
     );
   }
@@ -531,12 +840,26 @@ class User extends DataClass implements Insertable<User> {
   final int id;
   final String username;
   final String password;
+  final String? email;
+  final String? phone;
+  final String? name;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final String role;
+  final String salt;
+  final int status;
   const User({
     required this.id,
     required this.username,
     required this.password,
+    this.email,
+    this.phone,
+    this.name,
+    required this.createdAt,
+    required this.updatedAt,
     required this.role,
+    required this.salt,
+    required this.status,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -544,7 +867,20 @@ class User extends DataClass implements Insertable<User> {
     map['id'] = Variable<int>(id);
     map['username'] = Variable<String>(username);
     map['password'] = Variable<String>(password);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     map['role'] = Variable<String>(role);
+    map['salt'] = Variable<String>(salt);
+    map['status'] = Variable<int>(status);
     return map;
   }
 
@@ -553,7 +889,16 @@ class User extends DataClass implements Insertable<User> {
       id: Value(id),
       username: Value(username),
       password: Value(password),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
+      phone:
+          phone == null && nullToAbsent ? const Value.absent() : Value(phone),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
       role: Value(role),
+      salt: Value(salt),
+      status: Value(status),
     );
   }
 
@@ -566,7 +911,14 @@ class User extends DataClass implements Insertable<User> {
       id: serializer.fromJson<int>(json['id']),
       username: serializer.fromJson<String>(json['username']),
       password: serializer.fromJson<String>(json['password']),
+      email: serializer.fromJson<String?>(json['email']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      name: serializer.fromJson<String?>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       role: serializer.fromJson<String>(json['role']),
+      salt: serializer.fromJson<String>(json['salt']),
+      status: serializer.fromJson<int>(json['status']),
     );
   }
   @override
@@ -576,23 +928,55 @@ class User extends DataClass implements Insertable<User> {
       'id': serializer.toJson<int>(id),
       'username': serializer.toJson<String>(username),
       'password': serializer.toJson<String>(password),
+      'email': serializer.toJson<String?>(email),
+      'phone': serializer.toJson<String?>(phone),
+      'name': serializer.toJson<String?>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'role': serializer.toJson<String>(role),
+      'salt': serializer.toJson<String>(salt),
+      'status': serializer.toJson<int>(status),
     };
   }
 
-  User copyWith({int? id, String? username, String? password, String? role}) =>
-      User(
-        id: id ?? this.id,
-        username: username ?? this.username,
-        password: password ?? this.password,
-        role: role ?? this.role,
-      );
+  User copyWith({
+    int? id,
+    String? username,
+    String? password,
+    Value<String?> email = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    Value<String?> name = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? role,
+    String? salt,
+    int? status,
+  }) => User(
+    id: id ?? this.id,
+    username: username ?? this.username,
+    password: password ?? this.password,
+    email: email.present ? email.value : this.email,
+    phone: phone.present ? phone.value : this.phone,
+    name: name.present ? name.value : this.name,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    role: role ?? this.role,
+    salt: salt ?? this.salt,
+    status: status ?? this.status,
+  );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
       username: data.username.present ? data.username.value : this.username,
       password: data.password.present ? data.password.value : this.password,
+      email: data.email.present ? data.email.value : this.email,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       role: data.role.present ? data.role.value : this.role,
+      salt: data.salt.present ? data.salt.value : this.salt,
+      status: data.status.present ? data.status.value : this.status,
     );
   }
 
@@ -602,13 +986,32 @@ class User extends DataClass implements Insertable<User> {
           ..write('id: $id, ')
           ..write('username: $username, ')
           ..write('password: $password, ')
-          ..write('role: $role')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('role: $role, ')
+          ..write('salt: $salt, ')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, username, password, role);
+  int get hashCode => Object.hash(
+    id,
+    username,
+    password,
+    email,
+    phone,
+    name,
+    createdAt,
+    updatedAt,
+    role,
+    salt,
+    status,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -616,39 +1019,82 @@ class User extends DataClass implements Insertable<User> {
           other.id == this.id &&
           other.username == this.username &&
           other.password == this.password &&
-          other.role == this.role);
+          other.email == this.email &&
+          other.phone == this.phone &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.role == this.role &&
+          other.salt == this.salt &&
+          other.status == this.status);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> id;
   final Value<String> username;
   final Value<String> password;
+  final Value<String?> email;
+  final Value<String?> phone;
+  final Value<String?> name;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   final Value<String> role;
+  final Value<String> salt;
+  final Value<int> status;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.username = const Value.absent(),
     this.password = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.role = const Value.absent(),
+    this.salt = const Value.absent(),
+    this.status = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
     required String username,
     required String password,
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     required String role,
+    required String salt,
+    this.status = const Value.absent(),
   }) : username = Value(username),
        password = Value(password),
-       role = Value(role);
+       role = Value(role),
+       salt = Value(salt);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? username,
     Expression<String>? password,
+    Expression<String>? email,
+    Expression<String>? phone,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
     Expression<String>? role,
+    Expression<String>? salt,
+    Expression<int>? status,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (username != null) 'username': username,
       if (password != null) 'password': password,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (role != null) 'role': role,
+      if (salt != null) 'salt': salt,
+      if (status != null) 'status': status,
     });
   }
 
@@ -656,13 +1102,27 @@ class UsersCompanion extends UpdateCompanion<User> {
     Value<int>? id,
     Value<String>? username,
     Value<String>? password,
+    Value<String?>? email,
+    Value<String?>? phone,
+    Value<String?>? name,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
     Value<String>? role,
+    Value<String>? salt,
+    Value<int>? status,
   }) {
     return UsersCompanion(
       id: id ?? this.id,
       username: username ?? this.username,
       password: password ?? this.password,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       role: role ?? this.role,
+      salt: salt ?? this.salt,
+      status: status ?? this.status,
     );
   }
 
@@ -678,8 +1138,29 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (password.present) {
       map['password'] = Variable<String>(password.value);
     }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     if (role.present) {
       map['role'] = Variable<String>(role.value);
+    }
+    if (salt.present) {
+      map['salt'] = Variable<String>(salt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(status.value);
     }
     return map;
   }
@@ -690,7 +1171,14 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('id: $id, ')
           ..write('username: $username, ')
           ..write('password: $password, ')
-          ..write('role: $role')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('role: $role, ')
+          ..write('salt: $salt, ')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
@@ -718,6 +1206,9 @@ typedef $$BooksTableCreateCompanionBuilder =
       required String isbn,
       required String category,
       required double price,
+      required String publisher,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 typedef $$BooksTableUpdateCompanionBuilder =
     BooksCompanion Function({
@@ -727,6 +1218,9 @@ typedef $$BooksTableUpdateCompanionBuilder =
       Value<String> isbn,
       Value<String> category,
       Value<double> price,
+      Value<String> publisher,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 
 class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
@@ -764,6 +1258,21 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<double> get price => $composableBuilder(
     column: $table.price,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publisher => $composableBuilder(
+    column: $table.publisher,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -806,6 +1315,21 @@ class $$BooksTableOrderingComposer
     column: $table.price,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get publisher => $composableBuilder(
+    column: $table.publisher,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$BooksTableAnnotationComposer
@@ -834,6 +1358,15 @@ class $$BooksTableAnnotationComposer
 
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
+
+  GeneratedColumn<String> get publisher =>
+      $composableBuilder(column: $table.publisher, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
 class $$BooksTableTableManager
@@ -870,6 +1403,9 @@ class $$BooksTableTableManager
                 Value<String> isbn = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<double> price = const Value.absent(),
+                Value<String> publisher = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => BooksCompanion(
                 id: id,
                 title: title,
@@ -877,6 +1413,9 @@ class $$BooksTableTableManager
                 isbn: isbn,
                 category: category,
                 price: price,
+                publisher: publisher,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -886,6 +1425,9 @@ class $$BooksTableTableManager
                 required String isbn,
                 required String category,
                 required double price,
+                required String publisher,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => BooksCompanion.insert(
                 id: id,
                 title: title,
@@ -893,6 +1435,9 @@ class $$BooksTableTableManager
                 isbn: isbn,
                 category: category,
                 price: price,
+                publisher: publisher,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper:
               (p0) =>
@@ -928,14 +1473,28 @@ typedef $$UsersTableCreateCompanionBuilder =
       Value<int> id,
       required String username,
       required String password,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> name,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       required String role,
+      required String salt,
+      Value<int> status,
     });
 typedef $$UsersTableUpdateCompanionBuilder =
     UsersCompanion Function({
       Value<int> id,
       Value<String> username,
       Value<String> password,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> name,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       Value<String> role,
+      Value<String> salt,
+      Value<int> status,
     });
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
@@ -961,8 +1520,43 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get role => $composableBuilder(
     column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get salt => $composableBuilder(
+    column: $table.salt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -991,8 +1585,43 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get role => $composableBuilder(
     column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get salt => $composableBuilder(
+    column: $table.salt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -1015,8 +1644,29 @@ class $$UsersTableAnnotationComposer
   GeneratedColumn<String> get password =>
       $composableBuilder(column: $table.password, builder: (column) => column);
 
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get salt =>
+      $composableBuilder(column: $table.salt, builder: (column) => column);
+
+  GeneratedColumn<int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 }
 
 class $$UsersTableTableManager
@@ -1050,24 +1700,52 @@ class $$UsersTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> username = const Value.absent(),
                 Value<String> password = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> role = const Value.absent(),
+                Value<String> salt = const Value.absent(),
+                Value<int> status = const Value.absent(),
               }) => UsersCompanion(
                 id: id,
                 username: username,
                 password: password,
+                email: email,
+                phone: phone,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 role: role,
+                salt: salt,
+                status: status,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String username,
                 required String password,
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 required String role,
+                required String salt,
+                Value<int> status = const Value.absent(),
               }) => UsersCompanion.insert(
                 id: id,
                 username: username,
                 password: password,
+                email: email,
+                phone: phone,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 role: role,
+                salt: salt,
+                status: status,
               ),
           withReferenceMapper:
               (p0) =>
@@ -1106,11 +1784,4 @@ class $AppDatabaseManager {
       $$BooksTableTableManager(_db, _db.books);
   $$UsersTableTableManager get users =>
       $$UsersTableTableManager(_db, _db.users);
-}
-
-mixin _$BookDaoMixin on DatabaseAccessor<AppDatabase> {
-  $BooksTable get books => attachedDatabase.books;
-}
-mixin _$UserDaoMixin on DatabaseAccessor<AppDatabase> {
-  $UsersTable get users => attachedDatabase.users;
 }
