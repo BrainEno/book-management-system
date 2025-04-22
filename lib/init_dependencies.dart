@@ -1,5 +1,6 @@
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:bookstore_management_system/core/database/database.dart';
+import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
 import 'package:bookstore_management_system/features/auth/core/error/auth_exceptions.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
@@ -52,11 +53,11 @@ Future<void> initDependencies() async {
     encryptionCipher: HiveAesCipher(_generateEncryptionKey()),
   );
   sl.registerSingleton<Box<String>>(secureStorageBox);
+  sl.registerLazySingleton(() => ThemeBloc());
 
   database = AppDatabase();
   sl.registerSingleton<AppDatabase>(database);
 
-  // Initialize the database
   await _initAuth();
 
   try {

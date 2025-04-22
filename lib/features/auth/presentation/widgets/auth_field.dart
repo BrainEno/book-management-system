@@ -1,149 +1,110 @@
-import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:flutter/material.dart';
 
-class AuthField extends StatelessWidget {
+class AuthField extends StatefulWidget {
   final String hintText;
-  final bool isObscureText;
+  final bool isPassword;
   final TextEditingController controller;
-  final IconData? prefixIcon; // New: Optional prefix icon
-  final TextStyle? style; // New: Optional text style
-  final TextStyle? hintStyle; // New: Optional hint text style
-  final Color? borderColor; // New: Optional border color
-  final Color? focusedBorderColor; // New: Optional focused border color
+  final IconData? prefixIcon;
+  final TextStyle? style;
+  final TextStyle? hintStyle;
+  final Color? borderColor;
+  final Color? focusedBorderColor;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   const AuthField({
     super.key,
     required this.hintText,
     required this.controller,
-    this.isObscureText = false,
+    this.isPassword = false,
     this.prefixIcon,
     this.style,
     this.hintStyle,
     this.borderColor,
     this.focusedBorderColor,
+    this.keyboardType,
+    this.validator,
   });
 
   @override
+  State<AuthField> createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<AuthField> {
+  late bool _obscure;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscure = widget.isPassword;
+  }
+
+  OutlineInputBorder _buildBorder(Color color) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: color),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final defaultBorderColor =
+        widget.borderColor ??
+        theme.inputDecorationTheme.border?.borderSide.color ??
+        theme.colorScheme.onSurface.withAlpha(51);
+    final defaultFocusedColor =
+        widget.focusedBorderColor ?? theme.colorScheme.primary;
+
     return TextFormField(
-      autofocus: false,
-      controller: controller,
-      obscureText: isObscureText,
-      style:
-          style ??
-          TextStyle(
-            fontSize: 16,
-            color:
-                isDarkMode
-                    ? AppPallete
-                        .whiteColor // White text in dark mode
-                    : AppPallete.lightBlack, // Black text in light mode
-          ),
+      controller: widget.controller,
+      obscureText: _obscure,
+      keyboardType: widget.keyboardType,
+      style: widget.style ?? theme.textTheme.bodyMedium,
       decoration: InputDecoration(
-        hintText: hintText,
+        hintText: widget.hintText,
         hintStyle:
-            hintStyle ??
-            TextStyle(
-              fontSize: 16,
-              color:
-                  isDarkMode
-                      ? AppPallete
-                          .greyColor // Medium grey hint in dark mode
-                      : AppPallete
-                          .lightGreyText, // Light grey hint in light mode
-            ),
+            widget.hintStyle ??
+            theme.textTheme.bodySmall?.copyWith(fontSize: 16),
         prefixIcon:
-            prefixIcon != null
-                ? Icon(
-                  prefixIcon,
-                  color:
-                      isDarkMode
-                          ? AppPallete
-                              .greyColor // Medium grey icon in dark mode
-                          : AppPallete
-                              .lightGreyText, // Light grey icon in light mode
+            widget.prefixIcon != null
+                ? Icon(widget.prefixIcon, color: theme.iconTheme.color)
+                : null,
+        suffixIcon:
+            widget.isPassword
+                ? IconButton(
+                  icon: Icon(
+                    _obscure ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () => setState(() => _obscure = !_obscure),
                 )
                 : null,
         filled: true,
         fillColor:
-            isDarkMode
-                ? AppPallete
-                    .greyColorDark // Dark grey background in dark mode
-                : AppPallete.lightBackground, // White background in light mode
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16.0,
-          horizontal: 20.0,
-        ),
-        border: _authFieldBorder(
-          context,
-          isDarkMode,
-          borderColor,
-        ), // Theme aware border
-        enabledBorder: _authFieldBorder(
-          context,
-          isDarkMode,
-          borderColor,
-        ), // Theme aware enabled border
-        focusedBorder: _authFieldFocusedBorder(
-          context,
-          focusedBorderColor,
-        ), // Focused border remains gradient
-        errorBorder: _authFieldErrorBorder(context), // Error border remains red
-        focusedErrorBorder: _authFieldErrorBorder(
-          context,
-        ), // Focused error border remains red
+            theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface,
+        contentPadding:
+            theme.inputDecorationTheme.contentPadding ??
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        border: _buildBorder(defaultBorderColor),
+        enabledBorder: _buildBorder(defaultBorderColor),
+        focusedBorder: _buildBorder(defaultFocusedColor),
+        errorBorder: _buildBorder(Colors.redAccent),
+        focusedErrorBorder: _buildBorder(Colors.redAccent),
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return "请输入$hintText!";
-        }
-        if (hintText == "用户名" && value.length < 3) {
-          return "用户名必须至少包含 3 个字符";
-        }
-        if (hintText == "密码" && value.length < 6) {
-          return "密码必须至少包含 6 个字符";
-        }
-        return null;
-      },
-    );
-  }
-
-  // Theme-aware border for AuthField
-  OutlineInputBorder _authFieldBorder(
-    BuildContext context,
-    bool isDarkMode,
-    Color? borderColor,
-  ) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(
-        color:
-            borderColor ??
-            (isDarkMode
-                ? AppPallete
-                    .greyColorLight // Light grey border in dark mode
-                : AppPallete.lightBorder), // Light border in light mode
-      ),
-    );
-  }
-
-  // Focused border remains Gradient independent of theme
-  OutlineInputBorder _authFieldFocusedBorder(
-    BuildContext context,
-    Color? focusedBorderColor,
-  ) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: focusedBorderColor ?? AppPallete.gradient2),
-    );
-  }
-
-  // Error border remains red independent of theme
-  OutlineInputBorder _authFieldErrorBorder(BuildContext context) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Colors.redAccent),
+      validator:
+          widget.validator ??
+          (value) {
+            if (value == null || value.isEmpty) {
+              return '请输入${widget.hintText}';
+            }
+            if (widget.hintText == '用户名' && value.length < 3) {
+              return '用户名必须至少包含 3 个字符';
+            }
+            if (widget.hintText == '密码' && value.length < 6) {
+              return '密码必须至少包含 6 个字符';
+            }
+            return null;
+          },
     );
   }
 }

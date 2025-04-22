@@ -1,6 +1,7 @@
+import 'package:bookstore_management_system/core/theme/theme.dart';
+import 'package:bookstore_management_system/core/utils/set_window_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/widgets/auth_field.dart';
 import 'package:go_router/go_router.dart';
@@ -40,20 +41,15 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: isDarkMode ? AppPallete.blackColor : Colors.white,
-        elevation: 0,
-      ),
-      backgroundColor: isDarkMode ? AppPallete.blackColor : Colors.white,
+      appBar: AppBar(),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text(loginSuccessMessage)));
+            setWindowSize(1920, 1080);
             context.go('/');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(
@@ -64,22 +60,20 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: AppTheme.responsivePadding(context),
               child: Form(
                 key: formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 60),
-                    // Title
                     Text(
                       '登录',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize:
+                            32, // Optionally: AppTheme.responsiveFontSize(context, 32),
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -94,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
                     AuthField(
                       hintText: "密码",
                       controller: passwordController,
-                      isObscureText: true,
+                      isPassword: true,
                       prefixIcon: Icons.lock_outline,
                     ),
                     const SizedBox(height: 30),
@@ -104,8 +98,6 @@ class _LoginPageState extends State<LoginPage> {
                       child: const Text("登录"),
                     ),
                     const SizedBox(height: 30),
-
-                    // Navigate to sign-up page
                   ],
                 ),
               ),
