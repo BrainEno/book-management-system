@@ -7,6 +7,7 @@ import 'package:bookstore_management_system/init_dependencies.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -15,7 +16,7 @@ void main() async {
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = WindowOptions(
-    size: Size(700, 500),
+    size: Size(1920, 1080),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
@@ -33,7 +34,7 @@ void main() async {
         BlocProvider(create: (context) => sl<ThemeBloc>()),
         BlocProvider(create: (context) => sl<AuthBloc>()),
       ],
-      child: MyApp(),
+      child: ShowCaseWidget(builder: (context) => const MyApp()),
     ),
   );
 }
@@ -59,7 +60,7 @@ class MyApp extends StatelessWidget {
 }
 
 final _router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const HomePage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),

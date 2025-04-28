@@ -1,66 +1,111 @@
+import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'theme_bloc.dart';
 
 class ThemeToggleButton extends StatelessWidget {
-  const ThemeToggleButton({super.key});
+  /// You can override these to suit your layout
+  final double width;
+  final double height;
+
+  const ThemeToggleButton({super.key, this.width = 60, this.height = 34});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, state) {
-        final isDarkMode = state.themeMode == ThemeMode.dark;
-        return GestureDetector(
-          onTap: () {
-            // Dispatch the ToggleTheme event to switch themes
-            context.read<ThemeBloc>().add(ToggleTheme());
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 60,
-            height: 30,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color:
-                  isDarkMode
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.secondary,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Sun and Moon Icons
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
-                  left: isDarkMode ? 2 : 32,
+    // Read only the themeMode value to rebuild on changes
+    final isDarkMode = context.select(
+      (ThemeBloc bloc) => bloc.state.themeMode == ThemeMode.dark,
+    );
+
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.read<ThemeBloc>().add(ToggleTheme());
+        },
+        borderRadius: BorderRadius.circular(height / 2),
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Background bar with shadow
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(height / 2),
+                  color:
+                      isDarkMode ? Colors.grey.shade800 : Colors.amber.shade600,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Sun icon (fades)
+              Positioned(
+                left: width * 0.12,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isDarkMode ? 0.3 : 1.0,
                   child: Icon(
-                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-                    color:
-                        isDarkMode
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSecondary,
-                    size: 20,
+                    Icons.wb_sunny,
+                    size: height * 0.6,
+                    color: Colors.white,
                   ),
                 ),
-                // Sliding Circle
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 300),
-                  alignment:
-                      isDarkMode ? Alignment.centerRight : Alignment.centerLeft,
+              ),
+
+              // Moon icon (fades)
+              Positioned(
+                right: width * 0.12,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isDarkMode ? 1.0 : 0.3,
+                  child: Icon(
+                    Icons.nightlight_round,
+                    size: height * 0.6,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+
+              // Sliding thumb
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                alignment:
+                    isDarkMode ? Alignment.centerRight : Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
                   child: Container(
-                    width: 26,
-                    height: 26,
+                    width: height - 6,
+                    height: height - 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Theme.of(context).colorScheme.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 2,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

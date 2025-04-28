@@ -1,5 +1,5 @@
+import 'package:bookstore_management_system/core/common/models/nav_item.dart';
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
-
 import 'package:flutter/material.dart';
 
 class SidebarWidget extends StatefulWidget {
@@ -13,67 +13,120 @@ class SidebarWidget extends StatefulWidget {
 class _SidebarWidgetState extends State<SidebarWidget> {
   int? _selectedIndex;
 
+  // Structured navigation items
+  final List<NavItem> navItems = [
+    NavItem(index: 0, title: '回到首页', icon: Icons.home),
+    NavItem(
+      title: '基础数据',
+      icon: Icons.work,
+      children: [
+        NavItem(index: 1, title: '客户资料'),
+        NavItem(index: 2, title: '供应商资料'),
+        NavItem(index: 3, title: '出版社资料'),
+        NavItem(index: 4, title: '部门资料'),
+        NavItem(index: 5, title: '人员资料'),
+        NavItem(index: 6, title: '商品分类'),
+        NavItem(index: 7, title: '统计分类'),
+        NavItem(index: 8, title: '*商品资料'),
+        NavItem(index: 9, title: '销售属性'),
+        NavItem(index: 10, title: '商品属性'),
+        NavItem(index: 11, title: '商品资料附加信息'),
+        NavItem(index: 12, title: '公司信息'),
+        NavItem(index: 13, title: '购销方式'),
+        NavItem(index: 14, title: '会员资料'),
+        NavItem(index: 15, title: '会员卡类型'),
+        NavItem(index: 16, title: '会员折扣'),
+        NavItem(index: 17, title: '会员卡充值'),
+        NavItem(index: 18, title: '会员生日自动提醒'),
+      ],
+    ),
+    NavItem(
+      title: '订收管理',
+      icon: Icons.shop,
+      children: [
+        NavItem(index: 19, title: '收货单'),
+        NavItem(index: 20, title: '退货单'),
+        NavItem(index: 21, title: '供应商预付款'),
+        NavItem(index: 22, title: '供应商结算单'),
+      ],
+    ),
+    NavItem(
+      title: '销售管理',
+      icon: Icons.shop,
+      children: [
+        NavItem(index: 23, title: '销售单'),
+        NavItem(index: 24, title: '退货单'),
+      ],
+    ),
+    NavItem(index: 25, title: '统计分析', icon: Icons.bar_chart),
+    NavItem(index: 26, title: '权限管理', icon: Icons.group),
+    NavItem(index: 27, title: '系统管理', icon: Icons.settings),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Container(
-      width: 200,
-      color:
-          isDarkMode ? AppPallete.darkBackground : AppPallete.lightBackground,
+      alignment: Alignment.center,
+      width: 250,
       child: ListView(
-        padding: EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         children: [
-          _buildNavItem(0, "回到首页", Icons.home),
-          ExpansionTile(
-            leading: Icon(
-              Icons.shop,
-              color: isDarkMode ? Colors.white70 : AppPallete.lightBlack,
-            ),
-            title: Text(
-              "销售管理",
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : AppPallete.lightBlack,
-              ),
-            ),
-            children: [_buildSubNavItem(1, "销售单"), _buildSubNavItem(2, "退货单")],
+          Text(
+            'HL System',
+            style: theme.textTheme.titleLarge,
+            textAlign: TextAlign.center,
           ),
-          ExpansionTile(
-            leading: Icon(
-              Icons.work,
-              color: isDarkMode ? Colors.white70 : AppPallete.lightBlack,
-            ),
-            title: Text(
-              "基础数据",
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : AppPallete.lightBlack,
-              ),
-            ),
-            children: [_buildSubNavItem(3, "图书信息"), _buildSubNavItem(4, "供应商")],
-          ),
-          _buildNavItem(5, "订收管理", Icons.person),
-          _buildNavItem(6, "统计分析", Icons.bar_chart),
-          _buildNavItem(7, "权限管理", Icons.group),
-          _buildNavItem(8, "系统管理", Icons.settings),
+          const Divider(),
+          ...navItems.map((item) {
+            if (item.children != null) {
+              return ExpansionTile(
+                leading:
+                    item.icon != null
+                        ? Icon(item.icon, color: theme.iconTheme.color)
+                        : null,
+                title: Text(item.title, style: theme.textTheme.bodyLarge),
+                trailing: Icon(
+                  Icons.expand_more, // Custom collapse/expand icon
+                  color: theme.iconTheme.color,
+                ),
+                children:
+                    item.children!
+                        .map(
+                          (child) => _buildSubNavItem(
+                            child.index!,
+                            child.title,
+                            icon: child.icon,
+                          ),
+                        )
+                        .toList(),
+              );
+            } else {
+              return _buildNavItem(item.index!, item.title, icon: item.icon);
+            }
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, String title, IconData icon) {
+  Widget _buildNavItem(int index, String title, {IconData? icon}) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final isSelected = _selectedIndex == index;
 
     return ListTile(
-      leading: Icon(
-        icon,
-        color:
-            isSelected
-                ? theme.colorScheme.primary
-                : (isDarkMode ? Colors.white70 : AppPallete.lightBlack),
-      ),
+      leading:
+          icon != null
+              ? Icon(
+                icon,
+                color:
+                    isSelected
+                        ? theme.colorScheme.primary
+                        : (isDarkMode ? Colors.white70 : AppPallete.lightBlack),
+              )
+              : null,
       title: Text(
         title,
         style: TextStyle(
@@ -90,18 +143,28 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         widget.onItemSelected(index);
       },
       selected: isSelected,
-      selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      selectedTileColor: theme.colorScheme.primary.withAlpha(26),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       dense: true,
     );
   }
 
-  Widget _buildSubNavItem(int index, String title) {
+  Widget _buildSubNavItem(int index, String title, {IconData? icon}) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final isSelected = _selectedIndex == index;
 
     return ListTile(
+      leading:
+          icon != null
+              ? Icon(
+                icon,
+                color:
+                    isSelected
+                        ? theme.colorScheme.primary
+                        : (isDarkMode ? Colors.white70 : AppPallete.lightBlack),
+              )
+              : null,
       title: Text(
         title,
         style: TextStyle(
@@ -118,8 +181,8 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         widget.onItemSelected(index);
       },
       selected: isSelected,
-      selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
-      contentPadding: EdgeInsets.only(left: 48, right: 16),
+      selectedTileColor: theme.colorScheme.primary.withAlpha(26),
+      contentPadding: const EdgeInsets.only(left: 48, right: 16),
       dense: true,
     );
   }

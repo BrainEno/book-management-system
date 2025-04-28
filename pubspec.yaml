@@ -63,6 +63,7 @@ dependencies:
   hive:
   hive_flutter:
   encrypt:
+  showcaseview: ^4.0.1
 
 dev_dependencies:
   flutter_test:
