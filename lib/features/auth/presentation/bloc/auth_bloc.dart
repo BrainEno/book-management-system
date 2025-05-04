@@ -1,4 +1,4 @@
-import 'package:bookstore_management_system/core/common/entities/app_user.dart';
+import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/usecases/login_usecase.dart';

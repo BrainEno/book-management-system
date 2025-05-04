@@ -8,5 +8,6 @@
             "database": "/Users/beck/Library/Containers/com.example.bookstoreManagementSystem/Data/Documents/bookshop.sqlite"
         }
     ],
-    "sqltools.useNodeRuntime": true
+    "sqltools.useNodeRuntime": true,
+    "dart.additionalAnalyzerFileExtensions": ["drift"]
 }

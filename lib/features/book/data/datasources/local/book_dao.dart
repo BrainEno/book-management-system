@@ -11,6 +11,20 @@ class Books extends Table {
   TextColumn get category => text()();
   RealColumn get price => real()();
   TextColumn get publisher => text()();
+  TextColumn get bookId => text()();
+  TextColumn get internalPricing => text()();
+  TextColumn get selfEncoding => text()();
+  RealColumn get purchasePrice => real()();
+  IntColumn get publicationYear => integer()();
+  IntColumn get retailDiscount => integer()();
+  IntColumn get wholesaleDiscount => integer()();
+  IntColumn get wholesalePrice => integer()();
+  IntColumn get memberDiscount => integer()();
+  TextColumn get purchaseSaleMode => text()();
+  TextColumn get bookmark => text()();
+  TextColumn get packaging => text()();
+  TextColumn get properity => text()();
+  TextColumn get statisticalClass => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'book.dart';
+part of 'book_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_Book _$BookFromJson(Map<String, dynamic> json) => _Book(
+_BookModel _$BookModelFromJson(Map<String, dynamic> json) => _BookModel(
   bookId: json['bookId'] as String,
   id: (json['id'] as num).toInt(),
   title: json['title'] as String,
@@ -30,26 +30,27 @@ _Book _$BookFromJson(Map<String, dynamic> json) => _Book(
   statisticalClass: json['statisticalClass'] as String,
 );
 
-Map<String, dynamic> _$BookToJson(_Book instance) => <String, dynamic>{
-  'bookId': instance.bookId,
-  'id': instance.id,
-  'title': instance.title,
-  'author': instance.author,
-  'isbn': instance.isbn,
-  'price': instance.price,
-  'category': instance.category,
-  'publisher': instance.publisher,
-  'internalPricing': instance.internalPricing,
-  'selfEncoding': instance.selfEncoding,
-  'purchasePrice': instance.purchasePrice,
-  'publicationYear': instance.publicationYear,
-  'retailDiscount': instance.retailDiscount,
-  'wholesaleDiscount': instance.wholesaleDiscount,
-  'wholesalePrice': instance.wholesalePrice,
-  'memberDiscount': instance.memberDiscount,
-  'purchaseSaleMode': instance.purchaseSaleMode,
-  'bookmark': instance.bookmark,
-  'packaging': instance.packaging,
-  'properity': instance.properity,
-  'statisticalClass': instance.statisticalClass,
-};
+Map<String, dynamic> _$BookModelToJson(_BookModel instance) =>
+    <String, dynamic>{
+      'bookId': instance.bookId,
+      'id': instance.id,
+      'title': instance.title,
+      'author': instance.author,
+      'isbn': instance.isbn,
+      'price': instance.price,
+      'category': instance.category,
+      'publisher': instance.publisher,
+      'internalPricing': instance.internalPricing,
+      'selfEncoding': instance.selfEncoding,
+      'purchasePrice': instance.purchasePrice,
+      'publicationYear': instance.publicationYear,
+      'retailDiscount': instance.retailDiscount,
+      'wholesaleDiscount': instance.wholesaleDiscount,
+      'wholesalePrice': instance.wholesalePrice,
+      'memberDiscount': instance.memberDiscount,
+      'purchaseSaleMode': instance.purchaseSaleMode,
+      'bookmark': instance.bookmark,
+      'packaging': instance.packaging,
+      'properity': instance.properity,
+      'statisticalClass': instance.statisticalClass,
+    };

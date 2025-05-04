@@ -1,5 +1,6 @@
 import 'package:bcrypt/bcrypt.dart';
-import 'package:bookstore_management_system/core/common/models/app_user_model.dart';
+import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
+import 'package:bookstore_management_system/core/data/models/app_user_model.dart';
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/features/auth/core/error/auth_exceptions.dart';
 import 'package:drift/drift.dart';
@@ -133,7 +134,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (user == null) {
         throw UserNotFoundException("Password is incorrect");
       } else {
-        print(user.toString());
+        AppLogger.logger.i(user.toString());
       }
 
       // Store encrypted user ID in Hive
@@ -175,7 +176,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
       return AppUserModel.fromJson(user.toJson());
     } catch (e) {
-      print("Error fetching current user: $e");
+      AppLogger.logger.i("Error fetching current user: $e");
       await logout();
       return null;
     }
@@ -186,7 +187,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       await secureStorageBox.delete(_sessionUserIdKey);
     } catch (e) {
-      print("Error during logout (secure storage): $e");
+      AppLogger.logger.i("Error during logout (secure storage): $e");
       throw AuthException("An error occurred while logging out: $e");
     }
   }

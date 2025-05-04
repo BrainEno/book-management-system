@@ -1,4 +1,4 @@
-import 'package:bookstore_management_system/core/common/entities/app_user.dart';
+import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
 import 'package:bookstore_management_system/core/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
 

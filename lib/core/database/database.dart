@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 import 'dart:io';
 
+import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
 import 'package:bookstore_management_system/features/book/data/datasources/local/book_dao.dart';
@@ -48,7 +49,7 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, AppSecrets.dbName));
-    print('Database file path: ${file.path}');
+    AppLogger.logger.i('Database file path: ${file.path}');
 
     final cachebase = (await getTemporaryDirectory()).path;
     sqlite3.tempDirectory = cachebase;

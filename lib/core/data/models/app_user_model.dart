@@ -1,4 +1,4 @@
-import 'package:bookstore_management_system/core/common/entities/app_user.dart';
+import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'app_user_model.g.dart';

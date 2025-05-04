@@ -4,7 +4,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'book.dart';
+part of 'book_model.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,39 +14,22 @@ part of 'book.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$Book {
+mixin _$BookModel {
 
-//商品编码
- String get bookId; int get id; String get title; String get author; String get isbn;//售价
- double get price;//商品分类
- String get category;//出版社
- String get publisher;//内部定价
- String get internalPricing;//自编码
- String get selfEncoding;//进货价
- double get purchasePrice;//出版年
- int get publicationYear;//零售折扣
- int get retailDiscount;//批发价*
- int get wholesaleDiscount;//批发折扣
- int get wholesalePrice;//会员折扣
- int get memberDiscount;//购销方式*
- String get purchaseSaleMode;//书标
- String get bookmark;//包装*
- String get packaging;//商品属性
- String get properity;//统计分类
- String get statisticalClass;
-/// Create a copy of Book
+ String get bookId; int get id; String get title; String get author; String get isbn; double get price; String get category; String get publisher; String get internalPricing; String get selfEncoding; double get purchasePrice; int get publicationYear; int get retailDiscount; int get wholesaleDiscount; int get wholesalePrice; int get memberDiscount; String get purchaseSaleMode; String get bookmark; String get packaging; String get properity; String get statisticalClass;
+/// Create a copy of BookModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$BookCopyWith<Book> get copyWith => _$BookCopyWithImpl<Book>(this as Book, _$identity);
+$BookModelCopyWith<BookModel> get copyWith => _$BookModelCopyWithImpl<BookModel>(this as BookModel, _$identity);
 
-  /// Serializes this Book to a JSON map.
+  /// Serializes this BookModel to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Book&&(identical(other.bookId, bookId) || other.bookId == bookId)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.isbn, isbn) || other.isbn == isbn)&&(identical(other.price, price) || other.price == price)&&(identical(other.category, category) || other.category == category)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.internalPricing, internalPricing) || other.internalPricing == internalPricing)&&(identical(other.selfEncoding, selfEncoding) || other.selfEncoding == selfEncoding)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.publicationYear, publicationYear) || other.publicationYear == publicationYear)&&(identical(other.retailDiscount, retailDiscount) || other.retailDiscount == retailDiscount)&&(identical(other.wholesaleDiscount, wholesaleDiscount) || other.wholesaleDiscount == wholesaleDiscount)&&(identical(other.wholesalePrice, wholesalePrice) || other.wholesalePrice == wholesalePrice)&&(identical(other.memberDiscount, memberDiscount) || other.memberDiscount == memberDiscount)&&(identical(other.purchaseSaleMode, purchaseSaleMode) || other.purchaseSaleMode == purchaseSaleMode)&&(identical(other.bookmark, bookmark) || other.bookmark == bookmark)&&(identical(other.packaging, packaging) || other.packaging == packaging)&&(identical(other.properity, properity) || other.properity == properity)&&(identical(other.statisticalClass, statisticalClass) || other.statisticalClass == statisticalClass));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BookModel&&(identical(other.bookId, bookId) || other.bookId == bookId)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.isbn, isbn) || other.isbn == isbn)&&(identical(other.price, price) || other.price == price)&&(identical(other.category, category) || other.category == category)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.internalPricing, internalPricing) || other.internalPricing == internalPricing)&&(identical(other.selfEncoding, selfEncoding) || other.selfEncoding == selfEncoding)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.publicationYear, publicationYear) || other.publicationYear == publicationYear)&&(identical(other.retailDiscount, retailDiscount) || other.retailDiscount == retailDiscount)&&(identical(other.wholesaleDiscount, wholesaleDiscount) || other.wholesaleDiscount == wholesaleDiscount)&&(identical(other.wholesalePrice, wholesalePrice) || other.wholesalePrice == wholesalePrice)&&(identical(other.memberDiscount, memberDiscount) || other.memberDiscount == memberDiscount)&&(identical(other.purchaseSaleMode, purchaseSaleMode) || other.purchaseSaleMode == purchaseSaleMode)&&(identical(other.bookmark, bookmark) || other.bookmark == bookmark)&&(identical(other.packaging, packaging) || other.packaging == packaging)&&(identical(other.properity, properity) || other.properity == properity)&&(identical(other.statisticalClass, statisticalClass) || other.statisticalClass == statisticalClass));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55,15 +38,15 @@ int get hashCode => Object.hashAll([runtimeType,bookId,id,title,author,isbn,pric
 
 @override
 String toString() {
-  return 'Book(bookId: $bookId, id: $id, title: $title, author: $author, isbn: $isbn, price: $price, category: $category, publisher: $publisher, internalPricing: $internalPricing, selfEncoding: $selfEncoding, purchasePrice: $purchasePrice, publicationYear: $publicationYear, retailDiscount: $retailDiscount, wholesaleDiscount: $wholesaleDiscount, wholesalePrice: $wholesalePrice, memberDiscount: $memberDiscount, purchaseSaleMode: $purchaseSaleMode, bookmark: $bookmark, packaging: $packaging, properity: $properity, statisticalClass: $statisticalClass)';
+  return 'BookModel(bookId: $bookId, id: $id, title: $title, author: $author, isbn: $isbn, price: $price, category: $category, publisher: $publisher, internalPricing: $internalPricing, selfEncoding: $selfEncoding, purchasePrice: $purchasePrice, publicationYear: $publicationYear, retailDiscount: $retailDiscount, wholesaleDiscount: $wholesaleDiscount, wholesalePrice: $wholesalePrice, memberDiscount: $memberDiscount, purchaseSaleMode: $purchaseSaleMode, bookmark: $bookmark, packaging: $packaging, properity: $properity, statisticalClass: $statisticalClass)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $BookCopyWith<$Res>  {
-  factory $BookCopyWith(Book value, $Res Function(Book) _then) = _$BookCopyWithImpl;
+abstract mixin class $BookModelCopyWith<$Res>  {
+  factory $BookModelCopyWith(BookModel value, $Res Function(BookModel) _then) = _$BookModelCopyWithImpl;
 @useResult
 $Res call({
  String bookId, int id, String title, String author, String isbn, double price, String category, String publisher, String internalPricing, String selfEncoding, double purchasePrice, int publicationYear, int retailDiscount, int wholesaleDiscount, int wholesalePrice, int memberDiscount, String purchaseSaleMode, String bookmark, String packaging, String properity, String statisticalClass
@@ -74,14 +57,14 @@ $Res call({
 
 }
 /// @nodoc
-class _$BookCopyWithImpl<$Res>
-    implements $BookCopyWith<$Res> {
-  _$BookCopyWithImpl(this._self, this._then);
+class _$BookModelCopyWithImpl<$Res>
+    implements $BookModelCopyWith<$Res> {
+  _$BookModelCopyWithImpl(this._self, this._then);
 
-  final Book _self;
-  final $Res Function(Book) _then;
+  final BookModel _self;
+  final $Res Function(BookModel) _then;
 
-/// Create a copy of Book
+/// Create a copy of BookModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? bookId = null,Object? id = null,Object? title = null,Object? author = null,Object? isbn = null,Object? price = null,Object? category = null,Object? publisher = null,Object? internalPricing = null,Object? selfEncoding = null,Object? purchasePrice = null,Object? publicationYear = null,Object? retailDiscount = null,Object? wholesaleDiscount = null,Object? wholesalePrice = null,Object? memberDiscount = null,Object? purchaseSaleMode = null,Object? bookmark = null,Object? packaging = null,Object? properity = null,Object? statisticalClass = null,}) {
   return _then(_self.copyWith(
@@ -116,63 +99,46 @@ as String,
 /// @nodoc
 @JsonSerializable()
 
-class _Book implements Book {
-  const _Book({required this.bookId, required this.id, required this.title, required this.author, required this.isbn, required this.price, required this.category, required this.publisher, required this.internalPricing, required this.selfEncoding, required this.purchasePrice, required this.publicationYear, required this.retailDiscount, required this.wholesaleDiscount, required this.wholesalePrice, required this.memberDiscount, required this.purchaseSaleMode, required this.bookmark, required this.packaging, required this.properity, required this.statisticalClass});
-  factory _Book.fromJson(Map<String, dynamic> json) => _$BookFromJson(json);
+class _BookModel implements BookModel {
+  const _BookModel({required this.bookId, required this.id, required this.title, required this.author, required this.isbn, required this.price, required this.category, required this.publisher, required this.internalPricing, required this.selfEncoding, required this.purchasePrice, required this.publicationYear, required this.retailDiscount, required this.wholesaleDiscount, required this.wholesalePrice, required this.memberDiscount, required this.purchaseSaleMode, required this.bookmark, required this.packaging, required this.properity, required this.statisticalClass});
+  factory _BookModel.fromJson(Map<String, dynamic> json) => _$BookModelFromJson(json);
 
-//商品编码
 @override final  String bookId;
 @override final  int id;
 @override final  String title;
 @override final  String author;
 @override final  String isbn;
-//售价
 @override final  double price;
-//商品分类
 @override final  String category;
-//出版社
 @override final  String publisher;
-//内部定价
 @override final  String internalPricing;
-//自编码
 @override final  String selfEncoding;
-//进货价
 @override final  double purchasePrice;
-//出版年
 @override final  int publicationYear;
-//零售折扣
 @override final  int retailDiscount;
-//批发价*
 @override final  int wholesaleDiscount;
-//批发折扣
 @override final  int wholesalePrice;
-//会员折扣
 @override final  int memberDiscount;
-//购销方式*
 @override final  String purchaseSaleMode;
-//书标
 @override final  String bookmark;
-//包装*
 @override final  String packaging;
-//商品属性
 @override final  String properity;
-//统计分类
 @override final  String statisticalClass;
 
-/// Create a copy of Book
+/// Create a copy of BookModel
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$BookCopyWith<_Book> get copyWith => __$BookCopyWithImpl<_Book>(this, _$identity);
+_$BookModelCopyWith<_BookModel> get copyWith => __$BookModelCopyWithImpl<_BookModel>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$BookToJson(this, );
+  return _$BookModelToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Book&&(identical(other.bookId, bookId) || other.bookId == bookId)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.isbn, isbn) || other.isbn == isbn)&&(identical(other.price, price) || other.price == price)&&(identical(other.category, category) || other.category == category)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.internalPricing, internalPricing) || other.internalPricing == internalPricing)&&(identical(other.selfEncoding, selfEncoding) || other.selfEncoding == selfEncoding)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.publicationYear, publicationYear) || other.publicationYear == publicationYear)&&(identical(other.retailDiscount, retailDiscount) || other.retailDiscount == retailDiscount)&&(identical(other.wholesaleDiscount, wholesaleDiscount) || other.wholesaleDiscount == wholesaleDiscount)&&(identical(other.wholesalePrice, wholesalePrice) || other.wholesalePrice == wholesalePrice)&&(identical(other.memberDiscount, memberDiscount) || other.memberDiscount == memberDiscount)&&(identical(other.purchaseSaleMode, purchaseSaleMode) || other.purchaseSaleMode == purchaseSaleMode)&&(identical(other.bookmark, bookmark) || other.bookmark == bookmark)&&(identical(other.packaging, packaging) || other.packaging == packaging)&&(identical(other.properity, properity) || other.properity == properity)&&(identical(other.statisticalClass, statisticalClass) || other.statisticalClass == statisticalClass));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BookModel&&(identical(other.bookId, bookId) || other.bookId == bookId)&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.author, author) || other.author == author)&&(identical(other.isbn, isbn) || other.isbn == isbn)&&(identical(other.price, price) || other.price == price)&&(identical(other.category, category) || other.category == category)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.internalPricing, internalPricing) || other.internalPricing == internalPricing)&&(identical(other.selfEncoding, selfEncoding) || other.selfEncoding == selfEncoding)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.publicationYear, publicationYear) || other.publicationYear == publicationYear)&&(identical(other.retailDiscount, retailDiscount) || other.retailDiscount == retailDiscount)&&(identical(other.wholesaleDiscount, wholesaleDiscount) || other.wholesaleDiscount == wholesaleDiscount)&&(identical(other.wholesalePrice, wholesalePrice) || other.wholesalePrice == wholesalePrice)&&(identical(other.memberDiscount, memberDiscount) || other.memberDiscount == memberDiscount)&&(identical(other.purchaseSaleMode, purchaseSaleMode) || other.purchaseSaleMode == purchaseSaleMode)&&(identical(other.bookmark, bookmark) || other.bookmark == bookmark)&&(identical(other.packaging, packaging) || other.packaging == packaging)&&(identical(other.properity, properity) || other.properity == properity)&&(identical(other.statisticalClass, statisticalClass) || other.statisticalClass == statisticalClass));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -181,15 +147,15 @@ int get hashCode => Object.hashAll([runtimeType,bookId,id,title,author,isbn,pric
 
 @override
 String toString() {
-  return 'Book(bookId: $bookId, id: $id, title: $title, author: $author, isbn: $isbn, price: $price, category: $category, publisher: $publisher, internalPricing: $internalPricing, selfEncoding: $selfEncoding, purchasePrice: $purchasePrice, publicationYear: $publicationYear, retailDiscount: $retailDiscount, wholesaleDiscount: $wholesaleDiscount, wholesalePrice: $wholesalePrice, memberDiscount: $memberDiscount, purchaseSaleMode: $purchaseSaleMode, bookmark: $bookmark, packaging: $packaging, properity: $properity, statisticalClass: $statisticalClass)';
+  return 'BookModel(bookId: $bookId, id: $id, title: $title, author: $author, isbn: $isbn, price: $price, category: $category, publisher: $publisher, internalPricing: $internalPricing, selfEncoding: $selfEncoding, purchasePrice: $purchasePrice, publicationYear: $publicationYear, retailDiscount: $retailDiscount, wholesaleDiscount: $wholesaleDiscount, wholesalePrice: $wholesalePrice, memberDiscount: $memberDiscount, purchaseSaleMode: $purchaseSaleMode, bookmark: $bookmark, packaging: $packaging, properity: $properity, statisticalClass: $statisticalClass)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$BookCopyWith<$Res> implements $BookCopyWith<$Res> {
-  factory _$BookCopyWith(_Book value, $Res Function(_Book) _then) = __$BookCopyWithImpl;
+abstract mixin class _$BookModelCopyWith<$Res> implements $BookModelCopyWith<$Res> {
+  factory _$BookModelCopyWith(_BookModel value, $Res Function(_BookModel) _then) = __$BookModelCopyWithImpl;
 @override @useResult
 $Res call({
  String bookId, int id, String title, String author, String isbn, double price, String category, String publisher, String internalPricing, String selfEncoding, double purchasePrice, int publicationYear, int retailDiscount, int wholesaleDiscount, int wholesalePrice, int memberDiscount, String purchaseSaleMode, String bookmark, String packaging, String properity, String statisticalClass
@@ -200,17 +166,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$BookCopyWithImpl<$Res>
-    implements _$BookCopyWith<$Res> {
-  __$BookCopyWithImpl(this._self, this._then);
+class __$BookModelCopyWithImpl<$Res>
+    implements _$BookModelCopyWith<$Res> {
+  __$BookModelCopyWithImpl(this._self, this._then);
 
-  final _Book _self;
-  final $Res Function(_Book) _then;
+  final _BookModel _self;
+  final $Res Function(_BookModel) _then;
 
-/// Create a copy of Book
+/// Create a copy of BookModel
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? bookId = null,Object? id = null,Object? title = null,Object? author = null,Object? isbn = null,Object? price = null,Object? category = null,Object? publisher = null,Object? internalPricing = null,Object? selfEncoding = null,Object? purchasePrice = null,Object? publicationYear = null,Object? retailDiscount = null,Object? wholesaleDiscount = null,Object? wholesalePrice = null,Object? memberDiscount = null,Object? purchaseSaleMode = null,Object? bookmark = null,Object? packaging = null,Object? properity = null,Object? statisticalClass = null,}) {
-  return _then(_Book(
+  return _then(_BookModel(
 bookId: null == bookId ? _self.bookId : bookId // ignore: cast_nullable_to_non_nullable
 as String,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable

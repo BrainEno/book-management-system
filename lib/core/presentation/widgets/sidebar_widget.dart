@@ -1,4 +1,4 @@
-import 'package:bookstore_management_system/core/common/models/nav_item.dart';
+import 'package:bookstore_management_system/core/presentation/models/nav_item.dart';
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:flutter/material.dart';
 

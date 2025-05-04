@@ -1,50 +1,34 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'book.freezed.dart';
-part 'book.g.dart';
+part 'book_model.freezed.dart';
+part 'book_model.g.dart';
 
 @freezed
-abstract class Book with _$Book {
-  const factory Book({
-    //商品编码
+sealed class BookModel with _$BookModel {
+  const factory BookModel({
     required String bookId,
     required int id,
     required String title,
     required String author,
     required String isbn,
-    //售价
     required double price,
-    //商品分类
     required String category,
-    //出版社
     required String publisher,
-    //内部定价
     required String internalPricing,
-    //自编码
     required String selfEncoding,
-    //进货价
     required double purchasePrice,
-    //出版年
     required int publicationYear,
-    //零售折扣
     required int retailDiscount,
-    //批发价*
     required int wholesaleDiscount,
-    //批发折扣
     required int wholesalePrice,
-    //会员折扣
     required int memberDiscount,
-    //购销方式*
     required String purchaseSaleMode,
-    //书标
     required String bookmark,
-    //包装*
     required String packaging,
-    //商品属性
     required String properity,
-    //统计分类
     required String statisticalClass,
-  }) = _Book;
+  }) = _BookModel;
 
-  factory Book.fromJson(Map<String, dynamic> json) => _$BookFromJson(json);
+  factory BookModel.fromJson(Map<String, dynamic> json) =>
+      _$BookModelFromJson(json);
 }

@@ -1,6 +1,6 @@
 import 'package:bookstore_management_system/core/theme/theme_toggle_button.dart';
-import 'package:bookstore_management_system/features/book/presentation/widgets/home_view.dart';
-import 'package:bookstore_management_system/features/book/presentation/widgets/sidebar_widget.dart';
+import 'package:bookstore_management_system/core/presentation/widgets/home_view.dart';
+import 'package:bookstore_management_system/core/presentation/widgets/sidebar_widget.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {

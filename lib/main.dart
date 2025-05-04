@@ -3,7 +3,7 @@ import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/pages/login_page.dart';
 import 'package:bookstore_management_system/features/book/presentation/pages/home_page.dart';
-import 'package:bookstore_management_system/init_dependencies.dart';
+import 'package:bookstore_management_system/core/init_dependencies.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
 }
 
 final _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/login',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const HomePage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
