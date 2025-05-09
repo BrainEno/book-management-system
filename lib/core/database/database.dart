@@ -16,12 +16,18 @@ part 'database.g.dart';
 // Define the database with tables and DAOs
 @DriftDatabase(tables: [Books, Users], daos: [BookDao, UserDao])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase._internal([QueryExecutor? e]) : super(e ?? _openConnection());
+  // ignore: use_super_parameters
+  AppDatabase._internal(QueryExecutor e) : super(e);
 
   static AppDatabase? _instance;
 
-  factory AppDatabase() {
-    return _instance ??= AppDatabase._internal(_openConnection());
+  factory AppDatabase([QueryExecutor? executor]) {
+    if (executor != null) {
+      return AppDatabase._internal(executor);
+    }
+    _instance ??= AppDatabase._internal(_openConnection());
+
+    return _instance!;
   }
 
   @override
@@ -34,9 +40,6 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (Migrator m, int from, int to) async {
       // Add migration logic here for schema changes in future versions
-      if (from < 2) {
-        await m.addColumn(books, books.operator);
-      }
     },
     beforeOpen: (details) async {
       if (details.wasCreated) {

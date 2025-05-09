@@ -13,7 +13,6 @@ import 'package:shelf_router/shelf_router.dart' as shelf_router;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
-import 'package:window_manager/window_manager.dart';
 
 class ProductInfoEditorView extends StatefulWidget {
   final BookModel? book;
@@ -84,11 +83,8 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     _initializeControllers();
     _startService();
     _draftBox = GetIt.instance<Box<Map<String, String>>>();
-    if (widget.book != null) {
-      _populateFields(widget.book!);
-    }
+
     context.read<AuthBloc>().add(GetCurrentUserEvent());
-    _setupWindow();
   }
 
   void _initializeControllers() {
@@ -141,14 +137,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     _statisticalClassController.text =
         book.statisticalClass.isEmpty ? '不区分' : book.statisticalClass;
     _operatorController.text = book.operator;
-  }
-
-  Future<void> _setupWindow() async {
-    await windowManager.setAsFrameless();
-    await windowManager.setSize(const Size(800, 600));
-    await windowManager.setPosition(const Offset(100, 100));
-    await windowManager.setTitle('编辑商品资料');
-    await windowManager.show();
   }
 
   @override
@@ -336,7 +324,9 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
         listener: (context, authState) {
           if (authState is AuthSuccess) {
             setState(() {
-              _operatorController.text = authState.user.username;
+              if (widget.book != null) {
+                _populateFields(widget.book!);
+              }
             });
           }
         },
