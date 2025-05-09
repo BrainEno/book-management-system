@@ -3,6 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audioplayers_windows
+  bonsoir_windows
+  desktop_multi_window
+  flutter_lite_camera
+  permission_handler_windows
   screen_retriever_windows
   sqlite3_flutter_libs
   system_tray

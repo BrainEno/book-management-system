@@ -1,7 +1,19 @@
 PODS:
+  - audioplayers_darwin (0.0.1):
+    - FlutterMacOS
+  - bonsoir_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - desktop_multi_window (0.0.1):
+    - FlutterMacOS
   - file_picker (0.0.1):
     - FlutterMacOS
+  - flutter_lite_camera (0.0.1):
+    - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - mobile_scanner (7.0.0):
+    - Flutter
+    - FlutterMacOS
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -38,8 +50,13 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - audioplayers_darwin (from `Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/macos`)
+  - bonsoir_darwin (from `Flutter/ephemeral/.symlinks/plugins/bonsoir_darwin/darwin`)
+  - desktop_multi_window (from `Flutter/ephemeral/.symlinks/plugins/desktop_multi_window/macos`)
   - file_picker (from `Flutter/ephemeral/.symlinks/plugins/file_picker/macos`)
+  - flutter_lite_camera (from `Flutter/ephemeral/.symlinks/plugins/flutter_lite_camera/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - mobile_scanner (from `Flutter/ephemeral/.symlinks/plugins/mobile_scanner/darwin`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
   - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -52,10 +69,20 @@ SPEC REPOS:
     - sqlite3
 
 EXTERNAL SOURCES:
+  audioplayers_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/macos
+  bonsoir_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/bonsoir_darwin/darwin
+  desktop_multi_window:
+    :path: Flutter/ephemeral/.symlinks/plugins/desktop_multi_window/macos
   file_picker:
     :path: Flutter/ephemeral/.symlinks/plugins/file_picker/macos
+  flutter_lite_camera:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_lite_camera/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  mobile_scanner:
+    :path: Flutter/ephemeral/.symlinks/plugins/mobile_scanner/darwin
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
   screen_retriever_macos:
@@ -70,16 +97,21 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
+  audioplayers_darwin: dcad41de4fbd0099cb3749f7ab3b0cb8f70b810c
+  bonsoir_darwin: e3b8526c42ca46a885142df84229131dfabea842
+  desktop_multi_window: 566489c048b501134f9d7fb6a2354c60a9126486
   file_picker: e716a70a9fe5fd9e09ebc922d7541464289443af
+  flutter_lite_camera: 9370352a7cae3a2c9cfd961653759ec41e6e622b
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  mobile_scanner: c75a85fa552d6addff68419669661af0309b1e12
+  path_provider_foundation: 662dbdfb66bf11b8a7a2a9f02e3a4bf8831ecaab
   screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
-  shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
+  shared_preferences_foundation: 613d9692ff1fc9cb6f6bdb4736d6c0f40ab69b89
   sqlite3: fc1400008a9b3525f5914ed715a5d1af0b8f4983
-  sqlite3_flutter_libs: 487032b9008b28de37c72a3aa66849ef3745f3e6
+  sqlite3_flutter_libs: 05c5af4e29c9f6b14e5d0365c34b02e94a1374ad
   system_tray: e53c972838c69589ff2e77d6d3abfd71332f9e5d
   window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
 
-PODFILE CHECKSUM: 7eb978b976557c8c1cd717d8185ec483fd090a82
+PODFILE CHECKSUM: 617a69f6cc4cae6b47c8e30ffb60bc24b94f1045
 
 COCOAPODS: 1.16.2

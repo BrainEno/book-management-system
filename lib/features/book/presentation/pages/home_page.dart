@@ -1,6 +1,7 @@
 import 'package:bookstore_management_system/core/theme/theme_toggle_button.dart';
 import 'package:bookstore_management_system/core/presentation/widgets/home_view.dart';
 import 'package:bookstore_management_system/core/presentation/widgets/sidebar_widget.dart';
+import 'package:bookstore_management_system/features/book/presentation/widgets/product_info_editor_view.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _HomePageState extends State<HomePage> {
     Center(child: Text("人员资料视图", style: TextStyle(fontSize: 24))), // Index 5
     Center(child: Text("商品分类视图", style: TextStyle(fontSize: 24))), // Index 6
     Center(child: Text("统计分类视图", style: TextStyle(fontSize: 24))), // Index 7
-    Center(child: Text("商品资料视图", style: TextStyle(fontSize: 24))), // Index 8
+    ProductInfoEditorView(), // Index 8
     Center(child: Text("销售属性视图", style: TextStyle(fontSize: 24))), // Index 9
     Center(child: Text("商品属性视图", style: TextStyle(fontSize: 24))), // Index 10
     Center(

@@ -23,3 +23,8 @@ class AuthLogoutRequested extends AuthEvent {
   @override
   List<Object> get props => [];
 }
+
+class GetCurrentUserEvent extends AuthEvent {
+  @override
+  List<Object> get props => [];
+}

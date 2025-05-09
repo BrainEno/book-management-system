@@ -92,11 +92,11 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     'internalPricing',
   );
   @override
-  late final GeneratedColumn<String> internalPricing = GeneratedColumn<String>(
+  late final GeneratedColumn<double> internalPricing = GeneratedColumn<double>(
     'internal_pricing',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _selfEncodingMeta = const VerificationMeta(
@@ -136,44 +136,45 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     'retailDiscount',
   );
   @override
-  late final GeneratedColumn<int> retailDiscount = GeneratedColumn<int>(
+  late final GeneratedColumn<double> retailDiscount = GeneratedColumn<double>(
     'retail_discount',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _wholesaleDiscountMeta = const VerificationMeta(
     'wholesaleDiscount',
   );
   @override
-  late final GeneratedColumn<int> wholesaleDiscount = GeneratedColumn<int>(
-    'wholesale_discount',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumn<double> wholesaleDiscount =
+      GeneratedColumn<double>(
+        'wholesale_discount',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
   static const VerificationMeta _wholesalePriceMeta = const VerificationMeta(
     'wholesalePrice',
   );
   @override
-  late final GeneratedColumn<int> wholesalePrice = GeneratedColumn<int>(
+  late final GeneratedColumn<double> wholesalePrice = GeneratedColumn<double>(
     'wholesale_price',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _memberDiscountMeta = const VerificationMeta(
     'memberDiscount',
   );
   @override
-  late final GeneratedColumn<int> memberDiscount = GeneratedColumn<int>(
+  late final GeneratedColumn<double> memberDiscount = GeneratedColumn<double>(
     'member_discount',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _purchaseSaleModeMeta = const VerificationMeta(
@@ -231,6 +232,17 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _operatorMeta = const VerificationMeta(
+    'operator',
+  );
+  @override
+  late final GeneratedColumn<String> operator = GeneratedColumn<String>(
+    'operator',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -278,6 +290,7 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     packaging,
     properity,
     statisticalClass,
+    operator,
     createdAt,
     updatedAt,
   ];
@@ -486,6 +499,14 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     } else if (isInserting) {
       context.missing(_statisticalClassMeta);
     }
+    if (data.containsKey('operator')) {
+      context.handle(
+        _operatorMeta,
+        operator.isAcceptableOrUnknown(data['operator']!, _operatorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_operatorMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -549,7 +570,7 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
           )!,
       internalPricing:
           attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
+            DriftSqlType.double,
             data['${effectivePrefix}internal_pricing'],
           )!,
       selfEncoding:
@@ -569,22 +590,22 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
           )!,
       retailDiscount:
           attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
+            DriftSqlType.double,
             data['${effectivePrefix}retail_discount'],
           )!,
       wholesaleDiscount:
           attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
+            DriftSqlType.double,
             data['${effectivePrefix}wholesale_discount'],
           )!,
       wholesalePrice:
           attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
+            DriftSqlType.double,
             data['${effectivePrefix}wholesale_price'],
           )!,
       memberDiscount:
           attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
+            DriftSqlType.double,
             data['${effectivePrefix}member_discount'],
           )!,
       purchaseSaleMode:
@@ -611,6 +632,11 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
           attachedDatabase.typeMapping.read(
             DriftSqlType.string,
             data['${effectivePrefix}statistical_class'],
+          )!,
+      operator:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}operator'],
           )!,
       createdAt:
           attachedDatabase.typeMapping.read(
@@ -640,19 +666,20 @@ class Book extends DataClass implements Insertable<Book> {
   final double price;
   final String publisher;
   final String bookId;
-  final String internalPricing;
+  final double internalPricing;
   final String selfEncoding;
   final double purchasePrice;
   final int publicationYear;
-  final int retailDiscount;
-  final int wholesaleDiscount;
-  final int wholesalePrice;
-  final int memberDiscount;
+  final double retailDiscount;
+  final double wholesaleDiscount;
+  final double wholesalePrice;
+  final double memberDiscount;
   final String purchaseSaleMode;
   final String bookmark;
   final String packaging;
   final String properity;
   final String statisticalClass;
+  final String operator;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Book({
@@ -677,6 +704,7 @@ class Book extends DataClass implements Insertable<Book> {
     required this.packaging,
     required this.properity,
     required this.statisticalClass,
+    required this.operator,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -691,19 +719,20 @@ class Book extends DataClass implements Insertable<Book> {
     map['price'] = Variable<double>(price);
     map['publisher'] = Variable<String>(publisher);
     map['book_id'] = Variable<String>(bookId);
-    map['internal_pricing'] = Variable<String>(internalPricing);
+    map['internal_pricing'] = Variable<double>(internalPricing);
     map['self_encoding'] = Variable<String>(selfEncoding);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['publication_year'] = Variable<int>(publicationYear);
-    map['retail_discount'] = Variable<int>(retailDiscount);
-    map['wholesale_discount'] = Variable<int>(wholesaleDiscount);
-    map['wholesale_price'] = Variable<int>(wholesalePrice);
-    map['member_discount'] = Variable<int>(memberDiscount);
+    map['retail_discount'] = Variable<double>(retailDiscount);
+    map['wholesale_discount'] = Variable<double>(wholesaleDiscount);
+    map['wholesale_price'] = Variable<double>(wholesalePrice);
+    map['member_discount'] = Variable<double>(memberDiscount);
     map['purchase_sale_mode'] = Variable<String>(purchaseSaleMode);
     map['bookmark'] = Variable<String>(bookmark);
     map['packaging'] = Variable<String>(packaging);
     map['properity'] = Variable<String>(properity);
     map['statistical_class'] = Variable<String>(statisticalClass);
+    map['operator'] = Variable<String>(operator);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -732,6 +761,7 @@ class Book extends DataClass implements Insertable<Book> {
       packaging: Value(packaging),
       properity: Value(properity),
       statisticalClass: Value(statisticalClass),
+      operator: Value(operator),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -751,19 +781,20 @@ class Book extends DataClass implements Insertable<Book> {
       price: serializer.fromJson<double>(json['price']),
       publisher: serializer.fromJson<String>(json['publisher']),
       bookId: serializer.fromJson<String>(json['bookId']),
-      internalPricing: serializer.fromJson<String>(json['internalPricing']),
+      internalPricing: serializer.fromJson<double>(json['internalPricing']),
       selfEncoding: serializer.fromJson<String>(json['selfEncoding']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       publicationYear: serializer.fromJson<int>(json['publicationYear']),
-      retailDiscount: serializer.fromJson<int>(json['retailDiscount']),
-      wholesaleDiscount: serializer.fromJson<int>(json['wholesaleDiscount']),
-      wholesalePrice: serializer.fromJson<int>(json['wholesalePrice']),
-      memberDiscount: serializer.fromJson<int>(json['memberDiscount']),
+      retailDiscount: serializer.fromJson<double>(json['retailDiscount']),
+      wholesaleDiscount: serializer.fromJson<double>(json['wholesaleDiscount']),
+      wholesalePrice: serializer.fromJson<double>(json['wholesalePrice']),
+      memberDiscount: serializer.fromJson<double>(json['memberDiscount']),
       purchaseSaleMode: serializer.fromJson<String>(json['purchaseSaleMode']),
       bookmark: serializer.fromJson<String>(json['bookmark']),
       packaging: serializer.fromJson<String>(json['packaging']),
       properity: serializer.fromJson<String>(json['properity']),
       statisticalClass: serializer.fromJson<String>(json['statisticalClass']),
+      operator: serializer.fromJson<String>(json['operator']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -780,19 +811,20 @@ class Book extends DataClass implements Insertable<Book> {
       'price': serializer.toJson<double>(price),
       'publisher': serializer.toJson<String>(publisher),
       'bookId': serializer.toJson<String>(bookId),
-      'internalPricing': serializer.toJson<String>(internalPricing),
+      'internalPricing': serializer.toJson<double>(internalPricing),
       'selfEncoding': serializer.toJson<String>(selfEncoding),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'publicationYear': serializer.toJson<int>(publicationYear),
-      'retailDiscount': serializer.toJson<int>(retailDiscount),
-      'wholesaleDiscount': serializer.toJson<int>(wholesaleDiscount),
-      'wholesalePrice': serializer.toJson<int>(wholesalePrice),
-      'memberDiscount': serializer.toJson<int>(memberDiscount),
+      'retailDiscount': serializer.toJson<double>(retailDiscount),
+      'wholesaleDiscount': serializer.toJson<double>(wholesaleDiscount),
+      'wholesalePrice': serializer.toJson<double>(wholesalePrice),
+      'memberDiscount': serializer.toJson<double>(memberDiscount),
       'purchaseSaleMode': serializer.toJson<String>(purchaseSaleMode),
       'bookmark': serializer.toJson<String>(bookmark),
       'packaging': serializer.toJson<String>(packaging),
       'properity': serializer.toJson<String>(properity),
       'statisticalClass': serializer.toJson<String>(statisticalClass),
+      'operator': serializer.toJson<String>(operator),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -807,19 +839,20 @@ class Book extends DataClass implements Insertable<Book> {
     double? price,
     String? publisher,
     String? bookId,
-    String? internalPricing,
+    double? internalPricing,
     String? selfEncoding,
     double? purchasePrice,
     int? publicationYear,
-    int? retailDiscount,
-    int? wholesaleDiscount,
-    int? wholesalePrice,
-    int? memberDiscount,
+    double? retailDiscount,
+    double? wholesaleDiscount,
+    double? wholesalePrice,
+    double? memberDiscount,
     String? purchaseSaleMode,
     String? bookmark,
     String? packaging,
     String? properity,
     String? statisticalClass,
+    String? operator,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Book(
@@ -844,6 +877,7 @@ class Book extends DataClass implements Insertable<Book> {
     packaging: packaging ?? this.packaging,
     properity: properity ?? this.properity,
     statisticalClass: statisticalClass ?? this.statisticalClass,
+    operator: operator ?? this.operator,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -900,6 +934,7 @@ class Book extends DataClass implements Insertable<Book> {
           data.statisticalClass.present
               ? data.statisticalClass.value
               : this.statisticalClass,
+      operator: data.operator.present ? data.operator.value : this.operator,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -929,6 +964,7 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('packaging: $packaging, ')
           ..write('properity: $properity, ')
           ..write('statisticalClass: $statisticalClass, ')
+          ..write('operator: $operator, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -958,6 +994,7 @@ class Book extends DataClass implements Insertable<Book> {
     packaging,
     properity,
     statisticalClass,
+    operator,
     createdAt,
     updatedAt,
   ]);
@@ -986,6 +1023,7 @@ class Book extends DataClass implements Insertable<Book> {
           other.packaging == this.packaging &&
           other.properity == this.properity &&
           other.statisticalClass == this.statisticalClass &&
+          other.operator == this.operator &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -999,19 +1037,20 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<double> price;
   final Value<String> publisher;
   final Value<String> bookId;
-  final Value<String> internalPricing;
+  final Value<double> internalPricing;
   final Value<String> selfEncoding;
   final Value<double> purchasePrice;
   final Value<int> publicationYear;
-  final Value<int> retailDiscount;
-  final Value<int> wholesaleDiscount;
-  final Value<int> wholesalePrice;
-  final Value<int> memberDiscount;
+  final Value<double> retailDiscount;
+  final Value<double> wholesaleDiscount;
+  final Value<double> wholesalePrice;
+  final Value<double> memberDiscount;
   final Value<String> purchaseSaleMode;
   final Value<String> bookmark;
   final Value<String> packaging;
   final Value<String> properity;
   final Value<String> statisticalClass;
+  final Value<String> operator;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const BooksCompanion({
@@ -1036,6 +1075,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.packaging = const Value.absent(),
     this.properity = const Value.absent(),
     this.statisticalClass = const Value.absent(),
+    this.operator = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1048,19 +1088,20 @@ class BooksCompanion extends UpdateCompanion<Book> {
     required double price,
     required String publisher,
     required String bookId,
-    required String internalPricing,
+    required double internalPricing,
     required String selfEncoding,
     required double purchasePrice,
     required int publicationYear,
-    required int retailDiscount,
-    required int wholesaleDiscount,
-    required int wholesalePrice,
-    required int memberDiscount,
+    required double retailDiscount,
+    required double wholesaleDiscount,
+    required double wholesalePrice,
+    required double memberDiscount,
     required String purchaseSaleMode,
     required String bookmark,
     required String packaging,
     required String properity,
     required String statisticalClass,
+    required String operator,
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : title = Value(title),
@@ -1082,7 +1123,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
        bookmark = Value(bookmark),
        packaging = Value(packaging),
        properity = Value(properity),
-       statisticalClass = Value(statisticalClass);
+       statisticalClass = Value(statisticalClass),
+       operator = Value(operator);
   static Insertable<Book> custom({
     Expression<int>? id,
     Expression<String>? title,
@@ -1092,19 +1134,20 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<double>? price,
     Expression<String>? publisher,
     Expression<String>? bookId,
-    Expression<String>? internalPricing,
+    Expression<double>? internalPricing,
     Expression<String>? selfEncoding,
     Expression<double>? purchasePrice,
     Expression<int>? publicationYear,
-    Expression<int>? retailDiscount,
-    Expression<int>? wholesaleDiscount,
-    Expression<int>? wholesalePrice,
-    Expression<int>? memberDiscount,
+    Expression<double>? retailDiscount,
+    Expression<double>? wholesaleDiscount,
+    Expression<double>? wholesalePrice,
+    Expression<double>? memberDiscount,
     Expression<String>? purchaseSaleMode,
     Expression<String>? bookmark,
     Expression<String>? packaging,
     Expression<String>? properity,
     Expression<String>? statisticalClass,
+    Expression<String>? operator,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -1130,6 +1173,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (packaging != null) 'packaging': packaging,
       if (properity != null) 'properity': properity,
       if (statisticalClass != null) 'statistical_class': statisticalClass,
+      if (operator != null) 'operator': operator,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1144,19 +1188,20 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<double>? price,
     Value<String>? publisher,
     Value<String>? bookId,
-    Value<String>? internalPricing,
+    Value<double>? internalPricing,
     Value<String>? selfEncoding,
     Value<double>? purchasePrice,
     Value<int>? publicationYear,
-    Value<int>? retailDiscount,
-    Value<int>? wholesaleDiscount,
-    Value<int>? wholesalePrice,
-    Value<int>? memberDiscount,
+    Value<double>? retailDiscount,
+    Value<double>? wholesaleDiscount,
+    Value<double>? wholesalePrice,
+    Value<double>? memberDiscount,
     Value<String>? purchaseSaleMode,
     Value<String>? bookmark,
     Value<String>? packaging,
     Value<String>? properity,
     Value<String>? statisticalClass,
+    Value<String>? operator,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1182,6 +1227,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       packaging: packaging ?? this.packaging,
       properity: properity ?? this.properity,
       statisticalClass: statisticalClass ?? this.statisticalClass,
+      operator: operator ?? this.operator,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1215,7 +1261,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       map['book_id'] = Variable<String>(bookId.value);
     }
     if (internalPricing.present) {
-      map['internal_pricing'] = Variable<String>(internalPricing.value);
+      map['internal_pricing'] = Variable<double>(internalPricing.value);
     }
     if (selfEncoding.present) {
       map['self_encoding'] = Variable<String>(selfEncoding.value);
@@ -1227,16 +1273,16 @@ class BooksCompanion extends UpdateCompanion<Book> {
       map['publication_year'] = Variable<int>(publicationYear.value);
     }
     if (retailDiscount.present) {
-      map['retail_discount'] = Variable<int>(retailDiscount.value);
+      map['retail_discount'] = Variable<double>(retailDiscount.value);
     }
     if (wholesaleDiscount.present) {
-      map['wholesale_discount'] = Variable<int>(wholesaleDiscount.value);
+      map['wholesale_discount'] = Variable<double>(wholesaleDiscount.value);
     }
     if (wholesalePrice.present) {
-      map['wholesale_price'] = Variable<int>(wholesalePrice.value);
+      map['wholesale_price'] = Variable<double>(wholesalePrice.value);
     }
     if (memberDiscount.present) {
-      map['member_discount'] = Variable<int>(memberDiscount.value);
+      map['member_discount'] = Variable<double>(memberDiscount.value);
     }
     if (purchaseSaleMode.present) {
       map['purchase_sale_mode'] = Variable<String>(purchaseSaleMode.value);
@@ -1252,6 +1298,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     }
     if (statisticalClass.present) {
       map['statistical_class'] = Variable<String>(statisticalClass.value);
+    }
+    if (operator.present) {
+      map['operator'] = Variable<String>(operator.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1286,6 +1335,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('packaging: $packaging, ')
           ..write('properity: $properity, ')
           ..write('statisticalClass: $statisticalClass, ')
+          ..write('operator: $operator, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1952,19 +2002,20 @@ typedef $$BooksTableCreateCompanionBuilder =
       required double price,
       required String publisher,
       required String bookId,
-      required String internalPricing,
+      required double internalPricing,
       required String selfEncoding,
       required double purchasePrice,
       required int publicationYear,
-      required int retailDiscount,
-      required int wholesaleDiscount,
-      required int wholesalePrice,
-      required int memberDiscount,
+      required double retailDiscount,
+      required double wholesaleDiscount,
+      required double wholesalePrice,
+      required double memberDiscount,
       required String purchaseSaleMode,
       required String bookmark,
       required String packaging,
       required String properity,
       required String statisticalClass,
+      required String operator,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -1978,19 +2029,20 @@ typedef $$BooksTableUpdateCompanionBuilder =
       Value<double> price,
       Value<String> publisher,
       Value<String> bookId,
-      Value<String> internalPricing,
+      Value<double> internalPricing,
       Value<String> selfEncoding,
       Value<double> purchasePrice,
       Value<int> publicationYear,
-      Value<int> retailDiscount,
-      Value<int> wholesaleDiscount,
-      Value<int> wholesalePrice,
-      Value<int> memberDiscount,
+      Value<double> retailDiscount,
+      Value<double> wholesaleDiscount,
+      Value<double> wholesalePrice,
+      Value<double> memberDiscount,
       Value<String> purchaseSaleMode,
       Value<String> bookmark,
       Value<String> packaging,
       Value<String> properity,
       Value<String> statisticalClass,
+      Value<String> operator,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -2043,7 +2095,7 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get internalPricing => $composableBuilder(
+  ColumnFilters<double> get internalPricing => $composableBuilder(
     column: $table.internalPricing,
     builder: (column) => ColumnFilters(column),
   );
@@ -2063,22 +2115,22 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get retailDiscount => $composableBuilder(
+  ColumnFilters<double> get retailDiscount => $composableBuilder(
     column: $table.retailDiscount,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get wholesaleDiscount => $composableBuilder(
+  ColumnFilters<double> get wholesaleDiscount => $composableBuilder(
     column: $table.wholesaleDiscount,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get wholesalePrice => $composableBuilder(
+  ColumnFilters<double> get wholesalePrice => $composableBuilder(
     column: $table.wholesalePrice,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get memberDiscount => $composableBuilder(
+  ColumnFilters<double> get memberDiscount => $composableBuilder(
     column: $table.memberDiscount,
     builder: (column) => ColumnFilters(column),
   );
@@ -2105,6 +2157,11 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
 
   ColumnFilters<String> get statisticalClass => $composableBuilder(
     column: $table.statisticalClass,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operator => $composableBuilder(
+    column: $table.operator,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2168,7 +2225,7 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get internalPricing => $composableBuilder(
+  ColumnOrderings<double> get internalPricing => $composableBuilder(
     column: $table.internalPricing,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2188,22 +2245,22 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get retailDiscount => $composableBuilder(
+  ColumnOrderings<double> get retailDiscount => $composableBuilder(
     column: $table.retailDiscount,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get wholesaleDiscount => $composableBuilder(
+  ColumnOrderings<double> get wholesaleDiscount => $composableBuilder(
     column: $table.wholesaleDiscount,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get wholesalePrice => $composableBuilder(
+  ColumnOrderings<double> get wholesalePrice => $composableBuilder(
     column: $table.wholesalePrice,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get memberDiscount => $composableBuilder(
+  ColumnOrderings<double> get memberDiscount => $composableBuilder(
     column: $table.memberDiscount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2230,6 +2287,11 @@ class $$BooksTableOrderingComposer
 
   ColumnOrderings<String> get statisticalClass => $composableBuilder(
     column: $table.statisticalClass,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operator => $composableBuilder(
+    column: $table.operator,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2277,7 +2339,7 @@ class $$BooksTableAnnotationComposer
   GeneratedColumn<String> get bookId =>
       $composableBuilder(column: $table.bookId, builder: (column) => column);
 
-  GeneratedColumn<String> get internalPricing => $composableBuilder(
+  GeneratedColumn<double> get internalPricing => $composableBuilder(
     column: $table.internalPricing,
     builder: (column) => column,
   );
@@ -2297,22 +2359,22 @@ class $$BooksTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get retailDiscount => $composableBuilder(
+  GeneratedColumn<double> get retailDiscount => $composableBuilder(
     column: $table.retailDiscount,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get wholesaleDiscount => $composableBuilder(
+  GeneratedColumn<double> get wholesaleDiscount => $composableBuilder(
     column: $table.wholesaleDiscount,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get wholesalePrice => $composableBuilder(
+  GeneratedColumn<double> get wholesalePrice => $composableBuilder(
     column: $table.wholesalePrice,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get memberDiscount => $composableBuilder(
+  GeneratedColumn<double> get memberDiscount => $composableBuilder(
     column: $table.memberDiscount,
     builder: (column) => column,
   );
@@ -2335,6 +2397,9 @@ class $$BooksTableAnnotationComposer
     column: $table.statisticalClass,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get operator =>
+      $composableBuilder(column: $table.operator, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -2379,19 +2444,20 @@ class $$BooksTableTableManager
                 Value<double> price = const Value.absent(),
                 Value<String> publisher = const Value.absent(),
                 Value<String> bookId = const Value.absent(),
-                Value<String> internalPricing = const Value.absent(),
+                Value<double> internalPricing = const Value.absent(),
                 Value<String> selfEncoding = const Value.absent(),
                 Value<double> purchasePrice = const Value.absent(),
                 Value<int> publicationYear = const Value.absent(),
-                Value<int> retailDiscount = const Value.absent(),
-                Value<int> wholesaleDiscount = const Value.absent(),
-                Value<int> wholesalePrice = const Value.absent(),
-                Value<int> memberDiscount = const Value.absent(),
+                Value<double> retailDiscount = const Value.absent(),
+                Value<double> wholesaleDiscount = const Value.absent(),
+                Value<double> wholesalePrice = const Value.absent(),
+                Value<double> memberDiscount = const Value.absent(),
                 Value<String> purchaseSaleMode = const Value.absent(),
                 Value<String> bookmark = const Value.absent(),
                 Value<String> packaging = const Value.absent(),
                 Value<String> properity = const Value.absent(),
                 Value<String> statisticalClass = const Value.absent(),
+                Value<String> operator = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => BooksCompanion(
@@ -2416,6 +2482,7 @@ class $$BooksTableTableManager
                 packaging: packaging,
                 properity: properity,
                 statisticalClass: statisticalClass,
+                operator: operator,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -2429,19 +2496,20 @@ class $$BooksTableTableManager
                 required double price,
                 required String publisher,
                 required String bookId,
-                required String internalPricing,
+                required double internalPricing,
                 required String selfEncoding,
                 required double purchasePrice,
                 required int publicationYear,
-                required int retailDiscount,
-                required int wholesaleDiscount,
-                required int wholesalePrice,
-                required int memberDiscount,
+                required double retailDiscount,
+                required double wholesaleDiscount,
+                required double wholesalePrice,
+                required double memberDiscount,
                 required String purchaseSaleMode,
                 required String bookmark,
                 required String packaging,
                 required String properity,
                 required String statisticalClass,
+                required String operator,
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => BooksCompanion.insert(
@@ -2466,6 +2534,7 @@ class $$BooksTableTableManager
                 packaging: packaging,
                 properity: properity,
                 statisticalClass: statisticalClass,
+                operator: operator,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

@@ -12,19 +12,20 @@ class Books extends Table {
   RealColumn get price => real()();
   TextColumn get publisher => text()();
   TextColumn get bookId => text()();
-  TextColumn get internalPricing => text()();
+  RealColumn get internalPricing => real()();
   TextColumn get selfEncoding => text()();
   RealColumn get purchasePrice => real()();
   IntColumn get publicationYear => integer()();
-  IntColumn get retailDiscount => integer()();
-  IntColumn get wholesaleDiscount => integer()();
-  IntColumn get wholesalePrice => integer()();
-  IntColumn get memberDiscount => integer()();
+  RealColumn get retailDiscount => real()();
+  RealColumn get wholesaleDiscount => real()();
+  RealColumn get wholesalePrice => real()();
+  RealColumn get memberDiscount => real()();
   TextColumn get purchaseSaleMode => text()();
   TextColumn get bookmark => text()();
   TextColumn get packaging => text()();
   TextColumn get properity => text()();
   TextColumn get statisticalClass => text()();
+  TextColumn get operator => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -46,4 +47,14 @@ class BookDao extends DatabaseAccessor<AppDatabase> with _$BookDaoMixin {
   // Delete a book by ID
   Future<void> deleteBook(int id) =>
       (delete(books)..where((t) => t.id.equals(id))).go();
+
+  // Search a book by isbn
+  Future<Book> searchBookByISBN(String isbn) {
+    return (select(books)..where((b) => b.isbn.equals(isbn))).getSingle();
+  }
+
+  // Search a book by title
+  Future<Book> searchBookByTitle(String title) {
+    return (select(books)..where((b) => b.title.equals(title))).getSingle();
+  }
 }

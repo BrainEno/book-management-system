@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
+import 'package:bookstore_management_system/core/common/permission_handler.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
@@ -11,8 +12,20 @@ import 'package:bookstore_management_system/features/auth/data/datasources/local
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
 import 'package:bookstore_management_system/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:bookstore_management_system/features/auth/domain/repository/auth_repository.dart';
+import 'package:bookstore_management_system/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:bookstore_management_system/features/auth/presentation/usecases/login_usecase.dart';
+import 'package:bookstore_management_system/features/auth/domain/usecases/login_usecase.dart';
+import 'package:bookstore_management_system/features/book/data/datasources/local/book_dao.dart';
+import 'package:bookstore_management_system/features/book/data/datasources/local/book_local_datasource.dart';
+import 'package:bookstore_management_system/features/book/data/datasources/local/book_local_datasource_impl.dart';
+import 'package:bookstore_management_system/features/book/data/repositories/book_repository_impl.dart';
+import 'package:bookstore_management_system/features/book/domain/repositories/book_repository.dart';
+import 'package:bookstore_management_system/features/book/domain/usecase/add_book_usecase.dart';
+import 'package:bookstore_management_system/features/book/domain/usecase/delete_book_usecase.dart';
+import 'package:bookstore_management_system/features/book/domain/usecase/get_all_books_usecase.dart';
+import 'package:bookstore_management_system/features/book/domain/usecase/search_book_usecase.dart';
+import 'package:bookstore_management_system/features/book/domain/usecase/update_book_usecase.dart';
+import 'package:bookstore_management_system/features/book/presentation/blocs/book_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -23,6 +36,7 @@ import 'dart:io';
 final sl = GetIt.instance;
 late AppDatabase database;
 late Box<String> secureStorageBox; // Hive box for secure storage
+late Box<Map<String, String>> bookDraftBox;
 
 Future<void> initDependencies() async {
   //Register Logger as a singleton
@@ -76,13 +90,21 @@ Future<void> initDependencies() async {
     encryptionCipher: HiveAesCipher(encryptionKey),
   );
 
+  bookDraftBox = await Hive.openBox<Map<String, String>>('book_drafts');
+
   sl.registerSingleton<Box<String>>(secureStorageBox);
+  sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
   sl.registerLazySingleton(() => ThemeBloc());
 
+  // Initialize DB
   database = AppDatabase();
   sl.registerSingleton<AppDatabase>(database);
 
+  // Regiser PermissionHandler as a singleton
+  sl.registerSingleton<PermissionHandler>(PermissionHandler());
+
   await _initAuth();
+  await _initBook();
 
   try {
     final authDataSource = sl<AuthLocalDataSource>();
@@ -113,8 +135,40 @@ Future<void> _initAuth() async {
     )
     // Usecases
     ..registerFactory(() => LoginUsecase(sl()))
+    ..registerFactory(() => GetCurrentUserUseCase(sl()))
     // Blocs
-    ..registerLazySingleton(() => AuthBloc(sl()));
+    ..registerLazySingleton(
+      () => AuthBloc(sl<LoginUsecase>(), sl<GetCurrentUserUseCase>()),
+    );
+}
+
+Future<void> _initBook() async {
+  // DAOs
+  sl
+    ..registerFactory(() => BookDao(sl()))
+    // DataSources
+    ..registerFactory<BookLocalDataSource>(
+      () => BookLocalDataSourceImpl(sl<AppDatabase>()),
+    )
+    // Repositories
+    ..registerFactory<BookRepository>(
+      () => BookRepositoryImpl(sl<BookLocalDataSource>()),
+    )
+    // Usecases
+    ..registerFactory(() => AddBookUsecase(sl()))
+    ..registerFactory(() => UpdateBookUsecase(sl()))
+    ..registerFactory(() => GetAllBooksUsecase(sl()))
+    ..registerFactory(() => DeleteBookUsecase(sl()))
+    ..registerFactory(() => SearchBookUsecase(sl()))
+    // Blocs
+    ..registerLazySingleton(
+      () => BookBloc(
+        addBookUsecase: sl(),
+        updateBookUsecase: sl(),
+        deleteBookUsecase: sl(),
+        getAllBooksUsecase: sl(),
+      ),
+    );
 }
 
 // Securely retrieve or create the encryption key

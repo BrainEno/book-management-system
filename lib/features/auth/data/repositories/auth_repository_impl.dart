@@ -17,15 +17,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await authLocalDataSource.currentUser();
       if (user == null) {
-        return Left(CacheFailure(message: 'No current Account'));
+        return Left(CacheFailure('No current Account'));
       }
       return Right(user);
     } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
+      return Left(CacheFailure(e.message));
     } on AuthException catch (e) {
-      return Left(AuthFailure(message: e.message));
+      return Left(AuthFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -41,11 +41,11 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(user);
     } on AuthException catch (e) {
-      return Left(AuthFailure(message: e.message));
+      return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -55,9 +55,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await authLocalDataSource.logout();
       return const Right(null);
     } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
+      return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -81,11 +81,11 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(account);
     } on AuthException catch (e) {
-      return Left(AuthFailure(message: e.message));
+      return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

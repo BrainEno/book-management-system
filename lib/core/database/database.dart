@@ -16,7 +16,7 @@ part 'database.g.dart';
 // Define the database with tables and DAOs
 @DriftDatabase(tables: [Books, Users], daos: [BookDao, UserDao])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase._internal(super.e);
+  AppDatabase._internal([QueryExecutor? e]) : super(e ?? _openConnection());
 
   static AppDatabase? _instance;
 
@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -34,6 +34,9 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (Migrator m, int from, int to) async {
       // Add migration logic here for schema changes in future versions
+      if (from < 2) {
+        await m.addColumn(books, books.operator);
+      }
     },
     beforeOpen: (details) async {
       if (details.wasCreated) {
