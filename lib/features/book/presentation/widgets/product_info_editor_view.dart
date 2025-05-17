@@ -66,7 +66,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   final List<String> _properityOptions = ['不区分', '普通图书', '畅销书', '新书'];
   final List<String> _statisticalClassOptions = [
     '不区分',
-    '文学',
+    '小说',
     '诗歌',
     '哲学',
     '人类学',
@@ -186,12 +186,14 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
+      includeLoopback: false,
     );
-    final ipv4 =
-        interfaces
-            .expand((i) => i.addresses)
-            .firstWhere((addr) => !addr.isLoopback)
-            .address;
+
+    final InternetAddress localAddress = interfaces
+        .expand((i) => i.addresses)
+        .firstWhere((addr) => !addr.isLoopback);
+
+    final ipv4 = localAddress.address;
 
     _server = await io.serve(
       logRequests().addHandler(router.call),
@@ -200,21 +202,22 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     );
 
     final port = _server!.port;
-    final ip = _server!.address.address;
-    _logger.i('HTTP server listening on http://$ip:$port');
+
+    _logger.i('HTTP server listening on http://$ipv4:$port');
 
     final service = BonsoirService(
       name: 'Bookstore Desktop',
       type: AppSecrets.serviceType!,
       port: port,
-      attributes: {'ip': ip},
+      attributes: {'ip': ipv4},
     );
 
     _broadcast = BonsoirBroadcast(service: service);
+
     await _broadcast!.ready;
     await _broadcast!.start();
     _logger.i(
-      'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port',
+      'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port with IP $ipv4',
     );
   }
 

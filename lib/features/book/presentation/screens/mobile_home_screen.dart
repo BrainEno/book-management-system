@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:flutter/material.dart';
 import 'package:bonsoir/bonsoir.dart';
@@ -30,10 +32,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Future<void> _discoverService() async {
-    setState(() => _status = 'Searching for service...');
+    setState(() => _status = '正在搜索可用设备...');
     _discovery = BonsoirDiscovery(type: AppSecrets.serviceType!);
     if (_discovery == null) {
-      _logger.w('BonsoirDiscovery not found');
+      _logger.w('Bonsoir Discovery not found');
     }
     await _discovery!.ready;
     await _discovery!.start();
@@ -42,10 +44,14 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
         final service = event.service;
         if (service != null) {
-          final ip = service.attributes['ip'] ?? service.name;
+          final ip = (service.attributes['ip']=='127.0.0.1'&&Platform.isAndroid)
+              ?'10.0.2.2'
+              :service.attributes['ip'];
+
+
           final port = AppSecrets.servicePort;
 
-          if (ip.isNotEmpty && ip.isNotEmpty && port > 0) {
+          if (ip!=null && ip.isNotEmpty && port > 0) {
             final url = 'http://$ip:$port';
             _logger.i('Discovered desktop at $url');
             setState(() {
@@ -67,7 +73,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     });
 
     // Timeout if no service is found
-    Future.delayed(const Duration(seconds: 15), () async {
+    Future.delayed(const Duration(seconds: 60), () async {
       if (_desktopUrl == null) {
         _logger.w('设备连接超时');
         setState(() => _status = '暂未发现可用设备');
