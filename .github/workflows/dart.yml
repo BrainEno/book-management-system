@@ -22,7 +22,7 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SERVICE_TYPE }}" >> .env
           echo "SUPABASE_KEY=${{ secrets.SERVICE_PORT }}" >> .env
       
-
+      - run: rm -rf Podfile.lock Pods 
       - run: pod repo update
         working-directory: ios
 
