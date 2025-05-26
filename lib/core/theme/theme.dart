@@ -123,12 +123,12 @@ class AppTheme {
     ),
     iconTheme: const IconThemeData(color: AppPallete.whiteColor),
     primaryIconTheme: const IconThemeData(color: AppPallete.whiteColor),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppPallete.darkGreyLight,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
-    dialogTheme: const DialogTheme(
+    dialogTheme: const DialogThemeData(
       backgroundColor: AppPallete.darkBackground,
       titleTextStyle: TextStyle(
         color: AppPallete.whiteColor,
@@ -216,12 +216,12 @@ class AppTheme {
     ),
     iconTheme: const IconThemeData(color: AppPallete.lightBlack),
     primaryIconTheme: const IconThemeData(color: AppPallete.lightBlack),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppPallete.lightGrey,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
-    dialogTheme: const DialogTheme(
+    dialogTheme: const DialogThemeData(
       backgroundColor: AppPallete.lightBackground,
       titleTextStyle: TextStyle(
         color: AppPallete.lightBlack,

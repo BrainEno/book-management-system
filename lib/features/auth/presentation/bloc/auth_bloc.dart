@@ -33,6 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) => emit(AuthError(failure.message)),
       (user) => emit(AuthSuccess(user)),
     );
+    emit(AuthInitial());
   }
 
   Future<void> _onLogoutRequested(
@@ -46,6 +47,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     GetCurrentUserEvent event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthLoading());
     final result = await getCurrentUserUseCase(NoParams());
     result.fold(
       (failure) => emit(AuthError(failure.message)),

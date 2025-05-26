@@ -35,17 +35,17 @@ jobs:
         working-directory: build/ios/iphoneos
 
       - name: Zip iOS output
-        run: zip -qq -r -9 IpaExport.ipa Payload
+        run: zip -qq -r -9 BMS.ipa Payload
         working-directory: build/ios/iphoneos
 
       - name: Upload iOS binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/IpaExport.ipa
-          tag: v0.1
+          file: build/ios/iphoneos/BMS.ipa
+          tag: v0.2
           overwrite: true
-          body: "Release v0.1."
+          body: "Release v0.2."
 
   build-android:
     name: 🤖 Android Build
@@ -77,7 +77,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/app/outputs/flutter-apk/app-release.apk
-          tag: v0.1
+          file: build/app/outputs/flutter-apk/bms-app-release.apk
+          tag: v0.2
           overwrite: true
-          body: "Release v0.1."
+          body: "Release v0.2."

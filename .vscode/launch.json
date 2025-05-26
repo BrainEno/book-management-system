@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Flutter: Attach to Device",
+            "type": "dart",
+            "request": "attach",
+            "postDebugTask": "flutter: flutter build macos" 
+        },
+        {
             "name": "bookstore_management_system",
             "request": "launch",
             "type": "dart"

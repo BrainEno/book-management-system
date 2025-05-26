@@ -136,7 +136,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     _properityController.text = book.properity.isEmpty ? '不区分' : book.properity;
     _statisticalClassController.text =
         book.statisticalClass.isEmpty ? '不区分' : book.statisticalClass;
-    _operatorController.text = book.operator;
   }
 
   @override
@@ -330,6 +329,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
               if (widget.book != null) {
                 _populateFields(widget.book!);
               }
+              _operatorController.text = authState.user.username;
             });
           }
         },
@@ -371,12 +371,14 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
+            heroTag: 'draft',
             onPressed: _saveDraft,
             backgroundColor: Colors.green,
             child: const Icon(Icons.drafts, size: 28), // Changed to draft icon
           ),
           const SizedBox(height: 16),
           FloatingActionButton(
+            heroTag: 'save',
             onPressed: _saveOrUpdateBook,
             backgroundColor: const Color(0xFF3A4568),
             child: Icon(isUpdate ? Icons.update : Icons.save, size: 28),
@@ -472,7 +474,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
               '统计分类',
               _statisticalClassOptions,
             ),
-            _textField(_operatorController, '操作人员', required: true),
+            _textField(_operatorController, '操作人员', readOnly: true),
           ],
         );
       },
