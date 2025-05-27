@@ -102,7 +102,7 @@ jobs:
       - run: flutter build macos --release
 
       - name: Zip macOS output
-        run: zip -qq -r -9 BMS-macos.zip Runner.app
+        run: zip -qq -r -9 BMS-macos.zip . -i Runner.app
         working-directory: build/macos/Build/Products/Release
 
       - name: Upload macOS binaries to release
