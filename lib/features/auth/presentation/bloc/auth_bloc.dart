@@ -33,7 +33,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) => emit(AuthError(failure.message)),
       (user) => emit(AuthSuccess(user)),
     );
-    emit(AuthInitial());
   }
 
   Future<void> _onLogoutRequested(

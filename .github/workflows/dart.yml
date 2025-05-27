@@ -43,9 +43,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/BMS.ipa
-          tag: v0.2
+          tag: v0.3
           overwrite: true
-          body: "Release v0.2."
+          body: "Release v0.3."
 
   build-android:
     name: 🤖 Android Build
@@ -78,6 +78,72 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/app/outputs/flutter-apk/app-release.apk
-          tag: v0.2
+          tag: v0.3
           overwrite: true
-          body: "Release v0.2."
+          body: "Release v0.3."
+  build-macos:
+    name: 🍏 macOS Build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          architecture: x64
+      - run: flutter clean
+      - run: flutter pub get
+
+      - name: Create .env file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SERVICE_TYPE }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SERVICE_PORT }}" >> .env
+
+      - run: flutter build macos --release
+
+      - name: Zip macOS output
+        run: zip -qq -r -9 BMS-macos.zip Runner.app
+        working-directory: build/macos/Build/Products/Release
+
+      - name: Upload macOS binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/macos/Build/Products/Release/BMS-macos.zip
+          tag: v0.3
+          overwrite: true
+          body: "Release v0.3."
+  build-windows:
+    name: 🖥️ Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          architecture: x64
+
+      - run: flutter clean
+      - run: flutter pub get
+
+      - name: Create .env file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SERVICE_TYPE }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SERVICE_PORT }}" >> .env
+
+      - run: flutter build windows --release
+
+      - name: Zip Windows output
+        run: Compress-Archive -Path ./Release/* -DestinationPath BMS-windows.zip
+        shell: pwsh
+        working-directory: build/windows/runner
+
+      - name: Upload Windows binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/windows/runner/BMS-windows.zip
+          tag: v0.3
+          overwrite: true
+          body: "Release v0.3."
