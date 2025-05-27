@@ -120,10 +120,3 @@ flutter:
     - family: Noto
       fonts:
         - asset: fonts/NotoSansSC-VariableFont_wght.ttf
-
-  flutter_icons:
-    android: true
-    ios: true
-    image_path: "assets/icons/icon.png"
-    adaptive_icon_foreground: "assets/icons/icon.png"
-    adaptive_icon_background: "#ffffff"
