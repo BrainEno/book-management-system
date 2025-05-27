@@ -43,9 +43,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/BMS.ipa
-          tag: v0.31
+          tag: v0.32
           overwrite: true
-          body: "Release v0.31."
+          body: "Release v0.32."
 
   build-android:
     name: 🤖 Android Build
@@ -78,9 +78,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/app/outputs/flutter-apk/app-release.apk
-          tag: v0.31
+          tag: v0.32
           overwrite: true
-          body: "Release v0.31."
+          body: "Release v0.32."
   build-macos:
     name: 🍏 macOS Build
     runs-on: macos-latest
@@ -110,9 +110,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/macos/Build/Products/Release/BMS-macos.zip
-          tag: v0.31
+          tag: v0.32
           overwrite: true
-          body: "Release v0.31."
+          body: "Release v0.32."
   build-windows:
     name: 🖥️ Windows Build
     runs-on: windows-latest
@@ -135,10 +135,10 @@ jobs:
       - run: flutter build windows --release
 
       - name: Ensure working directory exists
-        run: mkdir -p build/windows/runner
+        run: mkdir -p build/windows/runner/
 
       - name: Zip Windows output
-        run: Compress-Archive -Path ./Release/* -DestinationPath BMS-windows.zip
+        run: Compress-Archive -Path build/windows/runner/* -DestinationPath BMS-windows.zip
         shell: pwsh
         working-directory: build/windows/runner
 
@@ -147,6 +147,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/windows/runner/BMS-windows.zip
-          tag: v0.31
+          tag: v0.32
           overwrite: true
-          body: "Release v0.31."
+          body: "Release v0.32."
