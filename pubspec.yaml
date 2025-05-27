@@ -119,4 +119,4 @@ flutter:
   fonts:
     - family: Noto
       fonts:
-        - asset: fonts/NotoSansSC-VariableFont_wght.ttf
+        - asset: assets/fonts/NotoSansSC-VariableFont_wght.ttf
