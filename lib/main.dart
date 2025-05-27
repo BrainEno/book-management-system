@@ -22,60 +22,65 @@ Future<void> _requestPermissions() async {
   if (Platform.isIOS || Platform.isAndroid) {
     // Request Camera Permission
     PermissionStatus cameraStatus = await Permission.camera.request();
+
     if (cameraStatus.isGranted) {
       if (kDebugMode) {
-        print("Camera permission granted");
+        AppLogger.logger.i("Camera permission granted");
       }
     } else if (cameraStatus.isDenied) {
       if (kDebugMode) {
-        print("Camera permission denied");
+        AppLogger.logger.i("Camera permission denied");
       }
     } else if (cameraStatus.isPermanentlyDenied) {
       if (kDebugMode) {
-        print("Camera permission permanently denied");
+        AppLogger.logger.i("Camera permission permanently denied");
       }
       // Optionally, open app settings if permanently denied
-      // openAppSettings();
+      openAppSettings();
     }
 
-    // Request Photo Library Permission
-    // On Android, for SDK 33+, use Permission.photos. For older SDKs, it might fall under Permission.storage.
-    // permission_handler usually handles this, but be mindful of Android specifics if issues arise.
-    PermissionStatus photoStatus;
-    if (Platform.isAndroid) {
-      // Example for Android 13+ specific photo picker permission
-      // For broader compatibility or if targeting older Android versions,
-      // you might need to request Permission.storage or handle API level checks.
-      // However, Permission.photos is generally the modern approach.
-      photoStatus = await Permission.photos.request();
-    } else {
-      // iOS
-      photoStatus = await Permission.photos.request();
-    }
+    PermissionStatus photoStatus = await Permission.photos.request();
 
     if (photoStatus.isGranted) {
       if (kDebugMode) {
-        print("Photo library permission granted");
+        AppLogger.logger.i("Photo library permission granted");
       }
     } else if (photoStatus.isDenied) {
       if (kDebugMode) {
-        print("Photo library permission denied");
+        AppLogger.logger.i("Photo library permission denied");
       }
     } else if (photoStatus.isPermanentlyDenied) {
       if (kDebugMode) {
-        print("Photo library permission permanently denied");
+        AppLogger.logger.i("Photo library permission permanently denied");
       }
       // Optionally, open app settings
       openAppSettings();
     }
 
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid || Platform.isIOS) {
       // This requires Android SDK 33+
       var nearbyStatus = await Permission.nearbyWifiDevices.request();
+
       if (nearbyStatus.isGranted) {
         AppLogger.logger.i("Nearby WiFi devices permission granted");
       } else {
         AppLogger.logger.i("Nearby WiFi devices permission denied");
+      }
+
+      if (nearbyStatus.isGranted) {
+        if (kDebugMode) {
+          AppLogger.logger.i("Nearby permission granted");
+        }
+      } else if (nearbyStatus.isDenied) {
+        if (kDebugMode) {
+          AppLogger.logger.i("Nearby permission denied");
+        }
+      } else if (nearbyStatus.isPermanentlyDenied) {
+        if (kDebugMode) {
+          AppLogger.logger.i("Nearby permission permanently denied");
+        }
+        // Optionally, open app settings if permanently denied
+        openAppSettings();
       }
     }
   }
