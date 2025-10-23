@@ -15,17 +15,17 @@ import 'package:bookstore_management_system/features/auth/domain/repository/auth
 import 'package:bookstore_management_system/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/auth/domain/usecases/login_usecase.dart';
-import 'package:bookstore_management_system/features/book/data/datasources/local/book_dao.dart';
-import 'package:bookstore_management_system/features/book/data/datasources/local/book_local_datasource.dart';
-import 'package:bookstore_management_system/features/book/data/datasources/local/book_local_datasource_impl.dart';
-import 'package:bookstore_management_system/features/book/data/repositories/book_repository_impl.dart';
-import 'package:bookstore_management_system/features/book/domain/repositories/book_repository.dart';
-import 'package:bookstore_management_system/features/book/domain/usecase/add_book_usecase.dart';
-import 'package:bookstore_management_system/features/book/domain/usecase/delete_book_usecase.dart';
-import 'package:bookstore_management_system/features/book/domain/usecase/get_all_books_usecase.dart';
-import 'package:bookstore_management_system/features/book/domain/usecase/search_book_usecase.dart';
-import 'package:bookstore_management_system/features/book/domain/usecase/update_book_usecase.dart';
-import 'package:bookstore_management_system/features/book/presentation/blocs/book_bloc.dart';
+import 'package:bookstore_management_system/features/product/data/datasources/local/product_dao.dart';
+import 'package:bookstore_management_system/features/product/data/datasources/local/product_local_datasource.dart';
+import 'package:bookstore_management_system/features/product/data/datasources/local/product_local_datasource_impl.dart';
+import 'package:bookstore_management_system/features/product/data/repositories/product_repository_impl.dart';
+import 'package:bookstore_management_system/features/product/domain/repositories/product_repository.dart';
+import 'package:bookstore_management_system/features/product/domain/usecase/add_product_usecase.dart';
+import 'package:bookstore_management_system/features/product/domain/usecase/delete_product_usecase.dart';
+import 'package:bookstore_management_system/features/product/domain/usecase/get_all_products_usecase.dart';
+import 'package:bookstore_management_system/features/product/domain/usecase/search_product_usecase.dart';
+import 'package:bookstore_management_system/features/product/domain/usecase/update_product_usecase.dart';
+import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -145,28 +145,28 @@ Future<void> _initAuth() async {
 Future<void> _initBook() async {
   // DAOs
   sl
-    ..registerFactory(() => BookDao(sl()))
+    ..registerFactory(() => ProductDao(sl()))
     // DataSources
-    ..registerFactory<BookLocalDataSource>(
+    ..registerFactory<ProductLocalDataSource>(
       () => BookLocalDataSourceImpl(sl<AppDatabase>()),
     )
     // Repositories
-    ..registerFactory<BookRepository>(
-      () => BookRepositoryImpl(sl<BookLocalDataSource>()),
+    ..registerFactory<ProductRepository>(
+      () => ProductRepositoryImpl(sl<ProductLocalDataSource>()),
     )
     // Usecases
-    ..registerFactory(() => AddBookUsecase(sl()))
-    ..registerFactory(() => UpdateBookUsecase(sl()))
-    ..registerFactory(() => GetAllBooksUsecase(sl()))
-    ..registerFactory(() => DeleteBookUsecase(sl()))
-    ..registerFactory(() => SearchBookUsecase(sl()))
+    ..registerFactory(() => AddProductUsecase(sl()))
+    ..registerFactory(() => UpdateProductUsecase(sl()))
+    ..registerFactory(() => GetAllProductsUsecase(sl()))
+    ..registerFactory(() => DeleteProductUsecase(sl()))
+    ..registerFactory(() => SearchProductUsecase(sl()))
     // Blocs
     ..registerLazySingleton(
-      () => BookBloc(
-        addBookUsecase: sl(),
-        updateBookUsecase: sl(),
-        deleteBookUsecase: sl(),
-        getAllBooksUsecase: sl(),
+      () => ProductBloc(
+        addProductUsecase: sl(),
+        updateProductUsecase: sl(),
+        deleteProductUsecase: sl(),
+        getAllProductsUsecase: sl(),
       ),
     );
 }

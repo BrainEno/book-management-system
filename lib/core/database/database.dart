@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
-import 'package:bookstore_management_system/features/book/data/datasources/local/book_dao.dart';
+import 'package:bookstore_management_system/features/product/data/datasources/local/product_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +14,7 @@ import 'package:sqlite3/sqlite3.dart';
 part 'database.g.dart';
 
 // Define the database with tables and DAOs
-@DriftDatabase(tables: [Books, Users], daos: [BookDao, UserDao])
+@DriftDatabase(tables: [Products, Users], daos: [ProductDao, UserDao])
 class AppDatabase extends _$AppDatabase {
   // ignore: use_super_parameters
   AppDatabase._internal(QueryExecutor e) : super(e);
@@ -31,7 +31,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

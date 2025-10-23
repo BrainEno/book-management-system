@@ -67,21 +67,23 @@ class AppTheme {
       onSecondary: AppPallete.whiteColor,
       onSurface: AppPallete.whiteColor,
     ),
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(color: AppPallete.whiteColor),
-      bodyLarge: TextStyle(color: AppPallete.whiteColor),
-      bodySmall: TextStyle(color: AppPallete.greyColor),
-      titleLarge: TextStyle(
-        color: AppPallete.whiteColor,
-        fontWeight: FontWeight.bold,
-      ),
-      titleMedium: TextStyle(
-        color: AppPallete.whiteColor,
-        fontWeight: FontWeight.w500,
-      ),
-      titleSmall: TextStyle(color: AppPallete.greyColorLight),
-      labelLarge: TextStyle(color: AppPallete.whiteColor),
-    ),
+    textTheme: ThemeData.dark().textTheme
+        .apply(fontFamily: 'NotoSansSC')
+        .copyWith(
+          bodyMedium: const TextStyle(color: AppPallete.whiteColor),
+          bodyLarge: const TextStyle(color: AppPallete.whiteColor),
+          bodySmall: const TextStyle(color: AppPallete.greyColor),
+          titleLarge: const TextStyle(
+            color: AppPallete.whiteColor,
+            fontWeight: FontWeight.bold,
+          ),
+          titleMedium: const TextStyle(
+            color: AppPallete.whiteColor,
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: const TextStyle(color: AppPallete.greyColorLight),
+          labelLarge: const TextStyle(color: AppPallete.whiteColor),
+        ),
     chipTheme: ChipThemeData(
       backgroundColor: AppPallete.darkGreyLight,
       labelStyle: const TextStyle(color: AppPallete.whiteColor),
@@ -160,21 +162,23 @@ class AppTheme {
       onSecondary: AppPallete.lightBlack,
       onSurface: AppPallete.lightBlack,
     ),
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(color: AppPallete.lightBlack),
-      bodyLarge: TextStyle(color: AppPallete.lightBlack),
-      bodySmall: TextStyle(color: AppPallete.lightGreyText),
-      titleLarge: TextStyle(
-        color: AppPallete.lightBlack,
-        fontWeight: FontWeight.bold,
-      ),
-      titleMedium: TextStyle(
-        color: AppPallete.lightBlack,
-        fontWeight: FontWeight.w500,
-      ),
-      titleSmall: TextStyle(color: AppPallete.lightGreyText),
-      labelLarge: TextStyle(color: AppPallete.lightBlack),
-    ),
+    textTheme: ThemeData.light().textTheme
+        .apply(fontFamily: 'NotoSansSC')
+        .copyWith(
+          bodyMedium: const TextStyle(color: AppPallete.lightBlack),
+          bodyLarge: const TextStyle(color: AppPallete.lightBlack),
+          bodySmall: const TextStyle(color: AppPallete.lightGreyText),
+          titleLarge: const TextStyle(
+            color: AppPallete.lightBlack,
+            fontWeight: FontWeight.bold,
+          ),
+          titleMedium: const TextStyle(
+            color: AppPallete.lightBlack,
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: const TextStyle(color: AppPallete.lightGreyText),
+          labelLarge: const TextStyle(color: AppPallete.lightBlack),
+        ),
     chipTheme: ChipThemeData(
       backgroundColor: AppPallete.lightGrey,
       labelStyle: const TextStyle(color: AppPallete.lightBlack),

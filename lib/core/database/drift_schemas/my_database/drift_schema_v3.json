@@ -12,7 +12,7 @@
             "references": [],
             "type": "table",
             "data": {
-                "name": "books",
+                "name": "products",
                 "was_declared_in_moor": false,
                 "columns": [
                     {
@@ -92,7 +92,7 @@
                         "dsl_features": []
                     },
                     {
-                        "name": "book_id",
+                        "name": "product_id",
                         "getter_name": "productId",
                         "moor_type": "string",
                         "nullable": false,
@@ -104,7 +104,7 @@
                     {
                         "name": "internal_pricing",
                         "getter_name": "internalPricing",
-                        "moor_type": "string",
+                        "moor_type": "double",
                         "nullable": false,
                         "customConstraints": null,
                         "default_dart": null,
@@ -144,7 +144,7 @@
                     {
                         "name": "retail_discount",
                         "getter_name": "retailDiscount",
-                        "moor_type": "int",
+                        "moor_type": "double",
                         "nullable": false,
                         "customConstraints": null,
                         "default_dart": null,
@@ -154,7 +154,7 @@
                     {
                         "name": "wholesale_discount",
                         "getter_name": "wholesaleDiscount",
-                        "moor_type": "int",
+                        "moor_type": "double",
                         "nullable": false,
                         "customConstraints": null,
                         "default_dart": null,
@@ -164,7 +164,7 @@
                     {
                         "name": "wholesale_price",
                         "getter_name": "wholesalePrice",
-                        "moor_type": "int",
+                        "moor_type": "double",
                         "nullable": false,
                         "customConstraints": null,
                         "default_dart": null,
@@ -174,7 +174,7 @@
                     {
                         "name": "member_discount",
                         "getter_name": "memberDiscount",
-                        "moor_type": "int",
+                        "moor_type": "double",
                         "nullable": false,
                         "customConstraints": null,
                         "default_dart": null,
@@ -224,6 +224,16 @@
                     {
                         "name": "statistical_class",
                         "getter_name": "statisticalClass",
+                        "moor_type": "string",
+                        "nullable": false,
+                        "customConstraints": null,
+                        "default_dart": null,
+                        "default_client_dart": null,
+                        "dsl_features": []
+                    },
+                    {
+                        "name": "operator",
+                        "getter_name": "operator",
                         "moor_type": "string",
                         "nullable": false,
                         "customConstraints": null,
@@ -294,7 +304,7 @@
                         "default_dart": null,
                         "default_client_dart": null,
                         "dsl_features": [
-                            "unknown"
+                            "unique"
                         ]
                     },
                     {

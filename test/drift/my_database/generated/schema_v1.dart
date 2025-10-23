@@ -61,7 +61,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  late final GeneratedColumn<String> bookId = GeneratedColumn<String>(
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
     'book_id',
     aliasedName,
     false,
@@ -188,7 +188,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     category,
     price,
     publisher,
-    bookId,
+    productId,
     internalPricing,
     selfEncoding,
     purchasePrice,
@@ -251,7 +251,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
             DriftSqlType.string,
             data['${effectivePrefix}publisher'],
           )!,
-      bookId:
+      productId:
           attachedDatabase.typeMapping.read(
             DriftSqlType.string,
             data['${effectivePrefix}book_id'],
@@ -348,7 +348,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
   final String category;
   final double price;
   final String publisher;
-  final String bookId;
+  final String productId;
   final String internalPricing;
   final String selfEncoding;
   final double purchasePrice;
@@ -372,7 +372,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     required this.category,
     required this.price,
     required this.publisher,
-    required this.bookId,
+    required this.productId,
     required this.internalPricing,
     required this.selfEncoding,
     required this.purchasePrice,
@@ -399,7 +399,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     map['category'] = Variable<String>(category);
     map['price'] = Variable<double>(price);
     map['publisher'] = Variable<String>(publisher);
-    map['book_id'] = Variable<String>(bookId);
+    map['book_id'] = Variable<String>(productId);
     map['internal_pricing'] = Variable<String>(internalPricing);
     map['self_encoding'] = Variable<String>(selfEncoding);
     map['purchase_price'] = Variable<double>(purchasePrice);
@@ -427,7 +427,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       category: Value(category),
       price: Value(price),
       publisher: Value(publisher),
-      bookId: Value(bookId),
+      productId: Value(productId),
       internalPricing: Value(internalPricing),
       selfEncoding: Value(selfEncoding),
       purchasePrice: Value(purchasePrice),
@@ -459,7 +459,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       category: serializer.fromJson<String>(json['category']),
       price: serializer.fromJson<double>(json['price']),
       publisher: serializer.fromJson<String>(json['publisher']),
-      bookId: serializer.fromJson<String>(json['bookId']),
+      productId: serializer.fromJson<String>(json['productId']),
       internalPricing: serializer.fromJson<String>(json['internalPricing']),
       selfEncoding: serializer.fromJson<String>(json['selfEncoding']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
@@ -488,7 +488,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       'category': serializer.toJson<String>(category),
       'price': serializer.toJson<double>(price),
       'publisher': serializer.toJson<String>(publisher),
-      'bookId': serializer.toJson<String>(bookId),
+      'productId': serializer.toJson<String>(productId),
       'internalPricing': serializer.toJson<String>(internalPricing),
       'selfEncoding': serializer.toJson<String>(selfEncoding),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
@@ -515,7 +515,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     String? category,
     double? price,
     String? publisher,
-    String? bookId,
+    String? productId,
     String? internalPricing,
     String? selfEncoding,
     double? purchasePrice,
@@ -539,7 +539,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     category: category ?? this.category,
     price: price ?? this.price,
     publisher: publisher ?? this.publisher,
-    bookId: bookId ?? this.bookId,
+    productId: productId ?? this.productId,
     internalPricing: internalPricing ?? this.internalPricing,
     selfEncoding: selfEncoding ?? this.selfEncoding,
     purchasePrice: purchasePrice ?? this.purchasePrice,
@@ -565,7 +565,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       category: data.category.present ? data.category.value : this.category,
       price: data.price.present ? data.price.value : this.price,
       publisher: data.publisher.present ? data.publisher.value : this.publisher,
-      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      productId: data.productId.present ? data.productId.value : this.productId,
       internalPricing:
           data.internalPricing.present
               ? data.internalPricing.value
@@ -624,7 +624,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
           ..write('category: $category, ')
           ..write('price: $price, ')
           ..write('publisher: $publisher, ')
-          ..write('bookId: $bookId, ')
+          ..write('productId: $productId, ')
           ..write('internalPricing: $internalPricing, ')
           ..write('selfEncoding: $selfEncoding, ')
           ..write('purchasePrice: $purchasePrice, ')
@@ -653,7 +653,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     category,
     price,
     publisher,
-    bookId,
+    productId,
     internalPricing,
     selfEncoding,
     purchasePrice,
@@ -681,7 +681,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
           other.category == this.category &&
           other.price == this.price &&
           other.publisher == this.publisher &&
-          other.bookId == this.bookId &&
+          other.productId == this.productId &&
           other.internalPricing == this.internalPricing &&
           other.selfEncoding == this.selfEncoding &&
           other.purchasePrice == this.purchasePrice &&
@@ -707,7 +707,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
   final Value<String> category;
   final Value<double> price;
   final Value<String> publisher;
-  final Value<String> bookId;
+  final Value<String> productId;
   final Value<String> internalPricing;
   final Value<String> selfEncoding;
   final Value<double> purchasePrice;
@@ -731,7 +731,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     this.category = const Value.absent(),
     this.price = const Value.absent(),
     this.publisher = const Value.absent(),
-    this.bookId = const Value.absent(),
+    this.productId = const Value.absent(),
     this.internalPricing = const Value.absent(),
     this.selfEncoding = const Value.absent(),
     this.purchasePrice = const Value.absent(),
@@ -756,7 +756,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     required String category,
     required double price,
     required String publisher,
-    required String bookId,
+    required String productId,
     required String internalPricing,
     required String selfEncoding,
     required double purchasePrice,
@@ -778,7 +778,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
        category = Value(category),
        price = Value(price),
        publisher = Value(publisher),
-       bookId = Value(bookId),
+       productId = Value(productId),
        internalPricing = Value(internalPricing),
        selfEncoding = Value(selfEncoding),
        purchasePrice = Value(purchasePrice),
@@ -800,7 +800,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     Expression<String>? category,
     Expression<double>? price,
     Expression<String>? publisher,
-    Expression<String>? bookId,
+    Expression<String>? productId,
     Expression<String>? internalPricing,
     Expression<String>? selfEncoding,
     Expression<double>? purchasePrice,
@@ -825,7 +825,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       if (category != null) 'category': category,
       if (price != null) 'price': price,
       if (publisher != null) 'publisher': publisher,
-      if (bookId != null) 'book_id': bookId,
+      if (productId != null) 'book_id': productId,
       if (internalPricing != null) 'internal_pricing': internalPricing,
       if (selfEncoding != null) 'self_encoding': selfEncoding,
       if (purchasePrice != null) 'purchase_price': purchasePrice,
@@ -852,7 +852,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     Value<String>? category,
     Value<double>? price,
     Value<String>? publisher,
-    Value<String>? bookId,
+    Value<String>? productId,
     Value<String>? internalPricing,
     Value<String>? selfEncoding,
     Value<double>? purchasePrice,
@@ -877,7 +877,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       category: category ?? this.category,
       price: price ?? this.price,
       publisher: publisher ?? this.publisher,
-      bookId: bookId ?? this.bookId,
+      productId: productId ?? this.productId,
       internalPricing: internalPricing ?? this.internalPricing,
       selfEncoding: selfEncoding ?? this.selfEncoding,
       purchasePrice: purchasePrice ?? this.purchasePrice,
@@ -920,8 +920,8 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     if (publisher.present) {
       map['publisher'] = Variable<String>(publisher.value);
     }
-    if (bookId.present) {
-      map['book_id'] = Variable<String>(bookId.value);
+    if (productId.present) {
+      map['book_id'] = Variable<String>(productId.value);
     }
     if (internalPricing.present) {
       map['internal_pricing'] = Variable<String>(internalPricing.value);
@@ -981,7 +981,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
           ..write('category: $category, ')
           ..write('price: $price, ')
           ..write('publisher: $publisher, ')
-          ..write('bookId: $bookId, ')
+          ..write('productId: $productId, ')
           ..write('internalPricing: $internalPricing, ')
           ..write('selfEncoding: $selfEncoding, ')
           ..write('purchasePrice: $purchasePrice, ')
