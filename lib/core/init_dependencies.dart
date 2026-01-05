@@ -38,7 +38,7 @@ late AppDatabase database;
 late Box<String> secureStorageBox; // Hive box for secure storage
 late Box<Map<String, String>> bookDraftBox;
 
-Future<void> initDependencies() async {
+Future<void> initDependencies({bool isMultiWindow = false}) async {
   //Register Logger as a singleton
   sl.registerSingleton<Logger>(
     Logger(
@@ -83,17 +83,33 @@ Future<void> initDependencies() async {
   }
 
   // Initialize Hive
-  await Hive.initFlutter();
-  List<int> encryptionKey = await _getOrCreateEncryptionKey();
-  secureStorageBox = await Hive.openBox<String>(
-    'secure_storage',
-    encryptionCipher: HiveAesCipher(encryptionKey),
-  );
+  if (!isMultiWindow) {
+    await Hive.initFlutter();
 
-  bookDraftBox = await Hive.openBox<Map<String, String>>('book_drafts');
+    List<int> encryptionKey = await _getOrCreateEncryptionKey();
+    secureStorageBox = await Hive.openBox<String>(
+      'secure_storage',
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
 
-  sl.registerSingleton<Box<String>>(secureStorageBox);
-  sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
+    bookDraftBox = await Hive.openBox<Map<String, String>>('book_drafts');
+
+    sl.registerSingleton<Box<String>>(secureStorageBox);
+    sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
+  } else {
+    final tempDir = await getTemporaryDirectory();
+    final subWindowPath =
+        '${tempDir.path}/sub_window_${DateTime.now().millisecondsSinceEpoch}';
+    await Directory(subWindowPath).create(recursive: true);
+    Hive.init(subWindowPath);
+    secureStorageBox = await Hive.openBox<String>('secure_storage_dummy');
+    bookDraftBox = await Hive.openBox<Map<String, String>>('book_drafts_dummy');
+    sl.registerSingleton<Box<String>>(secureStorageBox);
+    sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
+
+    AppLogger.logger.i("Initialized Hive for multi-window at $subWindowPath");
+  }
+
   sl.registerLazySingleton(() => ThemeBloc());
 
   // Initialize DB
@@ -106,18 +122,20 @@ Future<void> initDependencies() async {
   await _initAuth();
   await _initBook();
 
-  try {
-    final authDataSource = sl<AuthLocalDataSource>();
+  if (!isMultiWindow) {
+    try {
+      final authDataSource = sl<AuthLocalDataSource>();
 
-    await authDataSource.createUser(
-      username: 'admin',
-      password: AppSecrets.defaultPWD ?? 'admin123',
-      role: 'admin',
-    );
-  } on AuthException catch (e) {
-    AppLogger.logger.i("WARN: Creating user: ${e.message}");
-  } catch (e) {
-    AppLogger.logger.e("Error: initializing database: $e");
+      await authDataSource.createUser(
+        username: 'admin',
+        password: AppSecrets.defaultPWD ?? 'admin123',
+        role: 'admin',
+      );
+    } on AuthException catch (e) {
+      AppLogger.logger.i("WARN: Creating user: ${e.message}");
+    } catch (e) {
+      AppLogger.logger.e("Error: initializing database: $e");
+    }
   }
 }
 

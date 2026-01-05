@@ -5,6 +5,7 @@ import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
+import 'package:bookstore_management_system/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -175,52 +176,60 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   }
 
   Future<void> _startService() async {
-    final router =
-        shelf_router.Router()..post('/isbn', (Request req) async {
-          final isbn = await req.readAsString();
-          _logger.i('Received ISBN via HTTP: $isbn');
-          setState(() {
-            _isbnController.text = isbn;
-            _selfEncodingController.text = isbn;
+    if (isSubWindowInstance) {
+      AppLogger.logger.i('Detected sub-window, skipping HTTP server start.');
+      return;
+    }
+    try {
+      final router =
+          shelf_router.Router()..post('/isbn', (Request req) async {
+            final isbn = await req.readAsString();
+            _logger.i('Received ISBN via HTTP: $isbn');
+            setState(() {
+              _isbnController.text = isbn;
+              _selfEncodingController.text = isbn;
+            });
+            return Response.ok('OK');
           });
-          return Response.ok('OK');
-        });
 
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
 
-    final InternetAddress localAddress = interfaces
-        .expand((i) => i.addresses)
-        .firstWhere((addr) => !addr.isLoopback);
+      final InternetAddress localAddress = interfaces
+          .expand((i) => i.addresses)
+          .firstWhere((addr) => !addr.isLoopback);
 
-    final ipv4 = localAddress.address;
+      final ipv4 = localAddress.address;
 
-    _server = await io.serve(
-      logRequests().addHandler(router.call),
-      ipv4,
-      AppSecrets.servicePort,
-    );
+      _server = await io.serve(
+        logRequests().addHandler(router.call),
+        InternetAddress.anyIPv4,
+        AppSecrets.servicePort,
+      );
 
-    final port = _server!.port;
+      final port = _server!.port;
 
-    _logger.i('HTTP server listening on http://$ipv4:$port');
+      _logger.i('HTTP server listening on http://$ipv4:$port');
 
-    final service = BonsoirService(
-      name: 'Bookstore Desktop',
-      type: AppSecrets.serviceType!,
-      port: port,
-      attributes: {'ip': ipv4},
-    );
+      final service = BonsoirService(
+        name: 'Bookstore Desktop',
+        type: AppSecrets.serviceType!,
+        port: port,
+        attributes: {'ip': ipv4},
+      );
 
-    _broadcast = BonsoirBroadcast(service: service);
+      _broadcast = BonsoirBroadcast(service: service);
 
-    await _broadcast!.ready;
-    await _broadcast!.start();
-    _logger.i(
-      'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port with IP $ipv4',
-    );
+      await _broadcast!.ready;
+      await _broadcast!.start();
+      _logger.i(
+        'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port with IP $ipv4',
+      );
+    } catch (e) {
+      _logger.e('Error starting HTTP server and Bonsoir broadcast: $e');
+    }
   }
 
   void _saveOrUpdateBook() {

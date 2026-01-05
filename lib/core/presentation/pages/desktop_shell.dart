@@ -1,28 +1,65 @@
 import 'dart:convert';
 import 'package:bookstore_management_system/core/window/window_info.dart';
 import 'package:bookstore_management_system/core/window/app_window_manager.dart';
+import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
+import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/inventory/presentation/pages/inventory_page.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'package:bookstore_management_system/features/product/presentation/pages/product_page.dart';
 
-class DesktopShell extends StatelessWidget {
+class DesktopShell extends StatefulWidget {
   const DesktopShell({super.key});
+
+  @override
+  State<DesktopShell> createState() => _DesktopShellState();
+}
+
+class _DesktopShellState extends State<DesktopShell> {
+  int _selectedIndex = 0; // Local state for selected index
+
+  @override
+  void initState() {
+    super.initState();
+    // Open the default product window once after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final windowManager = context.read<AppWindowManager>();
+      // Only open if there is no active window yet
+      if (windowManager.activeWindow == null) {
+        windowManager.openOrFocusWindow(
+          title: '商品资料',
+          content: const ProductPage(),
+          popOutPageKey: 'product',
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final windowManager = context.watch<AppWindowManager>();
     final activeWindow = windowManager.activeWindow;
 
+    // Update selectedIndex based on activeWindow
+    if (activeWindow?.popOutPageKey == 'inventory') {
+      _selectedIndex = 1;
+    } else if (activeWindow?.popOutPageKey == 'product') {
+      _selectedIndex = 0;
+    }
+
     return Scaffold(
       body: Row(
         children: [
           // Left Navigation Rail
           NavigationRail(
-            selectedIndex: 0, // Note: This doesn't reflect state now
+            selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
               if (index == 0) {
                 windowManager.openOrFocusWindow(
                   title: '商品资料',
@@ -65,7 +102,11 @@ class DesktopShell extends StatelessWidget {
                             windowInfo: activeWindow,
                             // Pass the available size to the float function
                             onFloat:
-                                () => _floatWindow(activeWindow, constraints),
+                                () => _floatWindow(
+                                  context,
+                                  activeWindow,
+                                  constraints,
+                                ),
                           ),
                           Expanded(child: activeWindow.content),
                         ],
@@ -117,21 +158,40 @@ class DesktopShell extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Helper function to create the new window
-  void _floatWindow(WindowInfo windowInfo, BoxConstraints constraints) async {
-    // This is where we define the arguments for the new window
-    final arguments = {
-      'page': windowInfo.popOutPageKey,
-      'title': windowInfo.title,
-      'width': constraints.maxWidth, // Pass current width
-      'height': constraints.maxHeight, // Pass current height
+// Helper function to create the new window
+void _floatWindow(
+  BuildContext context,
+  WindowInfo windowInfo,
+  BoxConstraints constraints,
+) async {
+  final productBloc = context.read<ProductBloc>();
+  final currentState = productBloc.state;
+  Map<String, dynamic> windowState = {};
+
+  if (currentState is ProductsLoaded) {
+    // Assuming ProductFetchSuccess has a list of products
+    // And your Product entity has a toJson() method
+    windowState = {
+      'products':
+          currentState.products
+              .map((p) => (p as ProductModel).toJson())
+              .toList(),
     };
-
-    // Create the OS window
-    final window = await DesktopMultiWindow.createWindow(jsonEncode(arguments));
-    window.show();
   }
+  // This is where we define the arguments for the new window
+  final arguments = {
+    'page': windowInfo.popOutPageKey,
+    'title': windowInfo.title,
+    'width': constraints.maxWidth, // Pass current width
+    'height': constraints.maxHeight, // Pass current height
+    'state': jsonEncode(windowState),
+  };
+
+  // Create the OS window
+  final window = await DesktopMultiWindow.createWindow(jsonEncode(arguments));
+  window.show();
 }
 
 // A new private widget for the title bar of the docked view
