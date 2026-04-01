@@ -222,7 +222,8 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
       _broadcast = BonsoirBroadcast(service: service);
 
-      await _broadcast!.ready;
+      await _broadcast!.isReady;
+
       await _broadcast!.start();
       _logger.i(
         'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port with IP $ipv4',
@@ -547,7 +548,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     List<String> opts,
   ) {
     return DropdownButtonFormField<String>(
-      value: ctrl.text,
+      initialValue: ctrl.text,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[700]),

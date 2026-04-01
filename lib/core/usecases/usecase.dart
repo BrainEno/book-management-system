@@ -2,8 +2,8 @@
 import 'package:bookstore_management_system/core/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
 
-abstract class UseCase<Type, Params> {
-  Future<Either<Failure, Type>> call(Params params);
+abstract class UseCase<T, Params> {
+  Future<Either<Failure, T>> call(Params params);
 }
 
 class NoParams {}

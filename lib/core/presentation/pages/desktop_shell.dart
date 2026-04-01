@@ -190,8 +190,10 @@ void _floatWindow(
   };
 
   // Create the OS window
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(arguments));
-  window.show();
+  final controller = await WindowController.create(
+    WindowConfiguration(arguments: jsonEncode(arguments)),
+  );
+  await controller.show();
 }
 
 // A new private widget for the title bar of the docked view

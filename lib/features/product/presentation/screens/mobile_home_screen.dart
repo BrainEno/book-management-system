@@ -37,21 +37,23 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     if (_discovery == null) {
       _logger.w('Bonsoir Discovery not found');
     }
-    await _discovery!.ready;
+
+    _discovery!.isReady == true;
     await _discovery!.start();
 
     _discovery!.eventStream!.listen((event) async {
-      if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
+      if (event.service!.type ==
+          BonsoirDiscoveryServiceFoundEvent.discoveryServiceFound) {
         final service = event.service;
         if (service != null) {
-          final ip = (service.attributes['ip']=='127.0.0.1'&&Platform.isAndroid)
-              ?'10.0.2.2'
-              :service.attributes['ip'];
-
+          final ip =
+              (service.attributes['ip'] == '127.0.0.1' && Platform.isAndroid)
+                  ? '10.0.2.2'
+                  : service.attributes['ip'];
 
           final port = AppSecrets.servicePort;
 
-          if (ip!=null && ip.isNotEmpty && port > 0) {
+          if (ip != null && ip.isNotEmpty && port > 0) {
             final url = 'http://$ip:$port';
             _logger.i('Discovered desktop at $url');
             setState(() {
@@ -62,11 +64,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           } else {
             _logger.w('Invalid service data: IP=$ip, Port=$port');
           }
-        } else if (event.type ==
-            BonsoirDiscoveryEventType.discoveryServiceResolved) {
+        } else if (event.service!.type ==
+            BonsoirDiscoveryServiceResolvedEvent.discoveryServiceResolved) {
           _logger.i('Service resolved : ${event.service!.toJson()}');
-        } else if (event.type ==
-            BonsoirDiscoveryEventType.discoveryServiceLost) {
+        } else if (event.service!.type ==
+            BonsoirDiscoveryServiceLostEvent.discoveryServiceLost) {
           _logger.w('Service lost : ${event.service!.toJson()}');
         }
       }

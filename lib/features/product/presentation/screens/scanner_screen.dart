@@ -41,17 +41,20 @@ class _ScannerPageState extends State<ScannerScreen> {
       );
       if (response.statusCode == 200) {
         AppLogger.logger.i('ISBN sent successfully');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('ISBN sent successfully')));
       } else {
         AppLogger.logger.e('Failed to send ISBN');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Failed to send ISBN')));
       }
     } catch (e) {
       AppLogger.logger.e('Error sending ISBN: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error sending ISBN: $e')));

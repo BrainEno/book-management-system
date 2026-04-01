@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Shared Border Styling
-  static _border({
+  static OutlineInputBorder _border({
     Color color = AppPallete.greyColorLight,
     double width = 1.5,
     double radius = 8.0,
