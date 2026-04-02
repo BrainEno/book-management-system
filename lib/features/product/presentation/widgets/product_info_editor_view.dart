@@ -189,14 +189,14 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     if (isbn.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('ISBN is required')));
+      ).showSnackBar(const SnackBar(content: Text('请先填写 ISBN 再保存草稿')));
       return;
     }
 
     _draftBox.put(isbn, _formControllers.buildDraftData());
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Draft saved')));
+    ).showSnackBar(const SnackBar(content: Text('草稿已保存')));
   }
 
   void _handleAuthSuccess(AuthSuccess authState) {
@@ -233,6 +233,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
         title: Text(isUpdate ? '更新图书信息' : '添加图书信息'),
         backgroundColor: AppPallete.transparentColor,
       ),
+      backgroundColor: const Color(0xFFF6F1E8),
       body: MultiBlocListener(
         listeners: [
           BlocListener<AuthBloc, AuthState>(
@@ -253,7 +254,19 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('图书信息', style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  '图书信息',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '完善商品基础资料、归类信息与经营参数，保存后会同步到查询页面。',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF6F6B65),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 ProductInfoEditorFormGrid(
                   controllers: _formControllers,
@@ -265,23 +278,35 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
           ),
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'draft',
-            onPressed: _saveDraft,
-            backgroundColor: Colors.green,
-            child: const Icon(Icons.drafts),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.surface.withValues(alpha: 0.96),
+            border: const Border(top: BorderSide(color: Color(0xFFE6DCCF))),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          FloatingActionButton(
-            heroTag: 'save',
-            onPressed: _saveOrUpdateBook,
-            backgroundColor: const Color(0xFF3A4568),
-            child: Icon(isUpdate ? Icons.update : Icons.save),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton(onPressed: _saveDraft, child: const Text('保存草稿')),
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: _saveOrUpdateBook,
+                child: Text(isUpdate ? '保存修改' : '保存资料'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

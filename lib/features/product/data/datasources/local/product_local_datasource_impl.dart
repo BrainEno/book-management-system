@@ -1,5 +1,6 @@
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/features/product/data/datasources/local/product_local_datasource.dart';
+import 'package:bookstore_management_system/features/product/data/mappers/product_record_mapper.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:drift/drift.dart';
 
@@ -12,7 +13,7 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
   Future<ProductModel> addProduct(ProductModel productModel) async {
     final productDao = database.productDao;
     final ProductsCompanion newProduct = ProductsCompanion(
-      id: Value(productModel.id),
+      id: productModel.id > 0 ? Value(productModel.id) : const Value.absent(),
       title: Value(productModel.title),
       author: Value(productModel.author),
       isbn: Value(productModel.isbn),
@@ -37,17 +38,15 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       createdAt: Value(productModel.createdAt ?? DateTime.now()),
       updatedAt: Value(productModel.updatedAt ?? DateTime.now()),
     );
-    await productDao.insertProduct(newProduct);
-    return productModel;
+    final insertedId = await productDao.insertProduct(newProduct);
+    return productModel.copyWith(id: insertedId);
   }
 
   @override
   Future<List<ProductModel>> getAllProducts() async {
     final productDao = database.productDao;
     final products = await productDao.getAllProducts();
-    return products
-        .map((product) => ProductModel.fromJson(product.toJson()))
-        .toList();
+    return products.map(mapProductRecordToModel).toList();
   }
 
   @override
@@ -92,13 +91,13 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
   Future<ProductModel> searchByISBN(String isbn) async {
     final productDao = database.productDao;
     final product = await productDao.searchByISBN(isbn);
-    return ProductModel.fromJson(product.toJson());
+    return mapProductRecordToModel(product);
   }
 
   @override
   Future<ProductModel> searchByTitle(String title) async {
     final productDao = database.productDao;
     final product = await productDao.searchByTitle(title);
-    return ProductModel.fromJson(product.toJson());
+    return mapProductRecordToModel(product);
   }
 }

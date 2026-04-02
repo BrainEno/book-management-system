@@ -1,4 +1,4 @@
-name: Multi-Platform Release Build v0.33
+name: Multi-Platform Release Build v0.34
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ jobs:
     name: 🎉 iOS Build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -43,15 +43,15 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/BMS.ipa
-          tag: v0.33
+          tag: v0.34
           overwrite: true
-          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
+          body: "Release v0.34: spreadsheet-style product query/export, ISBN scanner stability fixes, and Windows packaging workflow repair."
 
   build-android:
     name: 🤖 Android Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v3
         with:
@@ -78,14 +78,14 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/app/outputs/flutter-apk/app-release.apk
-          tag: v0.33
+          tag: v0.34
           overwrite: true
-          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
+          body: "Release v0.34: spreadsheet-style product query/export, ISBN scanner stability fixes, and Windows packaging workflow repair."
   build-macos:
     name: 🍏 macOS Build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -110,14 +110,14 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/macos/Build/Products/Release/BMS-macos.zip
-          tag: v0.33
+          tag: v0.34
           overwrite: true
-          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
+          body: "Release v0.34: spreadsheet-style product query/export, ISBN scanner stability fixes, and Windows packaging workflow repair."
   build-windows:
     name: 🖥️ Windows Build
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -134,19 +134,28 @@ jobs:
 
       - run: flutter build windows --release
 
-      - name: Ensure working directory exists
-        run: mkdir -p build/windows/runner/
-
-      - name: Zip Windows output
-        run: Compress-Archive -Path build/windows/runner/* -DestinationPath BMS-windows.zip
+      - name: Package Windows output
         shell: pwsh
-        working-directory: build/windows/runner
+        run: |
+          $releasePath = "build/windows/x64/runner/Release"
+          $artifactPath = "build/artifacts/BMS-windows-v0.34.zip"
+
+          if (!(Test-Path $releasePath)) {
+            throw "Windows build output not found at $releasePath"
+          }
+
+          New-Item -ItemType Directory -Force -Path "build/artifacts" | Out-Null
+          if (Test-Path $artifactPath) {
+            Remove-Item $artifactPath -Force
+          }
+
+          Compress-Archive -Path "$releasePath/*" -DestinationPath $artifactPath -Force
 
       - name: Upload Windows binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/windows/runner/BMS-windows.zip
-          tag: v0.33
+          file: build/artifacts/BMS-windows-v0.34.zip
+          tag: v0.34
           overwrite: true
-          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
+          body: "Release v0.34: spreadsheet-style product query/export, ISBN scanner stability fixes, and Windows packaging workflow repair."

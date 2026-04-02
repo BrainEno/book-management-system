@@ -126,7 +126,7 @@ class ProductInfoEditorFormControllers {
   ProductModel buildProduct({ProductModel? existingProduct}) {
     return ProductModel(
       productId: bookIdController.text,
-      id: int.tryParse(idController.text) ?? 0,
+      id: existingProduct?.id ?? (int.tryParse(idController.text) ?? 0),
       title: titleController.text,
       author: authorController.text,
       isbn: isbnController.text,
