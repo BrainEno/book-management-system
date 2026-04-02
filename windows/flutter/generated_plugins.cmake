@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   permission_handler_windows
   screen_retriever_windows
   system_tray
+  webview_windows
   window_manager
 )
 

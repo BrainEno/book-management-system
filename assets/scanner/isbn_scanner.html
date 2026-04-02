@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISBN Scanner</title>
+  <script src="html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: rgba(8, 17, 31, 0.92);
+      --line: #34d399;
+      --text: #e5eefc;
+      --muted: #a8bbd6;
+      --border: rgba(148, 163, 184, 0.24);
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #07101d;
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .shell {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+
+    .title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: #020617;
+      isolation: isolate;
+    }
+
+    #preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #020617;
+      transform: scaleX(-1);
+      image-rendering: auto;
+    }
+
+    #fallback-reader {
+      position: absolute;
+      inset: 0;
+      display: none;
+      background: #020617;
+      z-index: 1;
+    }
+
+    #fallback-reader video,
+    #fallback-reader canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+      border-radius: 0;
+    }
+
+    #fallback-reader__dashboard {
+      display: none !important;
+    }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.06);
+      pointer-events: none;
+    }
+
+    .scan-box {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(82vw, 920px);
+      height: min(24vh, 190px);
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(226, 232, 240, 0.82);
+      border-radius: 24px;
+      pointer-events: none;
+    }
+
+    .corner {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-color: var(--line);
+      border-style: solid;
+      border-width: 0;
+    }
+
+    .corner.tl {
+      left: -2px;
+      top: -2px;
+      border-left-width: 5px;
+      border-top-width: 5px;
+      border-top-left-radius: 20px;
+    }
+
+    .corner.tr {
+      right: -2px;
+      top: -2px;
+      border-right-width: 5px;
+      border-top-width: 5px;
+      border-top-right-radius: 20px;
+    }
+
+    .corner.bl {
+      left: -2px;
+      bottom: -2px;
+      border-left-width: 5px;
+      border-bottom-width: 5px;
+      border-bottom-left-radius: 20px;
+    }
+
+    .corner.br {
+      right: -2px;
+      bottom: -2px;
+      border-right-width: 5px;
+      border-bottom-width: 5px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .scan-wave {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 12px;
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(52, 211, 153, 0),
+        rgba(52, 211, 153, 0.95),
+        rgba(125, 211, 252, 0.78),
+        rgba(52, 211, 153, 0)
+      );
+      animation: scan-wave 2.2s ease-in-out infinite;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    @keyframes scan-wave {
+      0% {
+        transform: translateY(0);
+        opacity: 0.35;
+      }
+      50% {
+        transform: translateY(calc(min(28vh, 240px) - 26px));
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 0.35;
+      }
+    }
+
+    .badge {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status {
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      min-width: 360px;
+      max-width: calc(100% - 32px);
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: rgba(8, 17, 31, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div>
+        <div class="title">ISBN 实时扫描</div>
+        <div class="hint">保持条码水平、完整进入取景框中部，距离建议 20-35cm。</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <video id="preview" autoplay playsinline muted></video>
+      <div id="fallback-reader"></div>
+      <div class="scrim"></div>
+      <div class="badge" id="camera-badge">准备连接摄像头...</div>
+      <div class="scan-box">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="scan-wave"></div>
+      </div>
+      <div class="status" id="status-text">正在初始化扫描器...</div>
+    </div>
+  </div>
+
+  <script>
+    let stream = null;
+    let barcodeDetector = null;
+    let html5QrCode = null;
+    let metricsTimer = null;
+    let decodeErrors = 0;
+    let elapsedSeconds = 0;
+    let lastDecodeError = '';
+    let cameraCount = 0;
+    let cameraLabel = '未知';
+    let camerasCache = [];
+    let activeCameraIndex = 0;
+    let switchedCamera = false;
+    let scanStopped = false;
+    let currentEngine = 'idle';
+    let requestedWidth = 960;
+    let requestedHeight = 540;
+
+    const preview = document.getElementById('preview');
+    const statusText = document.getElementById('status-text');
+    const cameraBadge = document.getElementById('camera-badge');
+
+    function sendToHost(methodName, data) {
+      if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage({ methodName, data });
+      }
+    }
+
+    function setStatus(text) {
+      statusText.textContent = text;
+      sendToHost('statusCallback', text);
+    }
+
+    function updateCameraBadge(text) {
+      cameraBadge.textContent = text;
+    }
+
+    function reportMetrics() {
+      sendToHost('metricsCallback', {
+        cameraCount,
+        cameraLabel,
+        decodeErrors,
+        elapsedSeconds,
+        requestedWidth,
+        requestedHeight,
+        lastDecodeError,
+        pageUrl: window.location.href,
+        secureContext: !!window.isSecureContext,
+        engine: currentEngine,
+      });
+    }
+
+    function buildDetector() {
+      if (!('BarcodeDetector' in window)) {
+        throw new Error('当前 WebView2 环境不支持 BarcodeDetector');
+      }
+
+      return new BarcodeDetector({
+        formats: [
+          'ean_13',
+          'ean_8',
+          'upc_a',
+          'upc_e',
+          'code_128',
+          'code_39',
+          'codabar',
+          'itf',
+        ],
+      });
+    }
+
+    async function stopStream() {
+      if (stream) {
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+      }
+      stream = null;
+      preview.srcObject = null;
+    }
+
+    function showNativePreview() {
+      preview.style.display = 'block';
+      document.getElementById('fallback-reader').style.display = 'none';
+    }
+
+    function showFallbackPreview() {
+      preview.style.display = 'none';
+      document.getElementById('fallback-reader').style.display = 'block';
+    }
+
+    async function startStream(cameraIndex) {
+      const device = camerasCache[cameraIndex];
+      if (!device) {
+        throw new Error('未找到目标摄像头');
+      }
+
+      await stopStream();
+
+      activeCameraIndex = cameraIndex;
+      cameraLabel = device.label || `摄像头 ${cameraIndex + 1}`;
+      updateCameraBadge(cameraLabel);
+      setStatus(`已连接摄像头：${cameraLabel}`);
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          deviceId: { exact: device.deviceId },
+          width: { ideal: requestedWidth },
+          height: { ideal: requestedHeight },
+          facingMode: 'environment',
+        },
+      });
+
+      preview.srcObject = stream;
+      await preview.play();
+      showNativePreview();
+      setStatus(`实时预览已开启：${cameraLabel}`);
+    }
+
+    async function switchToNextCamera() {
+      if (camerasCache.length < 2 || scanStopped) {
+        return;
+      }
+
+      switchedCamera = true;
+      setStatus('当前摄像头识别率低，自动切换另一摄像头...');
+      const nextIndex = (activeCameraIndex + 1) % camerasCache.length;
+      await startStream(nextIndex);
+    }
+
+    async function scanLoop() {
+      if (scanStopped) {
+        return;
+      }
+
+      try {
+        if (!preview.videoWidth || !preview.videoHeight) {
+          requestAnimationFrame(scanLoop);
+          return;
+        }
+
+        const barcodes = await barcodeDetector.detect(preview);
+        if (barcodes && barcodes.length > 0) {
+          const rawValue = barcodes.find((code) => code.rawValue)?.rawValue || '';
+          if (rawValue) {
+            setStatus('识别成功，正在写入 ISBN...');
+            reportMetrics();
+            scanStopped = true;
+            await stopStream();
+            sendToHost('successCallback', rawValue);
+            return;
+          }
+        }
+
+        if (elapsedSeconds >= 8 && !switchedCamera && camerasCache.length > 1) {
+          await switchToNextCamera();
+        }
+      } catch (error) {
+        decodeErrors += 1;
+        lastDecodeError = String(error || '');
+        if (decodeErrors % 20 === 0) {
+          setStatus(`识别中...已尝试 ${decodeErrors} 次`);
+          reportMetrics();
+        }
+      }
+
+      setTimeout(scanLoop, 120);
+    }
+
+    async function startHtml5QrcodeFallback(cameraIndex) {
+      const target = camerasCache[cameraIndex];
+      if (!target) {
+        throw new Error('ZXing 回退时未找到目标摄像头');
+      }
+
+      currentEngine = 'html5-qrcode';
+      activeCameraIndex = cameraIndex;
+      cameraLabel = target.label || `摄像头 ${cameraIndex + 1}`;
+      updateCameraBadge(`${cameraLabel} / ZXing`);
+      showFallbackPreview();
+      setStatus(`已切换到 ZXing 引擎：${cameraLabel}`);
+
+      if (html5QrCode) {
+        try {
+          await html5QrCode.stop();
+        } catch (e) {}
+        try {
+          await html5QrCode.clear();
+        } catch (e) {}
+      }
+
+      html5QrCode = new Html5Qrcode('fallback-reader', {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF
+        ],
+        useBarCodeDetectorIfSupported: false
+      });
+
+      await html5QrCode.start(
+        target.deviceId,
+        {
+          fps: 6,
+          disableFlip: true,
+          aspectRatio: 16 / 9,
+          qrbox: { width: 720, height: 170 }
+        },
+        async (decodedText, decodedResult) => {
+          setStatus('识别成功，正在写入 ISBN...');
+          reportMetrics();
+          scanStopped = true;
+          try { await html5QrCode.stop(); } catch (e) {}
+          sendToHost('successCallback', decodedText);
+        },
+        (errorMessage) => {
+          decodeErrors += 1;
+          lastDecodeError = String(errorMessage || '');
+          if (decodeErrors % 30 === 0) {
+            setStatus(`ZXing 识别中...已尝试 ${decodeErrors} 次`);
+            reportMetrics();
+          }
+        }
+      );
+    }
+
+    async function startScanner() {
+      try {
+        setStatus('正在初始化扫描器...');
+        const initialProbeStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: true,
+        });
+        initialProbeStream.getTracks().forEach((track) => track.stop());
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        camerasCache = devices.filter((device) => device.kind === 'videoinput');
+        cameraCount = camerasCache.length;
+        reportMetrics();
+
+        if (cameraCount === 0) {
+          throw new Error('未检测到可用摄像头');
+        }
+
+        const preferredIndex = camerasCache.findIndex((device) =>
+          /rear|back|environment|usb|webcam/i.test(device.label || '')
+        );
+        const startIndex = preferredIndex >= 0 ? preferredIndex : 0;
+
+        metricsTimer = setInterval(() => {
+          elapsedSeconds += 1;
+          reportMetrics();
+        if (elapsedSeconds % 5 === 0 && !scanStopped) {
+          setStatus(`扫描中... ${elapsedSeconds}s`);
+        }
+        }, 1500);
+
+        try {
+          barcodeDetector = buildDetector();
+          currentEngine = 'barcode-detector';
+          await startStream(startIndex);
+          scanLoop();
+        } catch (engineError) {
+          lastDecodeError = String(engineError || '');
+          setStatus('原生引擎不可用，正在切换到 ZXing...');
+          await startHtml5QrcodeFallback(startIndex);
+        }
+      } catch (error) {
+        setStatus('扫描器启动失败');
+        sendToHost('errorCallback', String(error || '未知错误'));
+        reportMetrics();
+      }
+    }
+
+    async function stopScanner() {
+      scanStopped = true;
+      if (metricsTimer) {
+        clearInterval(metricsTimer);
+        metricsTimer = null;
+      }
+      await stopStream();
+      if (html5QrCode) {
+        try { await html5QrCode.stop(); } catch (e) {}
+        try { await html5QrCode.clear(); } catch (e) {}
+      }
+    }
+
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.addEventListener('message', async function(event) {
+        const data = event && event.data ? event.data : {};
+        if (data.event === 'close') {
+          await stopScanner();
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', startScanner);
+  </script>
+</body>
+</html>

@@ -1,10 +1,9 @@
 import 'dart:io';
-
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
 import 'package:flutter/material.dart';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
-import 'scanner_screen.dart'; // Import the new ScannerPage
+import 'scanner_screen.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   const MobileHomeScreen({super.key});
@@ -34,49 +33,47 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   Future<void> _discoverService() async {
     setState(() => _status = '正在搜索可用设备...');
     _discovery = BonsoirDiscovery(type: AppSecrets.serviceType!);
-    if (_discovery == null) {
-      _logger.w('Bonsoir Discovery not found');
-    }
-
-    _discovery!.isReady == true;
     await _discovery!.start();
 
     _discovery!.eventStream!.listen((event) async {
-      if (event.service!.type ==
-          BonsoirDiscoveryServiceFoundEvent.discoveryServiceFound) {
+      if (event is BonsoirDiscoveryServiceFoundEvent) {
         final service = event.service;
         if (service != null) {
+          await service.resolve(_discovery!.serviceResolver); // 触发解析以获取完整信息
+          _logger.i('Service found, resolving: ${service.toJson()}');
+        }
+      } else if (event is BonsoirDiscoveryServiceResolvedEvent) {
+        final service = event.service;
+        if (service != null) {
+          final rawIp = service.attributes['ip'];
           final ip =
-              (service.attributes['ip'] == '127.0.0.1' && Platform.isAndroid)
-                  ? '10.0.2.2'
-                  : service.attributes['ip'];
-
-          final port = AppSecrets.servicePort;
-
+              (rawIp == '127.0.0.1' && Platform.isAndroid) ? '10.0.2.2' : rawIp;
+          final port = service.port; // 使用广播的实际端口，而非硬编码
           if (ip != null && ip.isNotEmpty && port > 0) {
             final url = 'http://$ip:$port';
             _logger.i('Discovered desktop at $url');
-            setState(() {
-              _desktopUrl = url;
-              _status = '已连接设备: $url';
-            });
+            if (mounted) {
+              setState(() {
+                _desktopUrl = url;
+                _status = '已连接设备: $url';
+              });
+            }
             await _discovery?.stop();
           } else {
             _logger.w('Invalid service data: IP=$ip, Port=$port');
           }
-        } else if (event.service!.type ==
-            BonsoirDiscoveryServiceResolvedEvent.discoveryServiceResolved) {
-          _logger.i('Service resolved : ${event.service!.toJson()}');
-        } else if (event.service!.type ==
-            BonsoirDiscoveryServiceLostEvent.discoveryServiceLost) {
-          _logger.w('Service lost : ${event.service!.toJson()}');
+        }
+      } else if (event is BonsoirDiscoveryServiceLostEvent) {
+        _logger.w('Service lost: ${event.service?.toJson()}');
+        if (mounted && _desktopUrl != null) {
+          setState(() => _status = '设备已断开');
         }
       }
     });
 
-    // Timeout if no service is found
+    // 超时处理
     Future.delayed(const Duration(seconds: 60), () async {
-      if (_desktopUrl == null) {
+      if (_desktopUrl == null && mounted) {
         _logger.w('设备连接超时');
         setState(() => _status = '暂未发现可用设备');
         await _discovery?.stop();
@@ -105,12 +102,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                     ),
                   );
                 } else {
-                  setState(() => _status = '暂无可用设备');
+                  setState(() => _status = '暂无可用设备，请点击“重新识别设备”');
                 }
               },
               child: const Text('扫描条形码'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _discoverService,
               child: const Text('重新识别设备'),
