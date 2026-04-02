@@ -52,11 +52,82 @@ void main() {
       expect(buildScannerDiagnosis(metrics), contains('成像/对焦问题'));
     });
 
-    test('buildScannerDiagnosis points to engine fallback when detector unsupported', () {
-      const metrics = ScannerDebugMetrics(
-        startupError: 'Error: 当前 WebView2 环境不支持 BarcodeDetector',
+    test(
+      'buildScannerDiagnosis points to engine fallback when detector unsupported',
+      () {
+        const metrics = ScannerDebugMetrics(
+          startupError: 'Error: 当前 WebView2 环境不支持 BarcodeDetector',
+        );
+        expect(buildScannerDiagnosis(metrics), contains('ZXing'));
+      },
+    );
+
+    test('buildMacOsScannerDiagnosis points to permission issue first', () {
+      const metrics = MacOsScannerDebugMetrics(permissionState: 'denied');
+      expect(buildMacOsScannerDiagnosis(metrics), contains('权限问题'));
+    });
+
+    test(
+      'buildMacOsScannerDiagnosis explains unknown camera count when preview is running',
+      () {
+        const metrics = MacOsScannerDebugMetrics(
+          permissionState: 'granted',
+          initialized: true,
+          running: true,
+          elapsedSeconds: 18,
+          cameraCount: null,
+        );
+        expect(buildMacOsScannerDiagnosis(metrics), contains('没有返回摄像头数量'));
+        expect(buildMacOsScannerDiagnosis(metrics), contains('对焦'));
+      },
+    );
+
+    test(
+      'buildMacOsScannerDiagnosis points out non-isbn detections when invalid detections exist',
+      () {
+        const metrics = MacOsScannerDebugMetrics(
+          permissionState: 'granted',
+          initialized: true,
+          running: true,
+          elapsedSeconds: 14,
+          invalidDetections: 3,
+          lastInvalidCode: 'HELLO-QR',
+        );
+        expect(buildMacOsScannerDiagnosis(metrics), contains('不是 ISBN 条码'));
+      },
+    );
+
+    test(
+      'buildMacOsScannerDiagnosis points to startup issue when error exists',
+      () {
+        const metrics = MacOsScannerDebugMetrics(
+          errorMessage: 'Camera initialization failed',
+        );
+        expect(buildMacOsScannerDiagnosis(metrics), contains('启动异常'));
+        expect(
+          buildMacOsScannerDiagnosis(metrics),
+          contains('Camera initialization failed'),
+        );
+      },
+    );
+
+    test('buildMacOsScannerDebugCode includes diagnosis and key fields', () {
+      const metrics = MacOsScannerDebugMetrics(
+        permissionState: 'granted',
+        initialized: true,
+        running: true,
+        cameraCount: 1,
+        elapsedSeconds: 9,
+        invalidDetections: 2,
+        lastSuccessfulCode: '9787121155352',
+        status: '摄像头已就绪',
       );
-      expect(buildScannerDiagnosis(metrics), contains('ZXing'));
+      final debugCode = buildMacOsScannerDebugCode(metrics);
+      expect(debugCode, contains('ISBN_SCANNER_DEBUG_V2_MACOS'));
+      expect(debugCode, contains('permissionState=granted'));
+      expect(debugCode, contains('cameraCount=1'));
+      expect(debugCode, contains('lastSuccessfulCode=9787121155352'));
+      expect(debugCode, contains('diagnosis='));
     });
   });
 }

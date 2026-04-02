@@ -115,6 +115,7 @@ Future<void> initDependencies({bool isMultiWindow = false}) async {
   // Initialize DB
   database = AppDatabase();
   sl.registerSingleton<AppDatabase>(database);
+  await database.customSelect('SELECT 1').get();
 
   // Regiser PermissionHandler as a singleton
   sl.registerSingleton<PermissionHandler>(PermissionHandler());

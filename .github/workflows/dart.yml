@@ -1,4 +1,4 @@
-name: iOS-Android-Build
+name: Multi-Platform Release Build v0.33
 
 on:
   workflow_dispatch:
@@ -43,9 +43,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/BMS.ipa
-          tag: v0.32
+          tag: v0.33
           overwrite: true
-          body: "Release v0.32."
+          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
 
   build-android:
     name: 🤖 Android Build
@@ -78,9 +78,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/app/outputs/flutter-apk/app-release.apk
-          tag: v0.32
+          tag: v0.33
           overwrite: true
-          body: "Release v0.32."
+          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
   build-macos:
     name: 🍏 macOS Build
     runs-on: macos-latest
@@ -110,9 +110,9 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/macos/Build/Products/Release/BMS-macos.zip
-          tag: v0.32
+          tag: v0.33
           overwrite: true
-          body: "Release v0.32."
+          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."
   build-windows:
     name: 🖥️ Windows Build
     runs-on: windows-latest
@@ -147,6 +147,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/windows/runner/BMS-windows.zip
-          tag: v0.32
+          tag: v0.33
           overwrite: true
-          body: "Release v0.32."
+          body: "Release v0.33: mobile ISBN scanner flow improvements and desktop scanner fixes."

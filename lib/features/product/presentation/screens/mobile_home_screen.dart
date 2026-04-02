@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
+import 'package:bookstore_management_system/features/product/presentation/controllers/mobile_discovery_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:bonsoir/bonsoir.dart';
-import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
+
 import 'scanner_screen.dart';
 
 class MobileHomeScreen extends StatefulWidget {
@@ -13,108 +14,125 @@ class MobileHomeScreen extends StatefulWidget {
 }
 
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
-  String _status = 'Ready';
-  String? _desktopUrl;
-  BonsoirDiscovery? _discovery;
-  final _logger = AppLogger.logger;
+  late final MobileDiscoveryController _discoveryController;
+  bool _debugMode = false;
 
   @override
   void initState() {
     super.initState();
-    _discoverService();
+    _discoveryController = MobileDiscoveryController(
+      serviceType: AppSecrets.serviceType ?? '',
+      platformLabel: Platform.operatingSystem,
+      sessionFactory: (type) => BonsoirMobileDiscoverySession(type),
+      useAndroidEmulatorLoopback: Platform.isAndroid,
+    )..startDiscovery();
   }
 
   @override
   void dispose() {
-    _discovery?.stop();
+    _discoveryController.dispose();
     super.dispose();
   }
 
-  Future<void> _discoverService() async {
-    setState(() => _status = '正在搜索可用设备...');
-    _discovery = BonsoirDiscovery(type: AppSecrets.serviceType!);
-    await _discovery!.start();
+  void _openScanner() {
+    final desktopUrl = _discoveryController.desktopUrl;
+    if (desktopUrl == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('暂无可用设备，请先重新识别设备')));
+      return;
+    }
 
-    _discovery!.eventStream!.listen((event) async {
-      if (event is BonsoirDiscoveryServiceFoundEvent) {
-        final service = event.service;
-        if (service != null) {
-          await service.resolve(_discovery!.serviceResolver); // 触发解析以获取完整信息
-          _logger.i('Service found, resolving: ${service.toJson()}');
-        }
-      } else if (event is BonsoirDiscoveryServiceResolvedEvent) {
-        final service = event.service;
-        if (service != null) {
-          final rawIp = service.attributes['ip'];
-          final ip =
-              (rawIp == '127.0.0.1' && Platform.isAndroid) ? '10.0.2.2' : rawIp;
-          final port = service.port; // 使用广播的实际端口，而非硬编码
-          if (ip != null && ip.isNotEmpty && port > 0) {
-            final url = 'http://$ip:$port';
-            _logger.i('Discovered desktop at $url');
-            if (mounted) {
-              setState(() {
-                _desktopUrl = url;
-                _status = '已连接设备: $url';
-              });
-            }
-            await _discovery?.stop();
-          } else {
-            _logger.w('Invalid service data: IP=$ip, Port=$port');
-          }
-        }
-      } else if (event is BonsoirDiscoveryServiceLostEvent) {
-        _logger.w('Service lost: ${event.service?.toJson()}');
-        if (mounted && _desktopUrl != null) {
-          setState(() => _status = '设备已断开');
-        }
-      }
-    });
-
-    // 超时处理
-    Future.delayed(const Duration(seconds: 60), () async {
-      if (_desktopUrl == null && mounted) {
-        _logger.w('设备连接超时');
-        setState(() => _status = '暂未发现可用设备');
-        await _discovery?.stop();
-      }
-    });
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) =>
+                ScannerScreen(desktopUrl: desktopUrl, debugMode: _debugMode),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('ISBN扫描器')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_status),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                if (_desktopUrl != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => ScannerScreen(desktopUrl: _desktopUrl!),
+    return AnimatedBuilder(
+      animation: _discoveryController,
+      builder: (context, _) {
+        final state = _discoveryController.debugState;
+        final diagnosis = buildMobileDiscoveryDiagnosis(state);
+        final debugCode = buildMobileDiscoveryDebugCode(state);
+
+        return Scaffold(
+          appBar: AppBar(title: const Text('ISBN扫描器')),
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      state.status,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  );
-                } else {
-                  setState(() => _status = '暂无可用设备，请点击“重新识别设备”');
-                }
-              },
-              child: const Text('扫描条形码'),
+                    const SizedBox(height: 12),
+                    Text(
+                      diagnosis,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _openScanner,
+                      child: const Text('扫描条形码'),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _discoveryController.refresh,
+                      child: const Text('重新识别设备'),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('调试模式'),
+                      subtitle: const Text('显示 Bonjour 发现和移动端扫码的关键状态'),
+                      value: _debugMode,
+                      onChanged: (value) {
+                        setState(() => _debugMode = value);
+                      },
+                    ),
+                    if (_debugMode) ...[
+                      const SizedBox(height: 12),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '移动端设备发现调试信息',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 12),
+                              SelectableText(
+                                debugCode,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _discoverService,
-              child: const Text('重新识别设备'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
