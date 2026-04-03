@@ -8,10 +8,88 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class AppWindowPayload {
-  const AppWindowPayload({this.initialProducts, this.initialProduct});
+  const AppWindowPayload({
+    this.initialProducts,
+    this.initialProduct,
+    this.productEditorDraft,
+    this.currentOperatorUsername,
+  });
 
   final List<ProductModel>? initialProducts;
   final ProductModel? initialProduct;
+  final Map<String, String>? productEditorDraft;
+  final String? currentOperatorUsername;
+
+  bool get isEmpty =>
+      (initialProducts == null || initialProducts!.isEmpty) &&
+      initialProduct == null &&
+      (productEditorDraft == null || productEditorDraft!.isEmpty) &&
+      currentOperatorUsername == null;
+
+  Map<String, dynamic> toJson() => {
+    if (initialProducts != null)
+      'products': initialProducts!.map((product) => product.toJson()).toList(),
+    if (initialProduct != null) 'product': initialProduct!.toJson(),
+    if (productEditorDraft != null) 'productEditorDraft': productEditorDraft,
+    if (currentOperatorUsername != null)
+      'currentOperatorUsername': currentOperatorUsername,
+  };
+
+  factory AppWindowPayload.fromJson(Map<String, dynamic> json) {
+    final rawProducts = json['products'];
+    final rawProduct = json['product'];
+    final rawDraft = json['productEditorDraft'];
+    final rawOperatorUsername = json['currentOperatorUsername'];
+
+    return AppWindowPayload(
+      initialProducts: rawProducts is List
+          ? rawProducts
+                .whereType<Map>()
+                .map(
+                  (product) =>
+                      ProductModel.fromJson(Map<String, dynamic>.from(product)),
+                )
+                .toList()
+          : null,
+      initialProduct: rawProduct is Map
+          ? ProductModel.fromJson(Map<String, dynamic>.from(rawProduct))
+          : null,
+      productEditorDraft: rawDraft is Map<String, String>
+          ? rawDraft
+          : rawDraft is Map
+          ? rawDraft.map(
+              (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+            )
+          : null,
+      currentOperatorUsername: rawOperatorUsername?.toString(),
+    );
+  }
+
+  AppWindowPayload copyWith({
+    List<ProductModel>? initialProducts,
+    ProductModel? initialProduct,
+    Map<String, String>? productEditorDraft,
+    String? currentOperatorUsername,
+    bool clearInitialProducts = false,
+    bool clearInitialProduct = false,
+    bool clearProductEditorDraft = false,
+    bool clearCurrentOperatorUsername = false,
+  }) {
+    return AppWindowPayload(
+      initialProducts: clearInitialProducts
+          ? null
+          : (initialProducts ?? this.initialProducts),
+      initialProduct: clearInitialProduct
+          ? null
+          : (initialProduct ?? this.initialProduct),
+      productEditorDraft: clearProductEditorDraft
+          ? null
+          : (productEditorDraft ?? this.productEditorDraft),
+      currentOperatorUsername: clearCurrentOperatorUsername
+          ? null
+          : (currentOperatorUsername ?? this.currentOperatorUsername),
+    );
+  }
 }
 
 typedef AppWindowPageBuilder =
@@ -67,7 +145,11 @@ final List<AppWindowDestination> floatingWindowDestinations = [
     label: '商品编辑',
     icon: Icons.edit_outlined,
     builder: (_, payload) =>
-        ProductInfoEditorView(product: payload.initialProduct),
+        ProductInfoEditorView(
+          product: payload.initialProduct,
+          initialDraft: payload.productEditorDraft,
+          initialOperatorUsername: payload.currentOperatorUsername,
+        ),
   ),
 ];
 
@@ -101,9 +183,9 @@ void openAppWindowByPageKey(
     return;
   }
 
-  context.read<AppWindowManager>().openOrFocusWindow(
+  context.read<AppWindowManager>().openWindow(
     title: destination.title,
-    content: destination.builder(context, payload),
     popOutPageKey: destination.pageKey,
+    payload: payload,
   );
 }

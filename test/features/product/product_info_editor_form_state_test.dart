@@ -56,4 +56,34 @@ void main() {
 
     expect(product.selfEncoding, '9787300000043');
   });
+
+  test(
+    'resetForNewEntry clears prior values and keeps operator when provided',
+    () {
+      final controllers = ProductInfoEditorFormControllers();
+      addTearDown(controllers.dispose);
+
+      controllers.bookIdController.text = 'A-003';
+      controllers.titleController.text = '待清空图书';
+      controllers.authorController.text = '作者';
+      controllers.isbnController.text = '9787300000044';
+      controllers.priceController.text = '88';
+      controllers.categoryController.text = '文学';
+      controllers.publisherController.text = '测试出版社';
+      controllers.packagingController.text = '精装';
+      controllers.operatorController.text = 'old-user';
+
+      controllers.resetForNewEntry(operatorUsername: 'tester');
+
+      expect(controllers.bookIdController.text, isEmpty);
+      expect(controllers.titleController.text, isEmpty);
+      expect(controllers.authorController.text, isEmpty);
+      expect(controllers.isbnController.text, isEmpty);
+      expect(controllers.priceController.text, isEmpty);
+      expect(controllers.categoryController.text, '不区分');
+      expect(controllers.publisherController.text, '不区分');
+      expect(controllers.packagingController.text, '不区分');
+      expect(controllers.operatorController.text, 'tester');
+    },
+  );
 }

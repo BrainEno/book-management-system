@@ -1,11 +1,8 @@
 import 'package:bookstore_management_system/core/theme/theme.dart';
-import 'package:bookstore_management_system/core/utils/set_window_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/widgets/auth_field.dart';
-
-const String loginSuccessMessage = '登录成功';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,18 +41,15 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthSuccess) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text(loginSuccessMessage)));
-            setWindowSize(1920, 1080);
-          } else if (state is AuthError) {
+          if (state is AuthError) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
+          final isLoading = state is AuthLoading;
+
           return SingleChildScrollView(
             child: Padding(
               padding: AppTheme.responsivePadding(context),
@@ -65,6 +59,10 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    if (isLoading) ...[
+                      const LinearProgressIndicator(),
+                      const SizedBox(height: 20),
+                    ],
                     Text(
                       '登录',
                       textAlign: TextAlign.center,
@@ -90,10 +88,44 @@ class _LoginPageState extends State<LoginPage> {
                       prefixIcon: Icons.lock_outline,
                     ),
                     const SizedBox(height: 30),
-                    // Login button or loading indicator
                     ElevatedButton(
-                      onPressed: _onLoginPressed,
-                      child: const Text("登录"),
+                      onPressed: isLoading ? null : _onLoginPressed,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: isLoading
+                            ? const Row(
+                                key: ValueKey('login-loading'),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text("正在登录..."),
+                                ],
+                              )
+                            : const Text(
+                                "登录",
+                                key: ValueKey('login-idle'),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 180),
+                      opacity: isLoading ? 1 : 0.72,
+                      child: Text(
+                        isLoading ? '正在校验账号并准备主界面...' : '输入账号密码后进入系统',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 30),
                   ],

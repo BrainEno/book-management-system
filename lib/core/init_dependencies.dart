@@ -9,8 +9,13 @@ export 'package:bookstore_management_system/core/di/service_locator.dart';
 Future<void> initDependencies({
   bool isMultiWindow = false,
   String? windowId,
+  String? hostWindowId,
 }) async {
-  registerCoreDependencies(isMultiWindow: isMultiWindow, windowId: windowId);
+  registerCoreDependencies(
+    isMultiWindow: isMultiWindow,
+    windowId: windowId,
+    hostWindowId: hostWindowId,
+  );
   await configureAppEnvironment();
   await registerPersistenceDependencies(isMultiWindow: isMultiWindow);
   registerFeatureDependencies();

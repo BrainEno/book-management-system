@@ -81,93 +81,88 @@ class DashboardHeroPanel extends StatelessWidget {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 1080;
 
-          final lead = Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: const [
-                    DashboardHintChip(
-                      label: '单店离线模式',
-                      color: AppPallete.forest,
-                    ),
-                    DashboardHintChip(label: '主仓营运中', color: AppPallete.copper),
-                    DashboardHintChip(
-                      label: '首页已切换为店长驾驶舱',
-                      color: AppPallete.ink,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  '$greeting，欢迎回到溪川书店主控台',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          final leadContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: const [
+                  DashboardHintChip(label: '单店离线模式', color: AppPallete.forest),
+                  DashboardHintChip(label: '主仓营运中', color: AppPallete.copper),
+                  DashboardHintChip(
+                    label: '首页已切换为店长驾驶舱',
                     color: AppPallete.ink,
-                    fontWeight: FontWeight.w800,
-                    height: 1.16,
                   ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                '$greeting，欢迎回到溪川书店主控台',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppPallete.ink,
+                  fontWeight: FontWeight.w800,
+                  height: 1.16,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  '今天先看经营体温，再决定去收货、补资料还是盯住库存预警。主页面把老系统的一眼可达保留下来，但换成更适合现代单店书店经营的层级。',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppPallete.mutedInk,
-                    height: 1.55,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '今天先看经营体温，再决定去收货、补资料还是盯住库存预警。主页面把老系统的一眼可达保留下来，但换成更适合现代单店书店经营的层级。',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppPallete.mutedInk,
+                  height: 1.55,
+                ),
+              ),
+              const SizedBox(height: 18),
+              InkWell(
+                onTap: onCommandPressed,
+                borderRadius: BorderRadius.circular(18),
+                child: Ink(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
                   ),
-                ),
-                const SizedBox(height: 18),
-                InkWell(
-                  onTap: onCommandPressed,
-                  borderRadius: BorderRadius.circular(18),
-                  child: Ink(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppPallete.paperBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search, color: AppPallete.mutedInk),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '搜索商品、ISBN、会员或输入命令',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppPallete.mutedInk),
-                          ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.78),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppPallete.paperBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: AppPallete.mutedInk),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '搜索商品、ISBN、会员或输入命令',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppPallete.mutedInk),
                         ),
-                        const _KeyboardTag(label: 'Ctrl'),
-                        const SizedBox(width: 6),
-                        const _KeyboardTag(label: 'K'),
-                      ],
-                    ),
+                      ),
+                      const _KeyboardTag(label: 'Ctrl'),
+                      const SizedBox(width: 6),
+                      const _KeyboardTag(label: 'K'),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: onOpenProduct,
-                      icon: const Icon(Icons.menu_book_outlined),
-                      label: const Text('进入商品资料'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onOpenInventory,
-                      icon: const Icon(Icons.inventory_2_outlined),
-                      label: const Text('查看库存入口'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: onOpenProduct,
+                    icon: const Icon(Icons.menu_book_outlined),
+                    label: const Text('进入商品资料'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onOpenInventory,
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('查看库存入口'),
+                  ),
+                ],
+              ),
+            ],
           );
 
           final side = SizedBox(
@@ -191,13 +186,17 @@ class DashboardHeroPanel extends StatelessWidget {
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [lead, const SizedBox(height: 20), side],
+              children: [leadContent, const SizedBox(height: 20), side],
             );
           }
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [lead, const SizedBox(width: 24), side],
+            children: [
+              Expanded(child: leadContent),
+              const SizedBox(width: 24),
+              side,
+            ],
           );
         },
       ),
