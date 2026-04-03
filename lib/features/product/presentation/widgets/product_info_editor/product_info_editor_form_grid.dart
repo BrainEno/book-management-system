@@ -30,7 +30,6 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
                 maxColumns: 3,
                 children: [
                   _GridFieldSpec(
-                    span: 2,
                     child: _EditorTextField(
                       controllers.titleController,
                       '书名',
@@ -39,28 +38,15 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
                   ),
                   _GridFieldSpec(
                     child: _EditorTextField(
-                      controllers.authorController,
-                      '作者',
-                      required: true,
-                    ),
-                  ),
-                  _GridFieldSpec(
-                    span: 2,
-                    child: _EditorTextField(
-                      controllers.isbnController,
-                      'ISBN',
-                      required: true,
-                      suffixIcon: TextButton.icon(
-                        onPressed: onOpenScanner,
-                        icon: const Icon(Icons.qr_code_scanner, size: 18),
-                        label: const Text('扫码'),
-                      ),
-                    ),
-                  ),
-                  _GridFieldSpec(
-                    child: _EditorTextField(
                       controllers.bookIdController,
                       '商品编码',
+                      required: true,
+                    ),
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.authorController,
+                      '作者',
                       required: true,
                     ),
                   ),
@@ -79,6 +65,19 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
                       controllers.selfEncodingController,
                       '自编码',
                       hintText: '不填将自动沿用 ISBN 或商品编码',
+                    ),
+                  ),
+                  _GridFieldSpec(
+                    span: 2,
+                    child: _EditorTextField(
+                      controllers.isbnController,
+                      'ISBN',
+                      required: true,
+                      suffixIcon: TextButton.icon(
+                        onPressed: onOpenScanner,
+                        icon: const Icon(Icons.qr_code_scanner, size: 18),
+                        label: const Text('扫码'),
+                      ),
                     ),
                   ),
                 ],

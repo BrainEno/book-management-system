@@ -85,6 +85,31 @@ class ProductInfoEditorFormControllers {
   final TextEditingController statisticalClassController;
   final TextEditingController operatorController;
 
+  List<TextEditingController> get allControllers => [
+    bookIdController,
+    idController,
+    titleController,
+    authorController,
+    isbnController,
+    priceController,
+    categoryController,
+    publisherController,
+    selfEncodingController,
+    internalPricingController,
+    purchasePriceController,
+    publicationYearController,
+    retailDiscountController,
+    wholesaleDiscountController,
+    wholesalePriceController,
+    memberDiscountController,
+    purchaseSaleModeController,
+    bookmarkController,
+    packagingController,
+    properityController,
+    statisticalClassController,
+    operatorController,
+  ];
+
   String? _normalizeOptionalText(
     String value, {
     Set<String> nullPlaceholders = const {'不区分'},
@@ -217,6 +242,70 @@ class ProductInfoEditorFormControllers {
       'statisticalClass': statisticalClassController.text,
       'operator': operatorController.text,
     };
+  }
+
+  void applyDraftData(Map<String, String> draft) {
+    bookIdController.text = draft['productId'] ?? '';
+    idController.text = draft['id'] ?? '';
+    titleController.text = draft['title'] ?? '';
+    authorController.text = draft['author'] ?? '';
+    isbnController.text = draft['isbn'] ?? '';
+    priceController.text = draft['price'] ?? '';
+    categoryController.text = draft['category']?.isNotEmpty == true
+        ? draft['category']!
+        : '不区分';
+    publisherController.text = draft['publisher']?.isNotEmpty == true
+        ? draft['publisher']!
+        : '不区分';
+    selfEncodingController.text = draft['selfEncoding'] ?? '';
+    internalPricingController.text = draft['internalPricing'] ?? '';
+    purchasePriceController.text = draft['purchasePrice'] ?? '';
+    publicationYearController.text = draft['publicationYear'] ?? '';
+    retailDiscountController.text = draft['retailDiscount'] ?? '';
+    wholesaleDiscountController.text = draft['wholesaleDiscount'] ?? '';
+    wholesalePriceController.text = draft['wholesalePrice'] ?? '';
+    memberDiscountController.text = draft['memberDiscount'] ?? '';
+    purchaseSaleModeController.text =
+        draft['purchaseSaleMode']?.isNotEmpty == true
+        ? draft['purchaseSaleMode']!
+        : '不区分';
+    bookmarkController.text = draft['bookmark'] ?? '';
+    packagingController.text = draft['packaging']?.isNotEmpty == true
+        ? draft['packaging']!
+        : '不区分';
+    properityController.text = draft['properity']?.isNotEmpty == true
+        ? draft['properity']!
+        : '不区分';
+    statisticalClassController.text =
+        draft['statisticalClass']?.isNotEmpty == true
+        ? draft['statisticalClass']!
+        : '不区分';
+    operatorController.text = draft['operator'] ?? '';
+  }
+
+  void resetForNewEntry({String? operatorUsername}) {
+    bookIdController.clear();
+    idController.clear();
+    titleController.clear();
+    authorController.clear();
+    isbnController.clear();
+    priceController.clear();
+    categoryController.text = '不区分';
+    publisherController.text = '不区分';
+    selfEncodingController.clear();
+    internalPricingController.clear();
+    purchasePriceController.clear();
+    publicationYearController.clear();
+    retailDiscountController.clear();
+    wholesaleDiscountController.clear();
+    wholesalePriceController.clear();
+    memberDiscountController.clear();
+    purchaseSaleModeController.text = '不区分';
+    bookmarkController.clear();
+    packagingController.text = '不区分';
+    properityController.text = '不区分';
+    statisticalClassController.text = '不区分';
+    operatorController.text = operatorUsername?.trim() ?? '';
   }
 
   void dispose() {

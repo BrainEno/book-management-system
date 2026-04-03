@@ -1,94 +1,161 @@
 import 'package:bookstore_management_system/core/window/window_info.dart';
-import 'package:flutter/material.dart';
+import 'dart:ui';
+
+import 'package:bookstore_management_system/app/navigation/app_window_destination.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 class AppWindowManager extends ChangeNotifier {
   final Uuid _uuid = const Uuid();
+  int _zIndexSeed = 0;
 
-  // A map to hold all opened windows, so we don't create duplicates
   final Map<String, WindowInfo> _openedWindows = {};
 
-  // Track the ID of the window currently shown in the main docked area
-  String? _activeWindowId;
+  List<WindowInfo> get windows {
+    final items = _openedWindows.values.toList()
+      ..sort((left, right) => left.zIndex.compareTo(right.zIndex));
+    return items;
+  }
 
-  // A list to track minimized windows
-  final List<WindowInfo> _minimizedWindows = [];
+  List<WindowInfo> get embeddedWindows =>
+      windows.where((window) => window.isEmbedded).toList();
 
-  // Expose the active window object
+  List<WindowInfo> get floatingWindows =>
+      windows.where((window) => window.isFloating).toList();
+
+  List<WindowInfo> get minimizedWindows =>
+      windows.where((window) => window.isMinimized).toList();
+
   WindowInfo? get activeWindow =>
-      _activeWindowId == null ? null : _openedWindows[_activeWindowId!];
+      embeddedWindows.isEmpty ? null : embeddedWindows.last;
 
-  // Expose the list of minimized windows
-  List<WindowInfo> get minimizedWindows => _minimizedWindows;
+  WindowInfo? windowById(String id) => _openedWindows[id];
 
-  // This method is called when you click a menu item
-  void openOrFocusWindow({
+  WindowInfo openWindow({
     required String title,
-    required Widget content,
     required String popOutPageKey,
+    AppWindowPayload payload = const AppWindowPayload(),
+    Rect? bounds,
+    AppWindowDisplayMode displayMode = AppWindowDisplayMode.embedded,
   }) {
-    // Check if a window with this key already exists
-    var existingWindow = _openedWindows.values.firstWhere(
-      (w) => w.popOutPageKey == popOutPageKey,
-      orElse: () => WindowInfo(
-        id: '',
-        title: '',
-        content: Container(),
-        popOutPageKey: '',
-      ),
+    final newWindow = WindowInfo(
+      id: _uuid.v4(),
+      title: title,
+      popOutPageKey: popOutPageKey,
+      payload: payload,
+      bounds: bounds ?? _defaultBoundsFor(_openedWindows.length),
+      displayMode: displayMode,
+      zIndex: ++_zIndexSeed,
     );
+    _openedWindows[newWindow.id] = newWindow;
 
-    if (existingWindow.id.isNotEmpty) {
-      // If it exists, make it active
-      _activeWindowId = existingWindow.id;
-      // If it was minimized, restore it
-      _minimizedWindows.removeWhere((w) => w.id == existingWindow.id);
-    } else {
-      // If it doesn't exist, create a new one
-      final newWindow = WindowInfo(
-        id: _uuid.v4(),
-        title: title,
-        content: content,
-        popOutPageKey: popOutPageKey,
-      );
-      _openedWindows[newWindow.id] = newWindow;
-      _activeWindowId = newWindow.id;
+    notifyListeners();
+    return newWindow;
+  }
+
+  void focusWindow(String id) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
     }
 
+    _openedWindows[id] = window.copyWith(
+      displayMode: AppWindowDisplayMode.embedded,
+      zIndex: ++_zIndexSeed,
+    );
     notifyListeners();
   }
 
-  void closeActiveWindow() {
-    if (_activeWindowId != null) {
-      _openedWindows.remove(_activeWindowId);
-      _activeWindowId = null;
-      // Optional: open the next available window? For now, we just close.
+  void closeWindow(String id) {
+    if (_openedWindows.remove(id) != null) {
+      notifyListeners();
     }
+  }
+
+  void minimizeWindow(String id) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
+    }
+
+    _openedWindows[id] = window.copyWith(
+      displayMode: AppWindowDisplayMode.minimized,
+      clearFloatingWindowId: true,
+    );
     notifyListeners();
   }
 
-  void minimizeActiveWindow() {
-    if (activeWindow != null && !_minimizedWindows.contains(activeWindow)) {
-      _minimizedWindows.add(activeWindow!);
-      _activeWindowId = null; // Clear the main view
+  void restoreMinimizedWindow(String id, {Rect? bounds}) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
     }
+
+    _openedWindows[id] = window.copyWith(
+      displayMode: AppWindowDisplayMode.embedded,
+      bounds: bounds ?? window.bounds,
+      zIndex: ++_zIndexSeed,
+      clearFloatingWindowId: true,
+    );
     notifyListeners();
   }
 
-  void restoreMinimizedWindow(String id) {
-    final window = _minimizedWindows.firstWhere((w) => w.id == id);
-    _minimizedWindows.remove(window);
-    _activeWindowId = window.id; // Make it active again
+  void markWindowFloating(String id, {String? floatingWindowId}) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
+    }
+
+    _openedWindows[id] = window.copyWith(
+      displayMode: AppWindowDisplayMode.floating,
+      floatingWindowId: floatingWindowId,
+      zIndex: ++_zIndexSeed,
+    );
     notifyListeners();
   }
 
-  // This method is called by the "Float" button
-  void floatActiveWindow() {
-    if (activeWindow != null) {
-      // When floating, we simply close the internal representation.
-      // The new OS window is now independent.
-      closeActiveWindow();
+  void dockWindow(
+    String id, {
+    required Rect bounds,
+    bool minimized = false,
+  }) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
     }
-    // No need to notify listeners, as closeActiveWindow already does.
+
+    _openedWindows[id] = window.copyWith(
+      displayMode: minimized
+          ? AppWindowDisplayMode.minimized
+          : AppWindowDisplayMode.embedded,
+      bounds: bounds,
+      zIndex: ++_zIndexSeed,
+      clearFloatingWindowId: true,
+    );
+    notifyListeners();
+  }
+
+  void updateWindowBounds(String id, Rect bounds) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
+    }
+
+    _openedWindows[id] = window.copyWith(bounds: bounds);
+    notifyListeners();
+  }
+
+  void updateWindowPayload(String id, AppWindowPayload payload) {
+    final window = _openedWindows[id];
+    if (window == null) {
+      return;
+    }
+
+    _openedWindows[id] = window.copyWith(payload: payload);
+    notifyListeners();
+  }
+
+  Rect _defaultBoundsFor(int index) {
+    return Rect.zero;
   }
 }

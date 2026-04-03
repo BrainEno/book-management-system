@@ -48,152 +48,262 @@ class ProductQueryHeader extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useCompactHeader = constraints.maxWidth < 1080;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '商品查询',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+              if (useCompactHeader)
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _HeaderTitle(theme: theme),
+                    _HeaderActions(
+                      isBusy: isBusy,
+                      exportButtonLabel: exportButtonLabel,
+                      onCreatePressed: onCreatePressed,
+                      onRefreshPressed: onRefreshPressed,
+                      onExportPressed: onExportPressed,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '上方切换查询方式，下方使用表格浏览、勾选并导出商品资料。',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppPallete.lightGreyText,
-                    ),
-                  ),
-                ],
-              ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  FilledButton.icon(
-                    onPressed: onCreatePressed,
-                    icon: const Icon(Icons.add),
-                    label: const Text('新增商品'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: onRefreshPressed,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('刷新'),
-                  ),
-                  FilledButton.tonalIcon(
-                    onPressed: onExportPressed,
-                    icon: isBusy && onExportPressed != null
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.download_rounded),
-                    label: Text(exportButtonLabel),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: 220,
-                child: DropdownButtonFormField<ProductQueryMode>(
-                  initialValue: queryMode,
-                  decoration: InputDecoration(
-                    labelText: '查询方式',
-                    filled: true,
-                    fillColor: const Color(0xFFF8F3EA),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  items: [
-                    for (final mode in ProductQueryMode.values)
-                      DropdownMenuItem<ProductQueryMode>(
-                        value: mode,
-                        child: Text(mode.label),
-                      ),
                   ],
-                  onChanged: onQueryModeChanged,
-                ),
-              ),
-              SizedBox(
-                width: 420,
-                child: TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: queryMode.hintText,
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: searchController.text.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: '清空搜索',
-                            onPressed: searchController.clear,
-                            icon: const Icon(Icons.close),
-                          ),
-                    filled: true,
-                    fillColor: const Color(0xFFF8F3EA),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide.none,
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _HeaderTitle(theme: theme)),
+                    const SizedBox(width: 16),
+                    _HeaderActions(
+                      isBusy: isBusy,
+                      exportButtonLabel: exportButtonLabel,
+                      onCreatePressed: onCreatePressed,
+                      onRefreshPressed: onRefreshPressed,
+                      onExportPressed: onExportPressed,
                     ),
-                  ),
+                  ],
                 ),
+              const SizedBox(height: 18),
+              if (useCompactHeader)
+                Column(
+                  children: [
+                    _QueryModeField(
+                      queryMode: queryMode,
+                      onQueryModeChanged: onQueryModeChanged,
+                    ),
+                    const SizedBox(height: 14),
+                    _SearchField(
+                      searchController: searchController,
+                      queryMode: queryMode,
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 220,
+                      child: _QueryModeField(
+                        queryMode: queryMode,
+                        onQueryModeChanged: onQueryModeChanged,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _SearchField(
+                        searchController: searchController,
+                        queryMode: queryMode,
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _CountBadge(
+                    label: '已录入商品',
+                    value: totalCount.toString(),
+                    color: const Color(0xFF2E5B4E),
+                  ),
+                  _CountBadge(
+                    label: '当前结果',
+                    value: visibleCount.toString(),
+                    color: const Color(0xFF9B6A34),
+                  ),
+                  _CountBadge(
+                    label: '已勾选',
+                    value: selectedCount.toString(),
+                    color: const Color(0xFF5C6270),
+                  ),
+                  _CountBadge(
+                    label: '默认导出',
+                    value: selectedCount > 0
+                        ? '选中结果'
+                        : searchController.text.trim().isEmpty
+                        ? '全部商品'
+                        : '查询结果',
+                    color: const Color(0xFF7B5E83),
+                  ),
+                ],
               ),
+              if (isBusy) ...[
+                const SizedBox(height: 14),
+                const LinearProgressIndicator(minHeight: 4),
+              ],
             ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HeaderTitle extends StatelessWidget {
+  const _HeaderTitle({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '商品查询',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _CountBadge(
-                label: '已录入商品',
-                value: totalCount.toString(),
-                color: const Color(0xFF2E5B4E),
-              ),
-              _CountBadge(
-                label: '当前结果',
-                value: visibleCount.toString(),
-                color: const Color(0xFF9B6A34),
-              ),
-              _CountBadge(
-                label: '已勾选',
-                value: selectedCount.toString(),
-                color: const Color(0xFF5C6270),
-              ),
-              _CountBadge(
-                label: '默认导出',
-                value: selectedCount > 0
-                    ? '选中结果'
-                    : searchController.text.trim().isEmpty
-                    ? '全部商品'
-                    : '查询结果',
-                color: const Color(0xFF7B5E83),
-              ),
-            ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '上方切换查询方式，下方使用表格浏览、勾选并导出商品资料。',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppPallete.lightGreyText,
           ),
-          if (isBusy) ...[
-            const SizedBox(height: 14),
-            const LinearProgressIndicator(minHeight: 4),
-          ],
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderActions extends StatelessWidget {
+  const _HeaderActions({
+    required this.isBusy,
+    required this.exportButtonLabel,
+    required this.onCreatePressed,
+    required this.onRefreshPressed,
+    required this.onExportPressed,
+  });
+
+  final bool isBusy;
+  final String exportButtonLabel;
+  final VoidCallback onCreatePressed;
+  final VoidCallback onRefreshPressed;
+  final VoidCallback? onExportPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.end,
+      children: [
+        FilledButton.icon(
+          onPressed: onCreatePressed,
+          icon: const Icon(Icons.add),
+          label: const Text('新增商品'),
+        ),
+        OutlinedButton.icon(
+          onPressed: onRefreshPressed,
+          icon: const Icon(Icons.refresh),
+          label: const Text('刷新'),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: onExportPressed,
+          icon: isBusy && onExportPressed != null
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.download_rounded),
+          label: Text(exportButtonLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _QueryModeField extends StatelessWidget {
+  const _QueryModeField({
+    required this.queryMode,
+    required this.onQueryModeChanged,
+  });
+
+  final ProductQueryMode queryMode;
+  final ValueChanged<ProductQueryMode?> onQueryModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<ProductQueryMode>(
+      key: const ValueKey('product-query-mode-field'),
+      initialValue: queryMode,
+      decoration: InputDecoration(
+        labelText: '查询方式',
+        filled: true,
+        fillColor: const Color(0xFFF8F3EA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      items: [
+        for (final mode in ProductQueryMode.values)
+          DropdownMenuItem<ProductQueryMode>(
+            value: mode,
+            child: Text(mode.label),
+          ),
+      ],
+      onChanged: onQueryModeChanged,
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.searchController,
+    required this.queryMode,
+  });
+
+  final TextEditingController searchController;
+  final ProductQueryMode queryMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      key: const ValueKey('product-query-search-field'),
+      controller: searchController,
+      decoration: InputDecoration(
+        hintText: queryMode.hintText,
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: searchController.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: '清空搜索',
+                onPressed: searchController.clear,
+                icon: const Icon(Icons.close),
+              ),
+        filled: true,
+        fillColor: const Color(0xFFF8F3EA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }

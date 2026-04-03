@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/di/service_locator.dart';
-import 'package:bookstore_management_system/core/theme/app_pallete.dart';
+import 'package:bookstore_management_system/core/window/app_window_manager.dart';
+import 'package:bookstore_management_system/core/window/current_app_window.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
@@ -18,12 +21,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 class ProductInfoEditorView extends StatefulWidget {
-  const ProductInfoEditorView({super.key, this.product});
+  const ProductInfoEditorView({
+    super.key,
+    this.product,
+    this.initialDraft,
+    this.initialOperatorUsername,
+  });
 
   final ProductModel? product;
+  final Map<String, String>? initialDraft;
+  final String? initialOperatorUsername;
 
   @override
   State<ProductInfoEditorView> createState() => _ProductInfoEditorViewState();
@@ -42,6 +53,11 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     'bookstore_product_editor',
     mode: ChannelMode.unidirectional,
   );
+  final _subWindowEvents = const WindowMethodChannel(
+    'bookstore_sub_window_events',
+    mode: ChannelMode.unidirectional,
+  );
+  Timer? _draftSyncDebounce;
 
   @override
   void initState() {
@@ -50,16 +66,84 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     _draftBox = sl<Box<Map<String, String>>>();
     _isbnReceiverService = ProductEditorIsbnReceiverService();
     _appRuntime = sl<AppRuntime>();
+    _applyInitialFormData();
+    _registerDraftListeners();
     _startIsbnReceiverService();
-    context.read<AuthBloc>().add(GetCurrentUserEvent());
+    _seedOperatorFromAuthStateIfAvailable();
+    if (context.read<AuthBloc>().state is! AuthSuccess &&
+        (widget.initialOperatorUsername?.trim().isNotEmpty != true)) {
+      context.read<AuthBloc>().add(GetCurrentUserEvent());
+    }
   }
 
   @override
   void dispose() {
+    _draftSyncDebounce?.cancel();
+    _unregisterDraftListeners();
     _isbnReceiverService.stop();
     _audioPlayer.dispose();
     _formControllers.dispose();
     super.dispose();
+  }
+
+  void _applyInitialFormData() {
+    if (widget.product != null) {
+      _formControllers.populateFromProduct(widget.product!);
+    }
+    final initialOperatorUsername = widget.initialOperatorUsername?.trim();
+    if (initialOperatorUsername != null && initialOperatorUsername.isNotEmpty) {
+      _formControllers.setOperator(initialOperatorUsername);
+    }
+    final draft = widget.initialDraft;
+    if (draft != null && draft.isNotEmpty) {
+      _formControllers.applyDraftData(draft);
+    }
+  }
+
+  void _seedOperatorFromAuthStateIfAvailable() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthSuccess) {
+      _formControllers.setOperator(authState.user.username);
+    }
+  }
+
+  void _registerDraftListeners() {
+    for (final controller in _formControllers.allControllers) {
+      controller.addListener(_scheduleDraftSync);
+    }
+  }
+
+  void _unregisterDraftListeners() {
+    for (final controller in _formControllers.allControllers) {
+      controller.removeListener(_scheduleDraftSync);
+    }
+  }
+
+  void _scheduleDraftSync() {
+    if (!_appRuntime.isSubWindow || _appRuntime.hostWindowId == null) {
+      return;
+    }
+
+    _draftSyncDebounce?.cancel();
+    _draftSyncDebounce = Timer(const Duration(milliseconds: 180), () {
+      unawaited(_syncDraftToParent());
+    });
+  }
+
+  Future<void> _syncDraftToParent() async {
+    final hostWindowId = _appRuntime.hostWindowId;
+    if (!_appRuntime.isSubWindow || hostWindowId == null) {
+      return;
+    }
+
+    try {
+      await _subWindowEvents.invokeMethod('sync-editor-draft', {
+        'windowId': hostWindowId,
+        'draft': _formControllers.buildDraftData(),
+      });
+    } catch (_) {
+      // Best effort.
+    }
   }
 
   void _dismissTextInput() {
@@ -159,17 +243,68 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     }
 
     _draftBox.put(isbn, _formControllers.buildDraftData());
+    unawaited(_syncDraftToParent());
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('草稿已保存')));
   }
 
+  String? _resolveOperatorForReset() {
+    final operatorName = _formControllers.operatorController.text.trim();
+    if (operatorName.isNotEmpty) {
+      return operatorName;
+    }
+
+    final initialOperator = widget.initialOperatorUsername?.trim();
+    if (initialOperator != null && initialOperator.isNotEmpty) {
+      return initialOperator;
+    }
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthSuccess) {
+      return authState.user.username;
+    }
+
+    return null;
+  }
+
+  void _resetEditorAfterCreate() {
+    _formKey.currentState?.reset();
+    _formControllers.resetForNewEntry(
+      operatorUsername: _resolveOperatorForReset(),
+    );
+  }
+
+  Future<void> _notifyEditorSaved({required int productId}) async {
+    if (!_appRuntime.isSubWindow) {
+      return;
+    }
+
+    try {
+      await _editorChannel.invokeMethod('product-editor-saved', {
+        'productId': productId,
+      });
+    } catch (_) {
+      // Some host windows don't subscribe to the editor channel.
+    }
+  }
+
+  Future<void> _clearDraftAfterSave() async {
+    final isbn = _formControllers.isbnController.text.trim();
+    if (isbn.isNotEmpty) {
+      await _draftBox.delete(isbn);
+    }
+  }
+
   void _handleAuthSuccess(AuthSuccess authState) {
     setState(() {
-      if (widget.product != null) {
-        _formControllers.populateFromProduct(widget.product!);
+      final hasDraftOperator =
+          widget.initialDraft?['operator']?.trim().isNotEmpty == true;
+      final hasInitialOperator =
+          widget.initialOperatorUsername?.trim().isNotEmpty == true;
+      if (!hasDraftOperator && !hasInitialOperator) {
+        _formControllers.setOperator(authState.user.username);
       }
-      _formControllers.setOperator(authState.user.username);
     });
   }
 
@@ -179,23 +314,41 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
       return;
     }
 
+    final currentWindow = Provider.of<CurrentAppWindow?>(
+      context,
+      listen: false,
+    );
+    if (currentWindow != null) {
+      context.read<AppWindowManager>().closeWindow(currentWindow.windowId);
+      return;
+    }
+
     if (mounted && Navigator.of(context).canPop()) {
       Navigator.pop(context);
     }
   }
 
   Future<void> _handleProductState(ProductState state) async {
-    if (state is ProductAdded ||
-        state is ProductUpdated ||
-        state is ProductDeleted) {
+    if (state is ProductAdded) {
       _dismissTextInput();
-      final savedProductId = state is ProductAdded
-          ? state.product.id
-          : widget.product?.id;
-      if (_appRuntime.isSubWindow && savedProductId != null) {
-        await _editorChannel.invokeMethod('product-editor-saved', {
-          'productId': savedProductId,
-        });
+      await _notifyEditorSaved(productId: state.product.id);
+      await _clearDraftAfterSave();
+      _resetEditorAfterCreate();
+      await _syncDraftToParent();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('商品资料已保存并清空表单')));
+      return;
+    }
+
+    if (state is ProductUpdated || state is ProductDeleted) {
+      _dismissTextInput();
+      final savedProductId = widget.product?.id;
+      if (savedProductId != null) {
+        await _notifyEditorSaved(productId: savedProductId);
       }
       await _closeEditor();
       return;
@@ -212,8 +365,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   Widget build(BuildContext context) {
     final isUpdate = widget.product != null;
     final theme = Theme.of(context);
-    final windowId = _appRuntime.windowId;
-    final idBadge = isUpdate ? '内部 ID ${widget.product!.id}' : '内部 ID 保存后生成';
+    final operatorName = _formControllers.operatorController.text.trim();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2EBDD),
@@ -233,170 +385,126 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 1320,
-                  maxHeight: MediaQuery.sizeOf(context).height - 40,
-                ),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.98),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFFE3D6C5)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.10),
-                        blurRadius: 28,
-                        offset: const Offset(0, 16),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 18),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFFF9F4EB), Color(0xFFF4EADF)],
-                            ),
-                            border: Border(
-                              bottom: BorderSide(color: Color(0xFFE6D8C6)),
-                            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final normalizedMaxHeight = constraints.maxHeight.isFinite
+                    ? math.max(0.0, constraints.maxHeight)
+                    : double.infinity;
+
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 1320,
+                      maxHeight: normalizedMaxHeight,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface.withValues(
+                          alpha: 0.98,
+                        ),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: const Color(0xFFE3D6C5)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.10),
+                            blurRadius: 28,
+                            offset: const Offset(0, 16),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isUpdate ? '编辑商品资料' : '新建商品资料',
-                                      style: theme.textTheme.headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      '把最重要的字段放在前面，保存后会自动同步到商品查询页。',
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: const Color(0xFF6F6B65),
-                                          ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 10,
-                                      runSpacing: 10,
-                                      children: [
-                                        _HeaderPill(
-                                          label: '内部主键',
-                                          value: idBadge,
-                                        ),
-                                        _HeaderPill(
-                                          label: '操作人员',
-                                          value:
-                                              _formControllers
-                                                  .operatorController
-                                                  .text
-                                                  .isEmpty
-                                              ? '加载中'
-                                              : _formControllers
-                                                    .operatorController
-                                                    .text,
-                                        ),
-                                        if (_appRuntime.isSubWindow &&
-                                            windowId?.isNotEmpty == true)
-                                          _HeaderPill(
-                                            label: '子窗口',
-                                            value: '#$windowId',
-                                          ),
-                                      ],
-                                    ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                24,
+                                20,
+                                24,
+                                18,
+                              ),
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFFF9F4EB),
+                                    Color(0xFFF4EADF),
                                   ],
                                 ),
+                                border: Border(
+                                  bottom: BorderSide(color: Color(0xFFE6D8C6)),
+                                ),
                               ),
-                              const SizedBox(width: 16),
-                              Wrap(
-                                spacing: 12,
-                                runSpacing: 12,
-                                alignment: WrapAlignment.end,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _saveDraft,
-                                    icon: const Icon(Icons.note_add_outlined),
-                                    label: const Text('保存草稿'),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isUpdate ? '编辑商品资料' : '新建商品资料',
+                                          style: theme.textTheme.headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          '操作人员：${operatorName.isEmpty ? (widget.initialOperatorUsername ?? '-') : operatorName}',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: const Color(0xFF6F6B65),
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  FilledButton.icon(
-                                    onPressed: _saveOrUpdateBook,
-                                    icon: const Icon(Icons.save_outlined),
-                                    label: Text(isUpdate ? '保存修改' : '保存资料'),
+                                  const SizedBox(width: 16),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 12,
+                                    alignment: WrapAlignment.end,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: _saveDraft,
+                                        icon: const Icon(
+                                          Icons.note_add_outlined,
+                                        ),
+                                        label: const Text('保存草稿'),
+                                      ),
+                                      FilledButton.icon(
+                                        onPressed: _saveOrUpdateBook,
+                                        icon: const Icon(Icons.save_outlined),
+                                        label: Text(isUpdate ? '保存修改' : '保存资料'),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(24),
-                            child: Form(
-                              key: _formKey,
-                              child: ProductInfoEditorFormGrid(
-                                controllers: _formControllers,
-                                onOpenScanner: _openDesktopScanner,
-                                onDropdownChanged: () => setState(() {}),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(24),
+                                child: Form(
+                                  key: _formKey,
+                                  child: ProductInfoEditorFormGrid(
+                                    controllers: _formControllers,
+                                    onOpenScanner: _openDesktopScanner,
+                                    onDropdownChanged: () => setState(() {}),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeaderPill extends StatelessWidget {
-  const _HeaderPill({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F1E7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2D3BF)),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppPallete.ink),
-          children: [
-            TextSpan(
-              text: '$label\n',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            TextSpan(
-              text: value,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ],
         ),
       ),
     );

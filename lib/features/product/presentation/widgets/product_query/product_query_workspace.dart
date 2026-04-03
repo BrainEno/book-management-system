@@ -1,5 +1,6 @@
 import 'package:bookstore_management_system/features/product/data/mappers/product_entity_mapper.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
+import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_detail_form_controller.dart';
@@ -10,9 +11,12 @@ import 'package:bookstore_management_system/features/product/presentation/widget
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_table_source.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_utils.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_workspace_support.dart';
+import 'package:bookstore_management_system/app/navigation/app_window_destination.dart';
+import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/window/window_pop_out_service.dart';
-import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
-import 'package:bookstore_management_system/core/di/service_locator.dart';
+import 'package:bookstore_management_system/core/window/app_window_manager.dart';
+import 'package:bookstore_management_system/core/window/sub_window_launch_data.dart';
+import 'package:bookstore_management_system/core/window/window_info.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,21 +25,26 @@ import 'dart:async';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 class ProductQueryWorkspace extends StatefulWidget {
-  const ProductQueryWorkspace({super.key, this.initialProducts});
+  const ProductQueryWorkspace({
+    super.key,
+    this.initialProducts,
+    this.windowPopOutService = const DesktopWindowPopOutService(),
+  });
 
   final List<ProductModel>? initialProducts;
+  final WindowPopOutService windowPopOutService;
 
   @override
   State<ProductQueryWorkspace> createState() => _ProductQueryWorkspaceState();
 }
 
 class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
+  final _logger = AppLogger.logger;
   final _detailFormKey = GlobalKey<FormState>();
   final _searchController = TextEditingController();
   final _dataGridController = DataGridController();
   final _exportService = const ProductQueryExportService();
   final _detailFormController = ProductQueryDetailFormController();
-  final _isSubWindow = sl<AppRuntime>().isSubWindow;
   final _editorChannel = const WindowMethodChannel(
     'bookstore_product_editor',
     mode: ChannelMode.unidirectional,
@@ -55,9 +64,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   void initState() {
     super.initState();
     _searchController.addListener(_handleQueryInputsChanged);
-    if (!_isSubWindow) {
-      unawaited(_editorChannel.setMethodCallHandler(_handleWindowMessage));
-    }
+    unawaited(_editorChannel.setMethodCallHandler(_handleWindowMessage));
 
     if (widget.initialProducts != null && widget.initialProducts!.isNotEmpty) {
       _applyProducts(widget.initialProducts!);
@@ -78,9 +85,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     _searchController.dispose();
     _dataGridController.dispose();
     _detailFormController.dispose();
-    if (!_isSubWindow) {
-      unawaited(_editorChannel.setMethodCallHandler(null));
-    }
+    unawaited(_editorChannel.setMethodCallHandler(null));
     super.dispose();
   }
 
@@ -165,11 +170,68 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   }
 
   Future<void> _openFullEditor({ProductModel? product}) async {
-    await openSubWindow(
-      pageKey: 'product-editor',
+    final authState = context.read<AuthBloc>().state;
+    final currentOperatorUsername = authState is AuthSuccess
+        ? authState.user.username
+        : null;
+    final manager = context.read<AppWindowManager>();
+    final managedWindow = manager.openWindow(
       title: product == null ? '新建商品资料' : '编辑商品资料',
-      state: {if (product != null) 'product': product.toJson()},
+      popOutPageKey: 'product-editor',
+      payload: AppWindowPayload(
+        initialProduct: product,
+        currentOperatorUsername: currentOperatorUsername,
+      ),
+      displayMode: AppWindowDisplayMode.floating,
     );
+
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final workspaceSize = renderBox?.size ?? MediaQuery.sizeOf(context);
+    final localFloatingBounds = resolveProductEditorFloatingBounds(
+      workspaceSize,
+    );
+    final origin = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+    final globalBounds = Rect.fromLTWH(
+      origin.dx + localFloatingBounds.left,
+      origin.dy + localFloatingBounds.top,
+      localFloatingBounds.width,
+      localFloatingBounds.height,
+    );
+
+    final launchData = SubWindowLaunchData(
+      page: 'product-editor',
+      title: managedWindow.title,
+      hostWindowId: managedWindow.id,
+      state: managedWindow.payload.toJson(),
+      bounds: SubWindowBounds.fromRect(globalBounds),
+    );
+
+    try {
+      _logger.i(
+        'Opening product editor from query workspace: product=${product?.id}, managedHost=${managedWindow.id}, trackedWindowsBefore=${manager.windows.length}',
+      );
+      final floatingWindowId = await widget.windowPopOutService.openSubWindow(
+        launchData,
+      );
+      if (!mounted) {
+        return;
+      }
+      manager.markWindowFloating(
+        managedWindow.id,
+        floatingWindowId: floatingWindowId,
+      );
+      _logger.i(
+        'Product editor opened from query workspace: managedHost=${managedWindow.id}, child=$floatingWindowId',
+      );
+    } catch (error) {
+      manager.closeWindow(managedWindow.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('打开子窗口失败：$error')));
+    }
   }
 
   void _selectProduct(ProductModel product) {
@@ -388,7 +450,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
       productCategoryOptions,
       _products.map((product) => product.category ?? '不区分'),
     );
-    final isCompactLayout = MediaQuery.sizeOf(context).width < 1280;
+    final isCompactLayout = MediaQuery.sizeOf(context).width < 1440;
     final tableSource = ProductQueryTableSource(
       products: visibleProducts,
       activeProductId: selectedProduct?.id,
@@ -496,7 +558,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
-                            flex: 10,
+                            flex: 12,
                             child: ProductQuerySpreadsheetPanel(
                               source: tableSource,
                               controller: _dataGridController,
@@ -515,7 +577,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                           ),
                           const SizedBox(width: 18),
                           Expanded(
-                            flex: 6,
+                            flex: 5,
                             child: ProductQueryDetailPanel(
                               formKey: _detailFormKey,
                               product: selectedProduct,

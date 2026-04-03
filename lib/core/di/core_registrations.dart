@@ -3,7 +3,11 @@ import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
 import 'package:logger/logger.dart';
 
-void registerCoreDependencies({required bool isMultiWindow, String? windowId}) {
+void registerCoreDependencies({
+  required bool isMultiWindow,
+  String? windowId,
+  String? hostWindowId,
+}) {
   sl.registerSingleton<Logger>(
     Logger(
       printer: PrettyPrinter(
@@ -18,7 +22,11 @@ void registerCoreDependencies({required bool isMultiWindow, String? windowId}) {
   );
 
   sl.registerSingleton<AppRuntime>(
-    AppRuntime(isSubWindow: isMultiWindow, windowId: windowId),
+    AppRuntime(
+      isSubWindow: isMultiWindow,
+      windowId: windowId,
+      hostWindowId: hostWindowId,
+    ),
   );
   sl.registerLazySingleton(() => ThemeBloc());
 }
