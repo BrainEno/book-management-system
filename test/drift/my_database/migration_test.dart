@@ -55,21 +55,19 @@ void main() {
       ),
     );
 
-    final categoryId = await database
-        .into(database.productCategories)
-        .insert(
-          ProductCategoriesCompanion.insert(
-            code: 'BOOK',
-            name: 'Books',
-          ),
-        );
+    await database.into(database.productCategories).insert(
+      ProductCategoriesCompanion.insert(
+        code: 'BOOK',
+        name: 'Books',
+      ),
+    );
 
-    final publisherId = await database.into(database.publishers).insert(
-          PublishersCompanion.insert(
-            code: const Value('PUB-001'),
-            name: 'Test Publisher',
-          ),
-        );
+    await database.into(database.publishers).insert(
+      PublishersCompanion.insert(
+        code: const Value('PUB-001'),
+        name: 'Test Publisher',
+      ),
+    );
 
     final supplierId = await database.into(database.suppliers).insert(
           SuppliersCompanion.insert(
@@ -401,7 +399,7 @@ void main() {
         1712103600
       );
     ''');
-    rawDb.dispose();
+    rawDb.close();
 
     database = AppDatabase(NativeDatabase.createInBackground(dbFile));
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/auth/presentation/widgets/auth_field.dart';
-import 'package:go_router/go_router.dart';
 
 const String loginSuccessMessage = '登录成功';
 
@@ -50,7 +49,6 @@ class _LoginPageState extends State<LoginPage> {
               context,
             ).showSnackBar(const SnackBar(content: Text(loginSuccessMessage)));
             setWindowSize(1920, 1080);
-            context.go('/');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(
               context,

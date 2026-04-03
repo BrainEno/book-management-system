@@ -2,6 +2,18 @@ import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  static const String appFontFamily = 'NotoSansSC';
+  static const List<String> appFontFamilyFallback = [
+    'Microsoft YaHei UI',
+    'Microsoft YaHei',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Heiti SC',
+    'SimHei',
+    'Noto Sans CJK SC',
+    'Noto Sans SC',
+  ];
+
   // Shared Border Styling
   static OutlineInputBorder _border({
     Color color = AppPallete.greyColorLight,
@@ -11,6 +23,21 @@ class AppTheme {
     borderSide: BorderSide(color: color, width: width),
     borderRadius: BorderRadius.circular(radius),
   );
+
+  static TextStyle _appTextStyle(
+    TextStyle style, {
+    Color? color,
+    FontWeight? fontWeight,
+    double? fontSize,
+  }) {
+    return style.copyWith(
+      fontFamily: appFontFamily,
+      fontFamilyFallback: appFontFamilyFallback,
+      color: color,
+      fontWeight: fontWeight,
+      fontSize: fontSize,
+    );
+  }
 
   // Responsive Padding Helper
   static EdgeInsets responsivePadding(
@@ -56,6 +83,8 @@ class AppTheme {
         color: AppPallete.whiteColor,
         fontSize: 20,
         fontWeight: FontWeight.bold,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
       ),
       iconTheme: IconThemeData(color: AppPallete.whiteColor),
     ),
@@ -70,23 +99,43 @@ class AppTheme {
     textTheme: ThemeData.dark().textTheme
         .apply(fontFamily: 'NotoSansSC')
         .copyWith(
-          bodyMedium: const TextStyle(color: AppPallete.whiteColor),
-          bodyLarge: const TextStyle(color: AppPallete.whiteColor),
-          bodySmall: const TextStyle(color: AppPallete.greyColor),
-          titleLarge: const TextStyle(
+          bodyMedium: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.whiteColor,
+          ),
+          bodyLarge: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.whiteColor,
+          ),
+          bodySmall: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.greyColor,
+          ),
+          titleLarge: _appTextStyle(
+            const TextStyle(),
             color: AppPallete.whiteColor,
             fontWeight: FontWeight.bold,
           ),
-          titleMedium: const TextStyle(
+          titleMedium: _appTextStyle(
+            const TextStyle(),
             color: AppPallete.whiteColor,
             fontWeight: FontWeight.w500,
           ),
-          titleSmall: const TextStyle(color: AppPallete.greyColorLight),
-          labelLarge: const TextStyle(color: AppPallete.whiteColor),
+          titleSmall: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.greyColorLight,
+          ),
+          labelLarge: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.whiteColor,
+          ),
         ),
     chipTheme: ChipThemeData(
       backgroundColor: AppPallete.darkGreyLight,
-      labelStyle: const TextStyle(color: AppPallete.whiteColor),
+      labelStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.whiteColor,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
@@ -104,15 +153,28 @@ class AppTheme {
         width: 2.0,
       ), // Updated to blue
       errorBorder: _border(color: AppPallete.errorColor),
-      hintStyle: const TextStyle(color: AppPallete.greyColorLight),
-      labelStyle: const TextStyle(color: AppPallete.whiteColor),
-      errorStyle: const TextStyle(color: AppPallete.errorColor),
+      hintStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.greyColorLight,
+      ),
+      labelStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.whiteColor,
+      ),
+      errorStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.errorColor,
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppPallete.blueColor, // Updated to blue
         foregroundColor: AppPallete.whiteColor,
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        textStyle: _appTextStyle(
+          const TextStyle(),
+          fontWeight: FontWeight.bold,
+          color: AppPallete.whiteColor,
+        ),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -120,7 +182,11 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppPallete.blueColor, // Updated to blue
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        textStyle: _appTextStyle(
+          const TextStyle(),
+          fontWeight: FontWeight.bold,
+          color: AppPallete.blueColor,
+        ),
       ),
     ),
     iconTheme: const IconThemeData(color: AppPallete.whiteColor),
@@ -136,8 +202,14 @@ class AppTheme {
         color: AppPallete.whiteColor,
         fontSize: 20,
         fontWeight: FontWeight.bold,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
       ),
-      contentTextStyle: TextStyle(color: AppPallete.greyColor),
+      contentTextStyle: TextStyle(
+        color: AppPallete.greyColor,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
+      ),
     ),
   );
 
@@ -151,6 +223,8 @@ class AppTheme {
         color: AppPallete.lightBlack,
         fontSize: 20,
         fontWeight: FontWeight.bold,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
       ),
       iconTheme: IconThemeData(color: AppPallete.lightBlack),
     ),
@@ -165,23 +239,43 @@ class AppTheme {
     textTheme: ThemeData.light().textTheme
         .apply(fontFamily: 'NotoSansSC')
         .copyWith(
-          bodyMedium: const TextStyle(color: AppPallete.lightBlack),
-          bodyLarge: const TextStyle(color: AppPallete.lightBlack),
-          bodySmall: const TextStyle(color: AppPallete.lightGreyText),
-          titleLarge: const TextStyle(
+          bodyMedium: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.lightBlack,
+          ),
+          bodyLarge: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.lightBlack,
+          ),
+          bodySmall: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.lightGreyText,
+          ),
+          titleLarge: _appTextStyle(
+            const TextStyle(),
             color: AppPallete.lightBlack,
             fontWeight: FontWeight.bold,
           ),
-          titleMedium: const TextStyle(
+          titleMedium: _appTextStyle(
+            const TextStyle(),
             color: AppPallete.lightBlack,
             fontWeight: FontWeight.w500,
           ),
-          titleSmall: const TextStyle(color: AppPallete.lightGreyText),
-          labelLarge: const TextStyle(color: AppPallete.lightBlack),
+          titleSmall: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.lightGreyText,
+          ),
+          labelLarge: _appTextStyle(
+            const TextStyle(),
+            color: AppPallete.lightBlack,
+          ),
         ),
     chipTheme: ChipThemeData(
       backgroundColor: AppPallete.lightGrey,
-      labelStyle: const TextStyle(color: AppPallete.lightBlack),
+      labelStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.lightBlack,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
@@ -199,15 +293,28 @@ class AppTheme {
         width: 2.0,
       ), // Updated to blue
       errorBorder: _border(color: AppPallete.errorColor),
-      hintStyle: const TextStyle(color: AppPallete.lightGreyText),
-      labelStyle: const TextStyle(color: AppPallete.lightBlack),
-      errorStyle: const TextStyle(color: AppPallete.errorColor),
+      hintStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.lightGreyText,
+      ),
+      labelStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.lightBlack,
+      ),
+      errorStyle: _appTextStyle(
+        const TextStyle(),
+        color: AppPallete.errorColor,
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppPallete.gradient1, // Updated to blue
         foregroundColor: AppPallete.whiteColor,
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        textStyle: _appTextStyle(
+          const TextStyle(),
+          fontWeight: FontWeight.bold,
+          color: AppPallete.whiteColor,
+        ),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -215,7 +322,11 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppPallete.gradient1, // Updated to blue
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        textStyle: _appTextStyle(
+          const TextStyle(),
+          fontWeight: FontWeight.bold,
+          color: AppPallete.gradient1,
+        ),
       ),
     ),
     iconTheme: const IconThemeData(color: AppPallete.lightBlack),
@@ -231,8 +342,14 @@ class AppTheme {
         color: AppPallete.lightBlack,
         fontSize: 20,
         fontWeight: FontWeight.bold,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
       ),
-      contentTextStyle: TextStyle(color: AppPallete.lightGreyText),
+      contentTextStyle: TextStyle(
+        color: AppPallete.lightGreyText,
+        fontFamily: appFontFamily,
+        fontFamilyFallback: appFontFamilyFallback,
+      ),
     ),
   );
 }

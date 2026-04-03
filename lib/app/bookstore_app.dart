@@ -1,8 +1,10 @@
 import 'dart:io';
 
-import 'package:bookstore_management_system/app/bookstore_router.dart';
 import 'package:bookstore_management_system/core/theme/theme.dart';
 import 'package:bookstore_management_system/core/theme/theme_bloc.dart';
+import 'package:bookstore_management_system/core/presentation/pages/desktop_shell.dart';
+import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookstore_management_system/features/auth/presentation/pages/login_page.dart';
 import 'package:bookstore_management_system/features/product/presentation/screens/mobile_home_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,13 +32,21 @@ class BookstoreApp extends StatelessWidget {
           );
         }
 
-        return MaterialApp.router(
+        return MaterialApp(
           builder: FToastBuilder(),
           debugShowCheckedModeBanner: false,
           themeMode: state.themeMode,
           theme: AppTheme.lightThemeMode,
           darkTheme: AppTheme.darkThemeMode,
-          routerConfig: bookstoreRouter,
+          home: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              if (authState is AuthSuccess) {
+                return const DesktopShell();
+              }
+
+              return const LoginPage();
+            },
+          ),
         );
       },
     );

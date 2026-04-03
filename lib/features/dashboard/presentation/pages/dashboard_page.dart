@@ -9,7 +9,6 @@ import 'package:bookstore_management_system/features/product/domain/entities/pro
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, required this.onOpenPage});
@@ -114,7 +113,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   onOpenInventory: () => widget.onOpenPage('inventory'),
                   onLogout: () {
                     context.read<AuthBloc>().add(AuthLogoutRequested());
-                    context.go('/login');
                   },
                 ),
                 const SizedBox(height: 22),

@@ -106,8 +106,7 @@ class AppDatabase extends _$AppDatabase {
     final result = await customSelect('PRAGMA table_info($tableName)').get();
     for (final row in result) {
       if (row.read<String>('name') == columnName) {
-        final type = row.data['type'];
-        return type == null ? null : type.toString().toUpperCase();
+        return row.data['type']?.toString().toUpperCase();
       }
     }
     return null;
@@ -176,10 +175,6 @@ END
     if (!await _tableExists(table.actualTableName)) {
       await m.createTable(table);
     }
-  }
-
-  Future<void> _migrateLegacyBooksTable(Migrator m) async {
-    await _migrateLegacyBooksTableToV5(m);
   }
 
   Future<void> _migrateLegacyBooksTableToV5(Migrator m) async {

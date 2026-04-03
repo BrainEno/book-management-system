@@ -17,7 +17,6 @@ dependencies:
   path:
   get_it: ^9.2.1
   flutter_dotenv: ^6.0.0
-  go_router: ^17.2.0
   intl: ^0.20.2
   file_picker: ^10.0.0
   window_manager: ^0.5.1
