@@ -58,6 +58,14 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     return _encrypter.decrypt64(encryptedData, iv: _iv);
   }
 
+  String? _normalizeOptionalText(String? value) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return null;
+    }
+    return normalized;
+  }
+
   @override
   Future<AppUserModel> createUser({
     required String username,
@@ -81,14 +89,14 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
       final insertedId = await userDao.insertUser(
         UsersCompanion(
-          username: Value(username),
+          username: Value(username.trim()),
           password: Value(hashedPassword),
-          role: Value(role),
+          role: Value(role.trim()),
           salt: Value(salt),
           status: const Value(1),
-          email: Value(email),
-          phone: Value(phone),
-          name: Value(name),
+          email: Value(_normalizeOptionalText(email)),
+          phone: Value(_normalizeOptionalText(phone)),
+          name: Value(_normalizeOptionalText(name)),
         ),
       );
 

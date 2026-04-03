@@ -1,4 +1,4 @@
-name: Multi-Platform Release Build v0.35
+name: Multi-Platform Release Build v0.36
 run-name: Release build for ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
@@ -12,8 +12,8 @@ permissions:
   contents: write
 
 env:
-  RELEASE_TAG: v0.35
-  RELEASE_BODY: "Release v0.35: architecture cleanup, product workspace refactor, database design docs, and a more reliable multi-platform release pipeline."
+  RELEASE_TAG: v0.36
+  RELEASE_BODY: "Release v0.36: Drift schema v4 migration, integer-backed pricing storage, normalized local auth/product inputs, refreshed database notes, and a bookstore offline PRD."
 
 jobs:
   build-ios:
@@ -183,7 +183,7 @@ jobs:
         shell: pwsh
         run: |
           $releasePath = "build/windows/x64/runner/Release"
-          $artifactPath = "build/artifacts/BMS-windows-v0.35.zip"
+          $artifactPath = "build/artifacts/BMS-windows-v0.36.zip"
 
           if (!(Test-Path $releasePath)) {
             throw "Windows build output not found at $releasePath"
@@ -200,7 +200,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
-          path: build/artifacts/BMS-windows-v0.35.zip
+          path: build/artifacts/BMS-windows-v0.36.zip
           if-no-files-found: error
 
   publish-release:
@@ -263,7 +263,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/windows/BMS-windows-v0.35.zip
+          file: dist/windows/BMS-windows-v0.36.zip
           tag: ${{ env.RELEASE_TAG }}
           overwrite: true
           body: ${{ env.RELEASE_BODY }}

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
+import 'package:bookstore_management_system/core/database/sqlite_type_converters.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
 import 'package:bookstore_management_system/features/product/data/datasources/local/product_dao.dart';
 import 'package:drift/drift.dart';
@@ -31,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -41,6 +42,12 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 3) {
         await _migrateLegacyBooksTable(m);
+      }
+      if (from == 3) {
+        await _migrateProductsTableToV4(m);
+      }
+      if (from < 4) {
+        await _migrateUsersTableToV4(m);
       }
       await _ensureRequiredTables(m);
     },
@@ -127,17 +134,17 @@ class AppDatabase extends _$AppDatabase {
         author,
         isbn,
         category,
-        CAST(price AS REAL),
+        CAST(ROUND(price * 100.0) AS INTEGER),
         publisher,
         book_id,
-        CAST(internal_pricing AS REAL),
+        CAST(ROUND(CAST(internal_pricing AS REAL) * 100.0) AS INTEGER),
         self_encoding,
-        CAST(purchase_price AS REAL),
+        CAST(ROUND(CAST(purchase_price AS REAL) * 100.0) AS INTEGER),
         CAST(publication_year AS INTEGER),
-        CAST(retail_discount AS REAL),
-        CAST(wholesale_discount AS REAL),
-        CAST(wholesale_price AS REAL),
-        CAST(member_discount AS REAL),
+        CAST(ROUND(CAST(retail_discount AS REAL) * 100.0) AS INTEGER),
+        CAST(ROUND(CAST(wholesale_discount AS REAL) * 100.0) AS INTEGER),
+        CAST(ROUND(CAST(wholesale_price AS REAL) * 100.0) AS INTEGER),
+        CAST(ROUND(CAST(member_discount AS REAL) * 100.0) AS INTEGER),
         purchase_sale_mode,
         bookmark,
         packaging,
@@ -149,6 +156,110 @@ class AppDatabase extends _$AppDatabase {
       FROM books
     ''');
     await customStatement('DROP TABLE books');
+  }
+
+  Future<void> _migrateProductsTableToV4(Migrator m) async {
+    if (!await _tableExists(products.actualTableName)) {
+      await m.createTable(products);
+      return;
+    }
+
+    await customStatement('ALTER TABLE products RENAME TO products_v3_backup');
+    await m.createTable(products);
+    await customStatement('''
+      INSERT INTO products (
+        id,
+        title,
+        author,
+        isbn,
+        category,
+        price,
+        publisher,
+        product_id,
+        internal_pricing,
+        self_encoding,
+        purchase_price,
+        publication_year,
+        retail_discount,
+        wholesale_discount,
+        wholesale_price,
+        member_discount,
+        purchase_sale_mode,
+        bookmark,
+        packaging,
+        properity,
+        statistical_class,
+        operator,
+        created_at,
+        updated_at
+      )
+      SELECT
+        id,
+        title,
+        author,
+        isbn,
+        category,
+        CAST(ROUND(price * 100.0) AS INTEGER),
+        publisher,
+        product_id,
+        CAST(ROUND(internal_pricing * 100.0) AS INTEGER),
+        self_encoding,
+        CAST(ROUND(purchase_price * 100.0) AS INTEGER),
+        publication_year,
+        CAST(ROUND(retail_discount * 100.0) AS INTEGER),
+        CAST(ROUND(wholesale_discount * 100.0) AS INTEGER),
+        CAST(ROUND(wholesale_price * 100.0) AS INTEGER),
+        CAST(ROUND(member_discount * 100.0) AS INTEGER),
+        purchase_sale_mode,
+        bookmark,
+        packaging,
+        properity,
+        statistical_class,
+        operator,
+        created_at,
+        updated_at
+      FROM products_v3_backup
+    ''');
+    await customStatement('DROP TABLE products_v3_backup');
+  }
+
+  Future<void> _migrateUsersTableToV4(Migrator m) async {
+    if (!await _tableExists(users.actualTableName)) {
+      await m.createTable(users);
+      return;
+    }
+
+    await customStatement('ALTER TABLE users RENAME TO users_v3_backup');
+    await m.createTable(users);
+    await customStatement('''
+      INSERT INTO users (
+        id,
+        username,
+        password,
+        email,
+        phone,
+        name,
+        created_at,
+        updated_at,
+        role,
+        salt,
+        status
+      )
+      SELECT
+        id,
+        TRIM(username),
+        password,
+        NULLIF(TRIM(COALESCE(email, '')), ''),
+        NULLIF(TRIM(COALESCE(phone, '')), ''),
+        NULLIF(TRIM(COALESCE(name, '')), ''),
+        created_at,
+        updated_at,
+        TRIM(role),
+        salt,
+        status
+      FROM users_v3_backup
+    ''');
+    await customStatement('DROP TABLE users_v3_backup');
   }
 }
 

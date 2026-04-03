@@ -36,4 +36,24 @@ void main() {
     expect(product.id, 42);
     expect(product.title, '新书名');
   });
+
+  test('buildProduct falls back to isbn when self encoding is blank', () {
+    final controllers = ProductInfoEditorFormControllers();
+    addTearDown(controllers.dispose);
+
+    controllers.idController.text = '0';
+    controllers.bookIdController.text = 'A-002';
+    controllers.titleController.text = 'ISBN 回填图书';
+    controllers.authorController.text = '新作者';
+    controllers.isbnController.text = '9787300000043';
+    controllers.priceController.text = '60';
+    controllers.categoryController.text = '文学';
+    controllers.publisherController.text = '测试出版社';
+    controllers.selfEncodingController.text = '   ';
+    controllers.operatorController.text = 'admin';
+
+    final product = controllers.buildProduct();
+
+    expect(product.selfEncoding, '9787300000043');
+  });
 }

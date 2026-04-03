@@ -81,7 +81,7 @@ Table warehouses {
 Table products {
   id integer [pk, increment]
   sku text [not null, unique, note: "Recommended replacement for current product_id"]
-  isbn text [unique, note: "Allow NULL for non-book extensions; keep unique for book master data"]
+  isbn text [unique, note: "Allow NULL for non-book products; enforce uniqueness only when non-null. 'Book requires ISBN' should be a business rule, ideally based on product_type"]
   title text [not null]
   subtitle text
   author_text text [not null]

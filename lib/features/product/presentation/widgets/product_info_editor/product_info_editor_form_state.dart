@@ -129,16 +129,21 @@ class ProductInfoEditorFormControllers {
   }
 
   ProductModel buildProduct({ProductModel? existingProduct}) {
+    final normalizedIsbn = isbnController.text.trim();
+    final normalizedSelfEncoding = selfEncodingController.text.trim().isEmpty
+        ? normalizedIsbn
+        : selfEncodingController.text.trim();
+
     return ProductModel(
-      productId: bookIdController.text,
+      productId: bookIdController.text.trim(),
       id: existingProduct?.id ?? (int.tryParse(idController.text) ?? 0),
-      title: titleController.text,
-      author: authorController.text,
-      isbn: isbnController.text,
+      title: titleController.text.trim(),
+      author: authorController.text.trim(),
+      isbn: normalizedIsbn,
       price: double.tryParse(priceController.text) ?? 0.0,
-      category: categoryController.text,
-      publisher: publisherController.text,
-      selfEncoding: selfEncodingController.text,
+      category: categoryController.text.trim(),
+      publisher: publisherController.text.trim(),
+      selfEncoding: normalizedSelfEncoding,
       internalPricing: double.tryParse(internalPricingController.text) ?? 0.0,
       purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
       publicationYear: int.tryParse(publicationYearController.text) ?? 2025,
@@ -147,14 +152,14 @@ class ProductInfoEditorFormControllers {
           double.tryParse(wholesaleDiscountController.text) ?? 100.0,
       wholesalePrice: double.tryParse(wholesalePriceController.text) ?? 0.0,
       memberDiscount: double.tryParse(memberDiscountController.text) ?? 100.0,
-      purchaseSaleMode: purchaseSaleModeController.text,
-      bookmark: bookmarkController.text.isEmpty
+      purchaseSaleMode: purchaseSaleModeController.text.trim(),
+      bookmark: bookmarkController.text.trim().isEmpty
           ? '不区分'
-          : bookmarkController.text,
-      packaging: packagingController.text,
-      properity: properityController.text,
-      statisticalClass: statisticalClassController.text,
-      operator: operatorController.text,
+          : bookmarkController.text.trim(),
+      packaging: packagingController.text.trim(),
+      properity: properityController.text.trim(),
+      statisticalClass: statisticalClassController.text.trim(),
+      operator: operatorController.text.trim(),
       createdAt: existingProduct?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

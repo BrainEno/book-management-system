@@ -75,9 +75,9 @@ class AuthRepositoryImpl implements AuthRepository {
         username: username,
         password: password,
         role: role,
-        phone: phone ?? '',
-        name: name ?? '',
-        email: email ?? '',
+        phone: phone,
+        name: name,
+        email: email,
       );
       return Right(account);
     } on AuthException catch (e) {

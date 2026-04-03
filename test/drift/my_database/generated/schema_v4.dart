@@ -4,11 +4,11 @@
 //
 import 'package:drift/drift.dart';
 
-class Books extends Table with TableInfo<Books, BooksData> {
+class Products extends Table with TableInfo<Products, ProductsData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  Books(this.attachedDatabase, [this._alias]);
+  Products(this.attachedDatabase, [this._alias]);
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
     'id',
     aliasedName,
@@ -16,9 +16,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     hasAutoIncrement: true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
+    $customConstraints: 'NOT NULL PRIMARY KEY AUTOINCREMENT',
   );
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
     'title',
@@ -26,6 +24,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> author = GeneratedColumn<String>(
     'author',
@@ -33,6 +32,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> isbn = GeneratedColumn<String>(
     'isbn',
@@ -40,6 +40,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> category = GeneratedColumn<String>(
     'category',
@@ -47,13 +48,15 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
-  late final GeneratedColumn<double> price = GeneratedColumn<double>(
+  late final GeneratedColumn<int> price = GeneratedColumn<int>(
     'price',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> publisher = GeneratedColumn<String>(
     'publisher',
@@ -61,20 +64,23 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> productId = GeneratedColumn<String>(
-    'book_id',
+    'product_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL UNIQUE',
   );
-  late final GeneratedColumn<String> internalPricing = GeneratedColumn<String>(
+  late final GeneratedColumn<int> internalPricing = GeneratedColumn<int>(
     'internal_pricing',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> selfEncoding = GeneratedColumn<String>(
     'self_encoding',
@@ -82,13 +88,15 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL UNIQUE',
   );
-  late final GeneratedColumn<double> purchasePrice = GeneratedColumn<double>(
+  late final GeneratedColumn<int> purchasePrice = GeneratedColumn<int>(
     'purchase_price',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<int> publicationYear = GeneratedColumn<int>(
     'publication_year',
@@ -96,20 +104,25 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<int> retailDiscount = GeneratedColumn<int>(
     'retail_discount',
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 10000',
+    defaultValue: const CustomExpression('10000'),
   );
   late final GeneratedColumn<int> wholesaleDiscount = GeneratedColumn<int>(
     'wholesale_discount',
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 10000',
+    defaultValue: const CustomExpression('10000'),
   );
   late final GeneratedColumn<int> wholesalePrice = GeneratedColumn<int>(
     'wholesale_price',
@@ -117,13 +130,16 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<int> memberDiscount = GeneratedColumn<int>(
     'member_discount',
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 10000',
+    defaultValue: const CustomExpression('10000'),
   );
   late final GeneratedColumn<String> purchaseSaleMode = GeneratedColumn<String>(
     'purchase_sale_mode',
@@ -131,6 +147,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> bookmark = GeneratedColumn<String>(
     'bookmark',
@@ -138,6 +155,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> packaging = GeneratedColumn<String>(
     'packaging',
@@ -145,6 +163,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> properity = GeneratedColumn<String>(
     'properity',
@@ -152,6 +171,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> statisticalClass = GeneratedColumn<String>(
     'statistical_class',
@@ -159,23 +179,36 @@ class Books extends Table with TableInfo<Books, BooksData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+  late final GeneratedColumn<String> operator = GeneratedColumn<String>(
+    'operator',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
     'created_at',
     aliasedName,
     false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT (CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER))',
     defaultValue: const CustomExpression(
       'CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER)',
     ),
   );
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
     'updated_at',
     aliasedName,
     false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT (CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER))',
     defaultValue: const CustomExpression(
       'CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER)',
     ),
@@ -203,6 +236,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
     packaging,
     properity,
     statisticalClass,
+    operator,
     createdAt,
     updatedAt,
   ];
@@ -210,13 +244,13 @@ class Books extends Table with TableInfo<Books, BooksData> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'books';
+  static const String $name = 'products';
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  BooksData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ProductsData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return BooksData(
+    return ProductsData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -238,7 +272,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
         data['${effectivePrefix}category'],
       )!,
       price: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}price'],
       )!,
       publisher: attachedDatabase.typeMapping.read(
@@ -247,10 +281,10 @@ class Books extends Table with TableInfo<Books, BooksData> {
       )!,
       productId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}book_id'],
+        data['${effectivePrefix}product_id'],
       )!,
       internalPricing: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
+        DriftSqlType.int,
         data['${effectivePrefix}internal_pricing'],
       )!,
       selfEncoding: attachedDatabase.typeMapping.read(
@@ -258,7 +292,7 @@ class Books extends Table with TableInfo<Books, BooksData> {
         data['${effectivePrefix}self_encoding'],
       )!,
       purchasePrice: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.int,
         data['${effectivePrefix}purchase_price'],
       )!,
       publicationYear: attachedDatabase.typeMapping.read(
@@ -301,35 +335,53 @@ class Books extends Table with TableInfo<Books, BooksData> {
         DriftSqlType.string,
         data['${effectivePrefix}statistical_class'],
       )!,
+      operator: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operator'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
+        DriftSqlType.int,
         data['${effectivePrefix}created_at'],
       )!,
       updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
+        DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
     );
   }
 
   @override
-  Books createAlias(String alias) {
-    return Books(attachedDatabase, alias);
+  Products createAlias(String alias) {
+    return Products(attachedDatabase, alias);
   }
+
+  @override
+  List<String> get customConstraints => const [
+    'CHECK(price >= 0)',
+    'CHECK(internal_pricing >= 0)',
+    'CHECK(purchase_price >= 0)',
+    'CHECK(publication_year BETWEEN 0 AND 9999)',
+    'CHECK(retail_discount BETWEEN 0 AND 10000)',
+    'CHECK(wholesale_discount BETWEEN 0 AND 10000)',
+    'CHECK(wholesale_price >= 0)',
+    'CHECK(member_discount BETWEEN 0 AND 10000)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
 }
 
-class BooksData extends DataClass implements Insertable<BooksData> {
+class ProductsData extends DataClass implements Insertable<ProductsData> {
   final int id;
   final String title;
   final String author;
   final String isbn;
   final String category;
-  final double price;
+  final int price;
   final String publisher;
   final String productId;
-  final String internalPricing;
+  final int internalPricing;
   final String selfEncoding;
-  final double purchasePrice;
+  final int purchasePrice;
   final int publicationYear;
   final int retailDiscount;
   final int wholesaleDiscount;
@@ -340,9 +392,10 @@ class BooksData extends DataClass implements Insertable<BooksData> {
   final String packaging;
   final String properity;
   final String statisticalClass;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  const BooksData({
+  final String operator;
+  final int createdAt;
+  final int updatedAt;
+  const ProductsData({
     required this.id,
     required this.title,
     required this.author,
@@ -364,6 +417,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     required this.packaging,
     required this.properity,
     required this.statisticalClass,
+    required this.operator,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -375,12 +429,12 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     map['author'] = Variable<String>(author);
     map['isbn'] = Variable<String>(isbn);
     map['category'] = Variable<String>(category);
-    map['price'] = Variable<double>(price);
+    map['price'] = Variable<int>(price);
     map['publisher'] = Variable<String>(publisher);
-    map['book_id'] = Variable<String>(productId);
-    map['internal_pricing'] = Variable<String>(internalPricing);
+    map['product_id'] = Variable<String>(productId);
+    map['internal_pricing'] = Variable<int>(internalPricing);
     map['self_encoding'] = Variable<String>(selfEncoding);
-    map['purchase_price'] = Variable<double>(purchasePrice);
+    map['purchase_price'] = Variable<int>(purchasePrice);
     map['publication_year'] = Variable<int>(publicationYear);
     map['retail_discount'] = Variable<int>(retailDiscount);
     map['wholesale_discount'] = Variable<int>(wholesaleDiscount);
@@ -391,13 +445,14 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     map['packaging'] = Variable<String>(packaging);
     map['properity'] = Variable<String>(properity);
     map['statistical_class'] = Variable<String>(statisticalClass);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['operator'] = Variable<String>(operator);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
     return map;
   }
 
-  BooksCompanion toCompanion(bool nullToAbsent) {
-    return BooksCompanion(
+  ProductsCompanion toCompanion(bool nullToAbsent) {
+    return ProductsCompanion(
       id: Value(id),
       title: Value(title),
       author: Value(author),
@@ -419,28 +474,29 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       packaging: Value(packaging),
       properity: Value(properity),
       statisticalClass: Value(statisticalClass),
+      operator: Value(operator),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
   }
 
-  factory BooksData.fromJson(
+  factory ProductsData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return BooksData(
+    return ProductsData(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       author: serializer.fromJson<String>(json['author']),
       isbn: serializer.fromJson<String>(json['isbn']),
       category: serializer.fromJson<String>(json['category']),
-      price: serializer.fromJson<double>(json['price']),
+      price: serializer.fromJson<int>(json['price']),
       publisher: serializer.fromJson<String>(json['publisher']),
       productId: serializer.fromJson<String>(json['productId']),
-      internalPricing: serializer.fromJson<String>(json['internalPricing']),
+      internalPricing: serializer.fromJson<int>(json['internalPricing']),
       selfEncoding: serializer.fromJson<String>(json['selfEncoding']),
-      purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
+      purchasePrice: serializer.fromJson<int>(json['purchasePrice']),
       publicationYear: serializer.fromJson<int>(json['publicationYear']),
       retailDiscount: serializer.fromJson<int>(json['retailDiscount']),
       wholesaleDiscount: serializer.fromJson<int>(json['wholesaleDiscount']),
@@ -451,8 +507,9 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       packaging: serializer.fromJson<String>(json['packaging']),
       properity: serializer.fromJson<String>(json['properity']),
       statisticalClass: serializer.fromJson<String>(json['statisticalClass']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      operator: serializer.fromJson<String>(json['operator']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
     );
   }
   @override
@@ -464,12 +521,12 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       'author': serializer.toJson<String>(author),
       'isbn': serializer.toJson<String>(isbn),
       'category': serializer.toJson<String>(category),
-      'price': serializer.toJson<double>(price),
+      'price': serializer.toJson<int>(price),
       'publisher': serializer.toJson<String>(publisher),
       'productId': serializer.toJson<String>(productId),
-      'internalPricing': serializer.toJson<String>(internalPricing),
+      'internalPricing': serializer.toJson<int>(internalPricing),
       'selfEncoding': serializer.toJson<String>(selfEncoding),
-      'purchasePrice': serializer.toJson<double>(purchasePrice),
+      'purchasePrice': serializer.toJson<int>(purchasePrice),
       'publicationYear': serializer.toJson<int>(publicationYear),
       'retailDiscount': serializer.toJson<int>(retailDiscount),
       'wholesaleDiscount': serializer.toJson<int>(wholesaleDiscount),
@@ -480,23 +537,24 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       'packaging': serializer.toJson<String>(packaging),
       'properity': serializer.toJson<String>(properity),
       'statisticalClass': serializer.toJson<String>(statisticalClass),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'operator': serializer.toJson<String>(operator),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
     };
   }
 
-  BooksData copyWith({
+  ProductsData copyWith({
     int? id,
     String? title,
     String? author,
     String? isbn,
     String? category,
-    double? price,
+    int? price,
     String? publisher,
     String? productId,
-    String? internalPricing,
+    int? internalPricing,
     String? selfEncoding,
-    double? purchasePrice,
+    int? purchasePrice,
     int? publicationYear,
     int? retailDiscount,
     int? wholesaleDiscount,
@@ -507,9 +565,10 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     String? packaging,
     String? properity,
     String? statisticalClass,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) => BooksData(
+    String? operator,
+    int? createdAt,
+    int? updatedAt,
+  }) => ProductsData(
     id: id ?? this.id,
     title: title ?? this.title,
     author: author ?? this.author,
@@ -531,11 +590,12 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     packaging: packaging ?? this.packaging,
     properity: properity ?? this.properity,
     statisticalClass: statisticalClass ?? this.statisticalClass,
+    operator: operator ?? this.operator,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  BooksData copyWithCompanion(BooksCompanion data) {
-    return BooksData(
+  ProductsData copyWithCompanion(ProductsCompanion data) {
+    return ProductsData(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       author: data.author.present ? data.author.value : this.author,
@@ -577,6 +637,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
       statisticalClass: data.statisticalClass.present
           ? data.statisticalClass.value
           : this.statisticalClass,
+      operator: data.operator.present ? data.operator.value : this.operator,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -584,7 +645,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
 
   @override
   String toString() {
-    return (StringBuffer('BooksData(')
+    return (StringBuffer('ProductsData(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('author: $author, ')
@@ -606,6 +667,7 @@ class BooksData extends DataClass implements Insertable<BooksData> {
           ..write('packaging: $packaging, ')
           ..write('properity: $properity, ')
           ..write('statisticalClass: $statisticalClass, ')
+          ..write('operator: $operator, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -635,13 +697,14 @@ class BooksData extends DataClass implements Insertable<BooksData> {
     packaging,
     properity,
     statisticalClass,
+    operator,
     createdAt,
     updatedAt,
   ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is BooksData &&
+      (other is ProductsData &&
           other.id == this.id &&
           other.title == this.title &&
           other.author == this.author &&
@@ -663,22 +726,23 @@ class BooksData extends DataClass implements Insertable<BooksData> {
           other.packaging == this.packaging &&
           other.properity == this.properity &&
           other.statisticalClass == this.statisticalClass &&
+          other.operator == this.operator &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
 
-class BooksCompanion extends UpdateCompanion<BooksData> {
+class ProductsCompanion extends UpdateCompanion<ProductsData> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> author;
   final Value<String> isbn;
   final Value<String> category;
-  final Value<double> price;
+  final Value<int> price;
   final Value<String> publisher;
   final Value<String> productId;
-  final Value<String> internalPricing;
+  final Value<int> internalPricing;
   final Value<String> selfEncoding;
-  final Value<double> purchasePrice;
+  final Value<int> purchasePrice;
   final Value<int> publicationYear;
   final Value<int> retailDiscount;
   final Value<int> wholesaleDiscount;
@@ -689,9 +753,10 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
   final Value<String> packaging;
   final Value<String> properity;
   final Value<String> statisticalClass;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  const BooksCompanion({
+  final Value<String> operator;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  const ProductsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.author = const Value.absent(),
@@ -713,31 +778,33 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     this.packaging = const Value.absent(),
     this.properity = const Value.absent(),
     this.statisticalClass = const Value.absent(),
+    this.operator = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
-  BooksCompanion.insert({
+  ProductsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
     required String author,
     required String isbn,
     required String category,
-    required double price,
+    required int price,
     required String publisher,
     required String productId,
-    required String internalPricing,
+    required int internalPricing,
     required String selfEncoding,
-    required double purchasePrice,
+    required int purchasePrice,
     required int publicationYear,
-    required int retailDiscount,
-    required int wholesaleDiscount,
+    this.retailDiscount = const Value.absent(),
+    this.wholesaleDiscount = const Value.absent(),
     required int wholesalePrice,
-    required int memberDiscount,
+    this.memberDiscount = const Value.absent(),
     required String purchaseSaleMode,
     required String bookmark,
     required String packaging,
     required String properity,
     required String statisticalClass,
+    required String operator,
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : title = Value(title),
@@ -751,27 +818,25 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
        selfEncoding = Value(selfEncoding),
        purchasePrice = Value(purchasePrice),
        publicationYear = Value(publicationYear),
-       retailDiscount = Value(retailDiscount),
-       wholesaleDiscount = Value(wholesaleDiscount),
        wholesalePrice = Value(wholesalePrice),
-       memberDiscount = Value(memberDiscount),
        purchaseSaleMode = Value(purchaseSaleMode),
        bookmark = Value(bookmark),
        packaging = Value(packaging),
        properity = Value(properity),
-       statisticalClass = Value(statisticalClass);
-  static Insertable<BooksData> custom({
+       statisticalClass = Value(statisticalClass),
+       operator = Value(operator);
+  static Insertable<ProductsData> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? author,
     Expression<String>? isbn,
     Expression<String>? category,
-    Expression<double>? price,
+    Expression<int>? price,
     Expression<String>? publisher,
     Expression<String>? productId,
-    Expression<String>? internalPricing,
+    Expression<int>? internalPricing,
     Expression<String>? selfEncoding,
-    Expression<double>? purchasePrice,
+    Expression<int>? purchasePrice,
     Expression<int>? publicationYear,
     Expression<int>? retailDiscount,
     Expression<int>? wholesaleDiscount,
@@ -782,8 +847,9 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     Expression<String>? packaging,
     Expression<String>? properity,
     Expression<String>? statisticalClass,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
+    Expression<String>? operator,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -793,7 +859,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       if (category != null) 'category': category,
       if (price != null) 'price': price,
       if (publisher != null) 'publisher': publisher,
-      if (productId != null) 'book_id': productId,
+      if (productId != null) 'product_id': productId,
       if (internalPricing != null) 'internal_pricing': internalPricing,
       if (selfEncoding != null) 'self_encoding': selfEncoding,
       if (purchasePrice != null) 'purchase_price': purchasePrice,
@@ -807,23 +873,24 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       if (packaging != null) 'packaging': packaging,
       if (properity != null) 'properity': properity,
       if (statisticalClass != null) 'statistical_class': statisticalClass,
+      if (operator != null) 'operator': operator,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
-  BooksCompanion copyWith({
+  ProductsCompanion copyWith({
     Value<int>? id,
     Value<String>? title,
     Value<String>? author,
     Value<String>? isbn,
     Value<String>? category,
-    Value<double>? price,
+    Value<int>? price,
     Value<String>? publisher,
     Value<String>? productId,
-    Value<String>? internalPricing,
+    Value<int>? internalPricing,
     Value<String>? selfEncoding,
-    Value<double>? purchasePrice,
+    Value<int>? purchasePrice,
     Value<int>? publicationYear,
     Value<int>? retailDiscount,
     Value<int>? wholesaleDiscount,
@@ -834,10 +901,11 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     Value<String>? packaging,
     Value<String>? properity,
     Value<String>? statisticalClass,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
+    Value<String>? operator,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
   }) {
-    return BooksCompanion(
+    return ProductsCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       author: author ?? this.author,
@@ -859,6 +927,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       packaging: packaging ?? this.packaging,
       properity: properity ?? this.properity,
       statisticalClass: statisticalClass ?? this.statisticalClass,
+      operator: operator ?? this.operator,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -883,22 +952,22 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
       map['category'] = Variable<String>(category.value);
     }
     if (price.present) {
-      map['price'] = Variable<double>(price.value);
+      map['price'] = Variable<int>(price.value);
     }
     if (publisher.present) {
       map['publisher'] = Variable<String>(publisher.value);
     }
     if (productId.present) {
-      map['book_id'] = Variable<String>(productId.value);
+      map['product_id'] = Variable<String>(productId.value);
     }
     if (internalPricing.present) {
-      map['internal_pricing'] = Variable<String>(internalPricing.value);
+      map['internal_pricing'] = Variable<int>(internalPricing.value);
     }
     if (selfEncoding.present) {
       map['self_encoding'] = Variable<String>(selfEncoding.value);
     }
     if (purchasePrice.present) {
-      map['purchase_price'] = Variable<double>(purchasePrice.value);
+      map['purchase_price'] = Variable<int>(purchasePrice.value);
     }
     if (publicationYear.present) {
       map['publication_year'] = Variable<int>(publicationYear.value);
@@ -930,18 +999,21 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
     if (statisticalClass.present) {
       map['statistical_class'] = Variable<String>(statisticalClass.value);
     }
+    if (operator.present) {
+      map['operator'] = Variable<String>(operator.value);
+    }
     if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+      map['created_at'] = Variable<int>(createdAt.value);
     }
     if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+      map['updated_at'] = Variable<int>(updatedAt.value);
     }
     return map;
   }
 
   @override
   String toString() {
-    return (StringBuffer('BooksCompanion(')
+    return (StringBuffer('ProductsCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('author: $author, ')
@@ -963,6 +1035,7 @@ class BooksCompanion extends UpdateCompanion<BooksData> {
           ..write('packaging: $packaging, ')
           ..write('properity: $properity, ')
           ..write('statisticalClass: $statisticalClass, ')
+          ..write('operator: $operator, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -982,9 +1055,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     hasAutoIncrement: true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
+    $customConstraints: 'NOT NULL PRIMARY KEY AUTOINCREMENT',
   );
   late final GeneratedColumn<String> username = GeneratedColumn<String>(
     'username',
@@ -992,7 +1063,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+    $customConstraints: 'NOT NULL UNIQUE',
   );
   late final GeneratedColumn<String> password = GeneratedColumn<String>(
     'password',
@@ -1000,6 +1071,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
     'email',
@@ -1007,6 +1079,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
+    $customConstraints: 'NULL',
   );
   late final GeneratedColumn<String> phone = GeneratedColumn<String>(
     'phone',
@@ -1014,6 +1087,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
+    $customConstraints: 'NULL',
   );
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
     'name',
@@ -1021,23 +1095,28 @@ class Users extends Table with TableInfo<Users, UsersData> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
+    $customConstraints: 'NULL',
   );
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
     'created_at',
     aliasedName,
     false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT (CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER))',
     defaultValue: const CustomExpression(
       'CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER)',
     ),
   );
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
     'updated_at',
     aliasedName,
     false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT (CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER))',
     defaultValue: const CustomExpression(
       'CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER)',
     ),
@@ -1048,6 +1127,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<String> salt = GeneratedColumn<String>(
     'salt',
@@ -1055,6 +1135,7 @@ class Users extends Table with TableInfo<Users, UsersData> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   late final GeneratedColumn<int> status = GeneratedColumn<int>(
     'status',
@@ -1062,7 +1143,8 @@ class Users extends Table with TableInfo<Users, UsersData> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultValue: const CustomExpression('0'),
+    $customConstraints: 'NOT NULL DEFAULT 1',
+    defaultValue: const CustomExpression('1'),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -1114,11 +1196,11 @@ class Users extends Table with TableInfo<Users, UsersData> {
         data['${effectivePrefix}name'],
       ),
       createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
+        DriftSqlType.int,
         data['${effectivePrefix}created_at'],
       )!,
       updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
+        DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
       role: attachedDatabase.typeMapping.read(
@@ -1140,6 +1222,11 @@ class Users extends Table with TableInfo<Users, UsersData> {
   Users createAlias(String alias) {
     return Users(attachedDatabase, alias);
   }
+
+  @override
+  List<String> get customConstraints => const ['CHECK(status BETWEEN 0 AND 3)'];
+  @override
+  bool get dontWriteConstraints => true;
 }
 
 class UsersData extends DataClass implements Insertable<UsersData> {
@@ -1149,8 +1236,8 @@ class UsersData extends DataClass implements Insertable<UsersData> {
   final String? email;
   final String? phone;
   final String? name;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final int createdAt;
+  final int updatedAt;
   final String role;
   final String salt;
   final int status;
@@ -1182,8 +1269,8 @@ class UsersData extends DataClass implements Insertable<UsersData> {
     if (!nullToAbsent || name != null) {
       map['name'] = Variable<String>(name);
     }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
     map['role'] = Variable<String>(role);
     map['salt'] = Variable<String>(salt);
     map['status'] = Variable<int>(status);
@@ -1222,8 +1309,8 @@ class UsersData extends DataClass implements Insertable<UsersData> {
       email: serializer.fromJson<String?>(json['email']),
       phone: serializer.fromJson<String?>(json['phone']),
       name: serializer.fromJson<String?>(json['name']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
       role: serializer.fromJson<String>(json['role']),
       salt: serializer.fromJson<String>(json['salt']),
       status: serializer.fromJson<int>(json['status']),
@@ -1239,8 +1326,8 @@ class UsersData extends DataClass implements Insertable<UsersData> {
       'email': serializer.toJson<String?>(email),
       'phone': serializer.toJson<String?>(phone),
       'name': serializer.toJson<String?>(name),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
       'role': serializer.toJson<String>(role),
       'salt': serializer.toJson<String>(salt),
       'status': serializer.toJson<int>(status),
@@ -1254,8 +1341,8 @@ class UsersData extends DataClass implements Insertable<UsersData> {
     Value<String?> email = const Value.absent(),
     Value<String?> phone = const Value.absent(),
     Value<String?> name = const Value.absent(),
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    int? createdAt,
+    int? updatedAt,
     String? role,
     String? salt,
     int? status,
@@ -1344,8 +1431,8 @@ class UsersCompanion extends UpdateCompanion<UsersData> {
   final Value<String?> email;
   final Value<String?> phone;
   final Value<String?> name;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
   final Value<String> role;
   final Value<String> salt;
   final Value<int> status;
@@ -1385,8 +1472,8 @@ class UsersCompanion extends UpdateCompanion<UsersData> {
     Expression<String>? email,
     Expression<String>? phone,
     Expression<String>? name,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
     Expression<String>? role,
     Expression<String>? salt,
     Expression<int>? status,
@@ -1413,8 +1500,8 @@ class UsersCompanion extends UpdateCompanion<UsersData> {
     Value<String?>? email,
     Value<String?>? phone,
     Value<String?>? name,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
     Value<String>? role,
     Value<String>? salt,
     Value<int>? status,
@@ -1456,10 +1543,10 @@ class UsersCompanion extends UpdateCompanion<UsersData> {
       map['name'] = Variable<String>(name.value);
     }
     if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+      map['created_at'] = Variable<int>(createdAt.value);
     }
     if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+      map['updated_at'] = Variable<int>(updatedAt.value);
     }
     if (role.present) {
       map['role'] = Variable<String>(role.value);
@@ -1492,15 +1579,15 @@ class UsersCompanion extends UpdateCompanion<UsersData> {
   }
 }
 
-class DatabaseAtV1 extends GeneratedDatabase {
-  DatabaseAtV1(QueryExecutor e) : super(e);
-  late final Books books = Books(this);
+class DatabaseAtV4 extends GeneratedDatabase {
+  DatabaseAtV4(QueryExecutor e) : super(e);
+  late final Products products = Products(this);
   late final Users users = Users(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [books, users];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [products, users];
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 4;
 }

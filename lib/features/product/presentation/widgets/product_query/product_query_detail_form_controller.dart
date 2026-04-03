@@ -54,15 +54,20 @@ class ProductQueryDetailFormController {
   }
 
   ProductModel buildUpdatedProduct(ProductModel selectedProduct) {
+    final normalizedIsbn = isbnController.text.trim();
+    final normalizedSelfEncoding = selfEncodingController.text.trim().isEmpty
+        ? normalizedIsbn
+        : selfEncodingController.text.trim();
+
     return selectedProduct.copyWith(
       title: titleController.text.trim(),
       productId: productIdController.text.trim(),
-      isbn: isbnController.text.trim(),
+      isbn: normalizedIsbn,
       author: authorController.text.trim(),
       price: parsePrice() ?? selectedProduct.price,
       publisher: publisherController.text.trim(),
       category: categoryController.text.trim(),
-      selfEncoding: selfEncodingController.text.trim(),
+      selfEncoding: normalizedSelfEncoding,
       updatedAt: DateTime.now(),
     );
   }

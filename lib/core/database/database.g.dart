@@ -27,6 +27,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'title',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -36,6 +40,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'author',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -45,6 +53,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'isbn',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 32,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -56,18 +68,22 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'category',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 128,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
-  late final GeneratedColumn<double> price = GeneratedColumn<double>(
-    'price',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<double, int> price =
+      GeneratedColumn<int>(
+        'price',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<double>($ProductsTable.$converterprice);
   static const VerificationMeta _publisherMeta = const VerificationMeta(
     'publisher',
   );
@@ -76,6 +92,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'publisher',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -87,20 +107,23 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'product_id',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-  );
-  static const VerificationMeta _internalPricingMeta = const VerificationMeta(
-    'internalPricing',
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   @override
-  late final GeneratedColumn<double> internalPricing = GeneratedColumn<double>(
-    'internal_pricing',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<double, int> internalPricing =
+      GeneratedColumn<int>(
+        'internal_pricing',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<double>($ProductsTable.$converterinternalPricing);
   static const VerificationMeta _selfEncodingMeta = const VerificationMeta(
     'selfEncoding',
   );
@@ -109,20 +132,23 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'self_encoding',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-  );
-  static const VerificationMeta _purchasePriceMeta = const VerificationMeta(
-    'purchasePrice',
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   @override
-  late final GeneratedColumn<double> purchasePrice = GeneratedColumn<double>(
-    'purchase_price',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<double, int> purchasePrice =
+      GeneratedColumn<int>(
+        'purchase_price',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<double>($ProductsTable.$converterpurchasePrice);
   static const VerificationMeta _publicationYearMeta = const VerificationMeta(
     'publicationYear',
   );
@@ -134,51 +160,45 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _retailDiscountMeta = const VerificationMeta(
-    'retailDiscount',
-  );
   @override
-  late final GeneratedColumn<double> retailDiscount = GeneratedColumn<double>(
-    'retail_discount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _wholesaleDiscountMeta = const VerificationMeta(
-    'wholesaleDiscount',
-  );
+  late final GeneratedColumnWithTypeConverter<double, int> retailDiscount =
+      GeneratedColumn<int>(
+        'retail_discount',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(10000),
+      ).withConverter<double>($ProductsTable.$converterretailDiscount);
   @override
-  late final GeneratedColumn<double> wholesaleDiscount =
-      GeneratedColumn<double>(
+  late final GeneratedColumnWithTypeConverter<double, int> wholesaleDiscount =
+      GeneratedColumn<int>(
         'wholesale_discount',
         aliasedName,
         false,
-        type: DriftSqlType.double,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(10000),
+      ).withConverter<double>($ProductsTable.$converterwholesaleDiscount);
+  @override
+  late final GeneratedColumnWithTypeConverter<double, int> wholesalePrice =
+      GeneratedColumn<int>(
+        'wholesale_price',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
         requiredDuringInsert: true,
-      );
-  static const VerificationMeta _wholesalePriceMeta = const VerificationMeta(
-    'wholesalePrice',
-  );
+      ).withConverter<double>($ProductsTable.$converterwholesalePrice);
   @override
-  late final GeneratedColumn<double> wholesalePrice = GeneratedColumn<double>(
-    'wholesale_price',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _memberDiscountMeta = const VerificationMeta(
-    'memberDiscount',
-  );
-  @override
-  late final GeneratedColumn<double> memberDiscount = GeneratedColumn<double>(
-    'member_discount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<double, int> memberDiscount =
+      GeneratedColumn<int>(
+        'member_discount',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(10000),
+      ).withConverter<double>($ProductsTable.$convertermemberDiscount);
   static const VerificationMeta _purchaseSaleModeMeta = const VerificationMeta(
     'purchaseSaleMode',
   );
@@ -187,6 +207,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'purchase_sale_mode',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 32,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -198,6 +222,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'bookmark',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -209,6 +237,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'packaging',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 32,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -220,6 +252,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'properity',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -231,6 +267,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'statistical_class',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -242,6 +282,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'operator',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -343,14 +387,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_categoryMeta);
     }
-    if (data.containsKey('price')) {
-      context.handle(
-        _priceMeta,
-        price.isAcceptableOrUnknown(data['price']!, _priceMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_priceMeta);
-    }
     if (data.containsKey('publisher')) {
       context.handle(
         _publisherMeta,
@@ -367,17 +403,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_productIdMeta);
     }
-    if (data.containsKey('internal_pricing')) {
-      context.handle(
-        _internalPricingMeta,
-        internalPricing.isAcceptableOrUnknown(
-          data['internal_pricing']!,
-          _internalPricingMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_internalPricingMeta);
-    }
     if (data.containsKey('self_encoding')) {
       context.handle(
         _selfEncodingMeta,
@@ -389,17 +414,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_selfEncodingMeta);
     }
-    if (data.containsKey('purchase_price')) {
-      context.handle(
-        _purchasePriceMeta,
-        purchasePrice.isAcceptableOrUnknown(
-          data['purchase_price']!,
-          _purchasePriceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_purchasePriceMeta);
-    }
     if (data.containsKey('publication_year')) {
       context.handle(
         _publicationYearMeta,
@@ -410,50 +424,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       );
     } else if (isInserting) {
       context.missing(_publicationYearMeta);
-    }
-    if (data.containsKey('retail_discount')) {
-      context.handle(
-        _retailDiscountMeta,
-        retailDiscount.isAcceptableOrUnknown(
-          data['retail_discount']!,
-          _retailDiscountMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_retailDiscountMeta);
-    }
-    if (data.containsKey('wholesale_discount')) {
-      context.handle(
-        _wholesaleDiscountMeta,
-        wholesaleDiscount.isAcceptableOrUnknown(
-          data['wholesale_discount']!,
-          _wholesaleDiscountMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_wholesaleDiscountMeta);
-    }
-    if (data.containsKey('wholesale_price')) {
-      context.handle(
-        _wholesalePriceMeta,
-        wholesalePrice.isAcceptableOrUnknown(
-          data['wholesale_price']!,
-          _wholesalePriceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_wholesalePriceMeta);
-    }
-    if (data.containsKey('member_discount')) {
-      context.handle(
-        _memberDiscountMeta,
-        memberDiscount.isAcceptableOrUnknown(
-          data['member_discount']!,
-          _memberDiscountMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_memberDiscountMeta);
     }
     if (data.containsKey('purchase_sale_mode')) {
       context.handle(
@@ -550,10 +520,12 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       )!,
-      price: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}price'],
-      )!,
+      price: $ProductsTable.$converterprice.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}price'],
+        )!,
+      ),
       publisher: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}publisher'],
@@ -562,38 +534,50 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.string,
         data['${effectivePrefix}product_id'],
       )!,
-      internalPricing: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}internal_pricing'],
-      )!,
+      internalPricing: $ProductsTable.$converterinternalPricing.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}internal_pricing'],
+        )!,
+      ),
       selfEncoding: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}self_encoding'],
       )!,
-      purchasePrice: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}purchase_price'],
-      )!,
+      purchasePrice: $ProductsTable.$converterpurchasePrice.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}purchase_price'],
+        )!,
+      ),
       publicationYear: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}publication_year'],
       )!,
-      retailDiscount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}retail_discount'],
-      )!,
-      wholesaleDiscount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}wholesale_discount'],
-      )!,
-      wholesalePrice: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}wholesale_price'],
-      )!,
-      memberDiscount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}member_discount'],
-      )!,
+      retailDiscount: $ProductsTable.$converterretailDiscount.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}retail_discount'],
+        )!,
+      ),
+      wholesaleDiscount: $ProductsTable.$converterwholesaleDiscount.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}wholesale_discount'],
+        )!,
+      ),
+      wholesalePrice: $ProductsTable.$converterwholesalePrice.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}wholesale_price'],
+        )!,
+      ),
+      memberDiscount: $ProductsTable.$convertermemberDiscount.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}member_discount'],
+        )!,
+      ),
       purchaseSaleMode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}purchase_sale_mode'],
@@ -633,6 +617,20 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   $ProductsTable createAlias(String alias) {
     return $ProductsTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<double, int> $converterprice = moneyAsCentsConverter;
+  static TypeConverter<double, int> $converterinternalPricing =
+      moneyAsCentsConverter;
+  static TypeConverter<double, int> $converterpurchasePrice =
+      moneyAsCentsConverter;
+  static TypeConverter<double, int> $converterretailDiscount =
+      discountAsBasisPointsConverter;
+  static TypeConverter<double, int> $converterwholesaleDiscount =
+      discountAsBasisPointsConverter;
+  static TypeConverter<double, int> $converterwholesalePrice =
+      moneyAsCentsConverter;
+  static TypeConverter<double, int> $convertermemberDiscount =
+      discountAsBasisPointsConverter;
 }
 
 class Product extends DataClass implements Insertable<Product> {
@@ -694,17 +692,43 @@ class Product extends DataClass implements Insertable<Product> {
     map['author'] = Variable<String>(author);
     map['isbn'] = Variable<String>(isbn);
     map['category'] = Variable<String>(category);
-    map['price'] = Variable<double>(price);
+    {
+      map['price'] = Variable<int>($ProductsTable.$converterprice.toSql(price));
+    }
     map['publisher'] = Variable<String>(publisher);
     map['product_id'] = Variable<String>(productId);
-    map['internal_pricing'] = Variable<double>(internalPricing);
+    {
+      map['internal_pricing'] = Variable<int>(
+        $ProductsTable.$converterinternalPricing.toSql(internalPricing),
+      );
+    }
     map['self_encoding'] = Variable<String>(selfEncoding);
-    map['purchase_price'] = Variable<double>(purchasePrice);
+    {
+      map['purchase_price'] = Variable<int>(
+        $ProductsTable.$converterpurchasePrice.toSql(purchasePrice),
+      );
+    }
     map['publication_year'] = Variable<int>(publicationYear);
-    map['retail_discount'] = Variable<double>(retailDiscount);
-    map['wholesale_discount'] = Variable<double>(wholesaleDiscount);
-    map['wholesale_price'] = Variable<double>(wholesalePrice);
-    map['member_discount'] = Variable<double>(memberDiscount);
+    {
+      map['retail_discount'] = Variable<int>(
+        $ProductsTable.$converterretailDiscount.toSql(retailDiscount),
+      );
+    }
+    {
+      map['wholesale_discount'] = Variable<int>(
+        $ProductsTable.$converterwholesaleDiscount.toSql(wholesaleDiscount),
+      );
+    }
+    {
+      map['wholesale_price'] = Variable<int>(
+        $ProductsTable.$converterwholesalePrice.toSql(wholesalePrice),
+      );
+    }
+    {
+      map['member_discount'] = Variable<int>(
+        $ProductsTable.$convertermemberDiscount.toSql(memberDiscount),
+      );
+    }
     map['purchase_sale_mode'] = Variable<String>(purchaseSaleMode);
     map['bookmark'] = Variable<String>(bookmark);
     map['packaging'] = Variable<String>(packaging);
@@ -1060,10 +1084,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     required String selfEncoding,
     required double purchasePrice,
     required int publicationYear,
-    required double retailDiscount,
-    required double wholesaleDiscount,
+    this.retailDiscount = const Value.absent(),
+    this.wholesaleDiscount = const Value.absent(),
     required double wholesalePrice,
-    required double memberDiscount,
+    this.memberDiscount = const Value.absent(),
     required String purchaseSaleMode,
     required String bookmark,
     required String packaging,
@@ -1083,10 +1107,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
        selfEncoding = Value(selfEncoding),
        purchasePrice = Value(purchasePrice),
        publicationYear = Value(publicationYear),
-       retailDiscount = Value(retailDiscount),
-       wholesaleDiscount = Value(wholesaleDiscount),
        wholesalePrice = Value(wholesalePrice),
-       memberDiscount = Value(memberDiscount),
        purchaseSaleMode = Value(purchaseSaleMode),
        bookmark = Value(bookmark),
        packaging = Value(packaging),
@@ -1099,17 +1120,17 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<String>? author,
     Expression<String>? isbn,
     Expression<String>? category,
-    Expression<double>? price,
+    Expression<int>? price,
     Expression<String>? publisher,
     Expression<String>? productId,
-    Expression<double>? internalPricing,
+    Expression<int>? internalPricing,
     Expression<String>? selfEncoding,
-    Expression<double>? purchasePrice,
+    Expression<int>? purchasePrice,
     Expression<int>? publicationYear,
-    Expression<double>? retailDiscount,
-    Expression<double>? wholesaleDiscount,
-    Expression<double>? wholesalePrice,
-    Expression<double>? memberDiscount,
+    Expression<int>? retailDiscount,
+    Expression<int>? wholesaleDiscount,
+    Expression<int>? wholesalePrice,
+    Expression<int>? memberDiscount,
     Expression<String>? purchaseSaleMode,
     Expression<String>? bookmark,
     Expression<String>? packaging,
@@ -1220,7 +1241,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       map['category'] = Variable<String>(category.value);
     }
     if (price.present) {
-      map['price'] = Variable<double>(price.value);
+      map['price'] = Variable<int>(
+        $ProductsTable.$converterprice.toSql(price.value),
+      );
     }
     if (publisher.present) {
       map['publisher'] = Variable<String>(publisher.value);
@@ -1229,28 +1252,42 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       map['product_id'] = Variable<String>(productId.value);
     }
     if (internalPricing.present) {
-      map['internal_pricing'] = Variable<double>(internalPricing.value);
+      map['internal_pricing'] = Variable<int>(
+        $ProductsTable.$converterinternalPricing.toSql(internalPricing.value),
+      );
     }
     if (selfEncoding.present) {
       map['self_encoding'] = Variable<String>(selfEncoding.value);
     }
     if (purchasePrice.present) {
-      map['purchase_price'] = Variable<double>(purchasePrice.value);
+      map['purchase_price'] = Variable<int>(
+        $ProductsTable.$converterpurchasePrice.toSql(purchasePrice.value),
+      );
     }
     if (publicationYear.present) {
       map['publication_year'] = Variable<int>(publicationYear.value);
     }
     if (retailDiscount.present) {
-      map['retail_discount'] = Variable<double>(retailDiscount.value);
+      map['retail_discount'] = Variable<int>(
+        $ProductsTable.$converterretailDiscount.toSql(retailDiscount.value),
+      );
     }
     if (wholesaleDiscount.present) {
-      map['wholesale_discount'] = Variable<double>(wholesaleDiscount.value);
+      map['wholesale_discount'] = Variable<int>(
+        $ProductsTable.$converterwholesaleDiscount.toSql(
+          wholesaleDiscount.value,
+        ),
+      );
     }
     if (wholesalePrice.present) {
-      map['wholesale_price'] = Variable<double>(wholesalePrice.value);
+      map['wholesale_price'] = Variable<int>(
+        $ProductsTable.$converterwholesalePrice.toSql(wholesalePrice.value),
+      );
     }
     if (memberDiscount.present) {
-      map['member_discount'] = Variable<double>(memberDiscount.value);
+      map['member_discount'] = Variable<int>(
+        $ProductsTable.$convertermemberDiscount.toSql(memberDiscount.value),
+      );
     }
     if (purchaseSaleMode.present) {
       map['purchase_sale_mode'] = Variable<String>(purchaseSaleMode.value);
@@ -1337,6 +1374,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     'username',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
@@ -1349,6 +1390,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     'password',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -1409,6 +1454,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     'role',
     aliasedName,
     false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 32,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -1429,7 +1478,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultValue: const Constant(1),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -1968,10 +2017,10 @@ typedef $$ProductsTableCreateCompanionBuilder =
       required String selfEncoding,
       required double purchasePrice,
       required int publicationYear,
-      required double retailDiscount,
-      required double wholesaleDiscount,
+      Value<double> retailDiscount,
+      Value<double> wholesaleDiscount,
       required double wholesalePrice,
-      required double memberDiscount,
+      Value<double> memberDiscount,
       required String purchaseSaleMode,
       required String bookmark,
       required String packaging,
@@ -2043,10 +2092,11 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get price => $composableBuilder(
-    column: $table.price,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get price =>
+      $composableBuilder(
+        column: $table.price,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<String> get publisher => $composableBuilder(
     column: $table.publisher,
@@ -2058,45 +2108,51 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get internalPricing => $composableBuilder(
-    column: $table.internalPricing,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get internalPricing =>
+      $composableBuilder(
+        column: $table.internalPricing,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<String> get selfEncoding => $composableBuilder(
     column: $table.selfEncoding,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get purchasePrice => $composableBuilder(
-    column: $table.purchasePrice,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get purchasePrice =>
+      $composableBuilder(
+        column: $table.purchasePrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<int> get publicationYear => $composableBuilder(
     column: $table.publicationYear,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get retailDiscount => $composableBuilder(
-    column: $table.retailDiscount,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get retailDiscount =>
+      $composableBuilder(
+        column: $table.retailDiscount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
-  ColumnFilters<double> get wholesaleDiscount => $composableBuilder(
-    column: $table.wholesaleDiscount,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get wholesaleDiscount =>
+      $composableBuilder(
+        column: $table.wholesaleDiscount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
-  ColumnFilters<double> get wholesalePrice => $composableBuilder(
-    column: $table.wholesalePrice,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get wholesalePrice =>
+      $composableBuilder(
+        column: $table.wholesalePrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
-  ColumnFilters<double> get memberDiscount => $composableBuilder(
-    column: $table.memberDiscount,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<double, double, int> get memberDiscount =>
+      $composableBuilder(
+        column: $table.memberDiscount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<String> get purchaseSaleMode => $composableBuilder(
     column: $table.purchaseSaleMode,
@@ -2173,7 +2229,7 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get price => $composableBuilder(
+  ColumnOrderings<int> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2188,7 +2244,7 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get internalPricing => $composableBuilder(
+  ColumnOrderings<int> get internalPricing => $composableBuilder(
     column: $table.internalPricing,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2198,7 +2254,7 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get purchasePrice => $composableBuilder(
+  ColumnOrderings<int> get purchasePrice => $composableBuilder(
     column: $table.purchasePrice,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2208,22 +2264,22 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get retailDiscount => $composableBuilder(
+  ColumnOrderings<int> get retailDiscount => $composableBuilder(
     column: $table.retailDiscount,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get wholesaleDiscount => $composableBuilder(
+  ColumnOrderings<int> get wholesaleDiscount => $composableBuilder(
     column: $table.wholesaleDiscount,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get wholesalePrice => $composableBuilder(
+  ColumnOrderings<int> get wholesalePrice => $composableBuilder(
     column: $table.wholesalePrice,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get memberDiscount => $composableBuilder(
+  ColumnOrderings<int> get memberDiscount => $composableBuilder(
     column: $table.memberDiscount,
     builder: (column) => ColumnOrderings(column),
   );
@@ -2293,7 +2349,7 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
-  GeneratedColumn<double> get price =>
+  GeneratedColumnWithTypeConverter<double, int> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 
   GeneratedColumn<String> get publisher =>
@@ -2302,45 +2358,51 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<String> get productId =>
       $composableBuilder(column: $table.productId, builder: (column) => column);
 
-  GeneratedColumn<double> get internalPricing => $composableBuilder(
-    column: $table.internalPricing,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get internalPricing =>
+      $composableBuilder(
+        column: $table.internalPricing,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<String> get selfEncoding => $composableBuilder(
     column: $table.selfEncoding,
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get purchasePrice => $composableBuilder(
-    column: $table.purchasePrice,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get purchasePrice =>
+      $composableBuilder(
+        column: $table.purchasePrice,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<int> get publicationYear => $composableBuilder(
     column: $table.publicationYear,
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get retailDiscount => $composableBuilder(
-    column: $table.retailDiscount,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get retailDiscount =>
+      $composableBuilder(
+        column: $table.retailDiscount,
+        builder: (column) => column,
+      );
 
-  GeneratedColumn<double> get wholesaleDiscount => $composableBuilder(
-    column: $table.wholesaleDiscount,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get wholesaleDiscount =>
+      $composableBuilder(
+        column: $table.wholesaleDiscount,
+        builder: (column) => column,
+      );
 
-  GeneratedColumn<double> get wholesalePrice => $composableBuilder(
-    column: $table.wholesalePrice,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get wholesalePrice =>
+      $composableBuilder(
+        column: $table.wholesalePrice,
+        builder: (column) => column,
+      );
 
-  GeneratedColumn<double> get memberDiscount => $composableBuilder(
-    column: $table.memberDiscount,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<double, int> get memberDiscount =>
+      $composableBuilder(
+        column: $table.memberDiscount,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<String> get purchaseSaleMode => $composableBuilder(
     column: $table.purchaseSaleMode,
@@ -2463,10 +2525,10 @@ class $$ProductsTableTableManager
                 required String selfEncoding,
                 required double purchasePrice,
                 required int publicationYear,
-                required double retailDiscount,
-                required double wholesaleDiscount,
+                Value<double> retailDiscount = const Value.absent(),
+                Value<double> wholesaleDiscount = const Value.absent(),
                 required double wholesalePrice,
-                required double memberDiscount,
+                Value<double> memberDiscount = const Value.absent(),
                 required String purchaseSaleMode,
                 required String bookmark,
                 required String packaging,
