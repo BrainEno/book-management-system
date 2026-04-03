@@ -1,6 +1,6 @@
 Project bookstore_management_system_current {
   database_type: "SQLite"
-  Note: "Generated from current Drift table definitions on 2026-04-03."
+  Note: "Generated from the current Drift table definitions on 2026-04-03."
 }
 
 Table users {
@@ -14,32 +14,194 @@ Table users {
   updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
   role text [not null]
   salt text [not null]
-  status integer [not null, default: 0, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
 }
 
 Table products {
   id integer [pk, increment]
   title text [not null]
   author text [not null]
-  isbn text [not null]
-  category text [not null]
-  price real [not null]
-  publisher text [not null]
-  product_id text [not null, note: "Current business code field"]
-  internal_pricing real [not null]
-  self_encoding text [not null, note: "Current internal encoding field"]
-  purchase_price real [not null]
-  publication_year integer [not null]
-  retail_discount real [not null]
-  wholesale_discount real [not null]
-  wholesale_price real [not null]
-  member_discount real [not null]
-  purchase_sale_mode text [not null]
-  bookmark text [not null, note: "Current shelf marker / location style field"]
-  packaging text [not null]
-  properity text [not null, note: "Typo kept to match current code"]
-  statistical_class text [not null]
-  operator text [not null, note: "Currently stores username, not a user foreign key"]
+  isbn text [unique, note: "Nullable; unique only when non-null"]
+  category text
+  price integer [not null, note: "Stored as cents through a Drift converter"]
+  publisher text
+  product_id text [not null, unique, note: "Current business code field"]
+  internal_pricing integer
+  self_encoding text [not null, unique, note: "Current internal encoding field"]
+  purchase_price integer
+  publication_year integer
+  retail_discount integer
+  wholesale_discount integer
+  wholesale_price integer
+  member_discount integer
+  purchase_sale_mode text
+  bookmark text
+  packaging text
+  properity text
+  statistical_class text
+  created_by integer [ref: > users.id]
+  updated_by integer [ref: > users.id]
   created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
   updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table product_categories {
+  id integer [pk, increment]
+  parent_id integer [ref: > product_categories.id]
+  code text [not null, unique]
+  name text [not null]
+  sort_order integer [not null, default: 0]
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table publishers {
+  id integer [pk, increment]
+  code text [unique]
+  name text [not null, unique]
+  contact_name text
+  phone text
+  address text
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table suppliers {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null, unique]
+  contact_name text
+  phone text
+  address text
+  settlement_term text
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table customers {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null]
+  customer_type text [not null, default: "retail", note: "retail, member, wholesale"]
+  phone text
+  email text
+  address text
+  member_level text
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table warehouses {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null, unique]
+  address text
+  manager_user_id integer [ref: > users.id]
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table stock_balances {
+  id integer [pk, increment]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  product_id integer [not null, ref: > products.id]
+  on_hand_qty integer [not null, default: 0]
+  reserved_qty integer [not null, default: 0]
+  safety_stock_qty integer [not null, default: 0]
+  shelf_code text
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+
+  indexes {
+    (warehouse_id, product_id) [unique]
+  }
+}
+
+Table stock_movements {
+  id integer [pk, increment]
+  movement_no text [not null, unique]
+  movement_type text [not null, note: "purchase_in, sale_out, return_in, return_out, adjust_in, adjust_out"]
+  ref_type text [note: "purchase_order, sales_order, manual_adjustment"]
+  ref_id integer
+  warehouse_id integer [not null, ref: > warehouses.id]
+  product_id integer [not null, ref: > products.id]
+  qty_delta integer [not null]
+  unit_cost_cent integer
+  amount_cent integer
+  occurred_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  operator_user_id integer [ref: > users.id]
+  note text
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table purchase_orders {
+  id integer [pk, increment]
+  order_no text [not null, unique]
+  supplier_id integer [not null, ref: > suppliers.id]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  status integer [not null, default: 0, note: "0=draft, 1=approved, 2=part_received, 3=completed, 4=cancelled"]
+  ordered_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  expected_at integer
+  total_amount_cent integer [not null, default: 0]
+  paid_amount_cent integer [not null, default: 0]
+  created_by integer [ref: > users.id]
+  approved_by integer [ref: > users.id]
+  note text
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table purchase_order_items {
+  id integer [pk, increment]
+  purchase_order_id integer [not null, ref: > purchase_orders.id]
+  line_no integer [not null]
+  product_id integer [not null, ref: > products.id]
+  qty integer [not null]
+  unit_price_cent integer [not null]
+  discount_bp integer [not null, default: 10000]
+  line_amount_cent integer [not null]
+  received_qty integer [not null, default: 0]
+  note text
+
+  indexes {
+    (purchase_order_id, line_no) [unique]
+  }
+}
+
+Table sales_orders {
+  id integer [pk, increment]
+  order_no text [not null, unique]
+  customer_id integer [ref: > customers.id]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  status integer [not null, default: 0, note: "0=draft, 1=confirmed, 2=completed, 3=cancelled, 4=refunded"]
+  sales_channel text [not null, default: "store"]
+  sold_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  total_amount_cent integer [not null, default: 0]
+  receivable_amount_cent integer [not null, default: 0]
+  received_amount_cent integer [not null, default: 0]
+  created_by integer [ref: > users.id]
+  note text
+  created_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+  updated_at integer [not null, note: "Drift DateTimeColumn, stored as unix epoch seconds in SQLite"]
+}
+
+Table sales_order_items {
+  id integer [pk, increment]
+  sales_order_id integer [not null, ref: > sales_orders.id]
+  line_no integer [not null]
+  product_id integer [not null, ref: > products.id]
+  qty integer [not null]
+  unit_price_cent integer [not null]
+  discount_bp integer [not null, default: 10000]
+  line_amount_cent integer [not null]
+  cost_price_cent integer
+  note text
+
+  indexes {
+    (sales_order_id, line_no) [unique]
+  }
 }

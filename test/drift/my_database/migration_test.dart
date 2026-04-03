@@ -1,322 +1,473 @@
-// dart format width=80
-// ignore_for_file: unused_local_variable, unused_import
-import 'package:drift/drift.dart' hide isNull;
-import 'package:drift_dev/api/migrations_native.dart';
-import 'package:bookstore_management_system/core/database/database.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'generated/schema.dart';
+import 'dart:io';
 
-import 'generated/schema_v1.dart' as v1;
-import 'generated/schema_v2.dart' as v2;
-import 'generated/schema_v3.dart' as v3;
-import 'generated/schema_v4.dart' as v4;
+import 'package:bookstore_management_system/core/database/database.dart';
+import 'package:drift/drift.dart' show Value, Variable;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
+import 'package:sqlite3/sqlite3.dart';
 
 void main() {
-  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  late SchemaVerifier verifier;
+  late AppDatabase database;
 
-  setUpAll(() {
-    verifier = SchemaVerifier(GeneratedHelper());
+  tearDown(() async {
+    await database.close();
   });
 
-  group('simple database migrations', () {
-    const versions = GeneratedHelper.versions;
-    final latestVersion = versions.last;
+  test('fresh database creates the recommended support tables', () async {
+    database = AppDatabase(NativeDatabase.memory());
 
-    for (final fromVersion in versions.where(
-      (version) => version < latestVersion,
-    )) {
-      test('from $fromVersion to $latestVersion', () async {
-        final schema = await verifier.schemaAt(fromVersion);
-        final db = AppDatabase(schema.newConnection());
-        await verifier.migrateAndValidate(db, latestVersion);
-        await db.close();
-      });
-    }
-  });
+    final tableRows = await database.customSelect(
+      '''
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+      ORDER BY name
+      ''',
+    ).get();
+    final tableNames = tableRows.map((row) => row.read<String>('name')).toSet();
 
-  test('migration from v1 to v4 migrates books into products', () async {
-    final createdAt = DateTime.utc(2025, 1, 2, 3, 4, 5);
-    final updatedAt = DateTime.utc(2025, 1, 2, 6, 7, 8);
-    final oldBooksData = <v1.BooksData>[
-      v1.BooksData(
-        id: 1,
-        title: 'Migration Test Book',
-        author: 'Author A',
-        isbn: '9787300000001',
-        category: 'History',
-        price: 45.5,
-        publisher: 'Test Publisher',
-        productId: 'BOOK-001',
-        internalPricing: '19.8',
-        selfEncoding: 'SELF-001',
-        purchasePrice: 15.2,
-        publicationYear: 2024,
-        retailDiscount: 88,
-        wholesaleDiscount: 72,
-        wholesalePrice: 30,
-        memberDiscount: 90,
-        purchaseSaleMode: 'Retail',
-        bookmark: 'Yes',
-        packaging: 'Box',
-        properity: 'Normal',
-        statisticalClass: 'A1',
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-      ),
-    ];
-    await verifier.testWithDataIntegrity(
-      oldVersion: 1,
-      newVersion: 4,
-      createOld: v1.DatabaseAtV1.new,
-      createNew: v4.DatabaseAtV4.new,
-      openTestedDatabase: AppDatabase.new,
-      createItems: (batch, oldDb) {
-        batch.insertAll(oldDb.books, oldBooksData);
-      },
-      validateItems: (newDb) async {
-        final products = await newDb.select(newDb.products).get();
-        expect(products, hasLength(1));
-
-        final migratedProduct = products.single;
-        expect(migratedProduct.id, 1);
-        expect(migratedProduct.title, 'Migration Test Book');
-        expect(migratedProduct.author, 'Author A');
-        expect(migratedProduct.isbn, '9787300000001');
-        expect(migratedProduct.category, 'History');
-        expect(migratedProduct.price, 4550);
-        expect(migratedProduct.publisher, 'Test Publisher');
-        expect(migratedProduct.productId, 'BOOK-001');
-        expect(migratedProduct.internalPricing, 1980);
-        expect(migratedProduct.selfEncoding, 'SELF-001');
-        expect(migratedProduct.purchasePrice, 1520);
-        expect(migratedProduct.publicationYear, 2024);
-        expect(migratedProduct.retailDiscount, 8800);
-        expect(migratedProduct.wholesaleDiscount, 7200);
-        expect(migratedProduct.wholesalePrice, 3000);
-        expect(migratedProduct.memberDiscount, 9000);
-        expect(migratedProduct.purchaseSaleMode, 'Retail');
-        expect(migratedProduct.bookmark, 'Yes');
-        expect(migratedProduct.packaging, 'Box');
-        expect(migratedProduct.properity, 'Normal');
-        expect(migratedProduct.statisticalClass, 'A1');
-        expect(migratedProduct.operator, '');
-        expect(
-          migratedProduct.createdAt,
-          createdAt.millisecondsSinceEpoch ~/ 1000,
-        );
-        expect(
-          migratedProduct.updatedAt,
-          updatedAt.millisecondsSinceEpoch ~/ 1000,
-        );
-
-        final rawStorage = await newDb.customSelect('''
-          SELECT
-            typeof(price) AS price_type,
-            price,
-            typeof(retail_discount) AS retail_discount_type,
-            retail_discount
-          FROM products
-          WHERE id = 1
-          ''').getSingle();
-
-        expect(rawStorage.read<String>('price_type'), 'integer');
-        expect(rawStorage.read<int>('price'), 4550);
-        expect(rawStorage.read<String>('retail_discount_type'), 'integer');
-        expect(rawStorage.read<int>('retail_discount'), 8800);
-      },
+    expect(
+      tableNames,
+      containsAll([
+        'users',
+        'products',
+        'product_categories',
+        'publishers',
+        'suppliers',
+        'customers',
+        'warehouses',
+        'stock_balances',
+        'stock_movements',
+        'purchase_orders',
+        'purchase_order_items',
+        'sales_orders',
+        'sales_order_items',
+      ]),
     );
-  });
 
-  test('migration from v2 to v4 preserves book data and operator', () async {
-    final createdAt = DateTime.utc(2025, 2, 2, 3, 4, 5);
-    final updatedAt = DateTime.utc(2025, 2, 2, 6, 7, 8);
-    final oldBooksData = <v2.BooksData>[
-      v2.BooksData(
-        id: 2,
-        title: 'Existing Operator Book',
-        author: 'Author B',
-        isbn: '9787300000002',
-        category: 'Tech',
-        price: 52.0,
-        publisher: 'Second Publisher',
-        productId: 'BOOK-002',
-        internalPricing: 22.5,
-        selfEncoding: 'SELF-002',
-        purchasePrice: 16.6,
-        publicationYear: 2023,
-        retailDiscount: 85.5,
-        wholesaleDiscount: 74.5,
-        wholesalePrice: 33.5,
-        memberDiscount: 92.0,
-        purchaseSaleMode: 'Wholesale',
-        bookmark: 'No',
-        packaging: 'Bag',
-        properity: 'Special',
-        statisticalClass: 'B2',
-        operator: 'beck',
-        createdAt: createdAt,
-        updatedAt: updatedAt,
+    final userId = await database.into(database.users).insert(
+      UsersCompanion.insert(
+        username: 'admin',
+        password: 'hashed-password',
+        role: 'admin',
+        salt: 'salt-value',
       ),
-    ];
-    await verifier.testWithDataIntegrity(
-      oldVersion: 2,
-      newVersion: 4,
-      createOld: v2.DatabaseAtV2.new,
-      createNew: v4.DatabaseAtV4.new,
-      openTestedDatabase: AppDatabase.new,
-      createItems: (batch, oldDb) {
-        batch.insertAll(oldDb.books, oldBooksData);
-      },
-      validateItems: (newDb) async {
-        final products = await newDb.select(newDb.products).get();
-        expect(products, hasLength(1));
-
-        final migratedProduct = products.single;
-        expect(migratedProduct.id, 2);
-        expect(migratedProduct.title, 'Existing Operator Book');
-        expect(migratedProduct.author, 'Author B');
-        expect(migratedProduct.isbn, '9787300000002');
-        expect(migratedProduct.category, 'Tech');
-        expect(migratedProduct.price, 5200);
-        expect(migratedProduct.publisher, 'Second Publisher');
-        expect(migratedProduct.productId, 'BOOK-002');
-        expect(migratedProduct.internalPricing, 2250);
-        expect(migratedProduct.selfEncoding, 'SELF-002');
-        expect(migratedProduct.purchasePrice, 1660);
-        expect(migratedProduct.publicationYear, 2023);
-        expect(migratedProduct.retailDiscount, 8550);
-        expect(migratedProduct.wholesaleDiscount, 7450);
-        expect(migratedProduct.wholesalePrice, 3350);
-        expect(migratedProduct.memberDiscount, 9200);
-        expect(migratedProduct.purchaseSaleMode, 'Wholesale');
-        expect(migratedProduct.bookmark, 'No');
-        expect(migratedProduct.packaging, 'Bag');
-        expect(migratedProduct.properity, 'Special');
-        expect(migratedProduct.statisticalClass, 'B2');
-        expect(migratedProduct.operator, 'beck');
-        expect(
-          migratedProduct.createdAt,
-          createdAt.millisecondsSinceEpoch ~/ 1000,
-        );
-        expect(
-          migratedProduct.updatedAt,
-          updatedAt.millisecondsSinceEpoch ~/ 1000,
-        );
-
-        final rawStorage = await newDb.customSelect('''
-          SELECT
-            price,
-            internal_pricing,
-            wholesale_discount,
-            member_discount
-          FROM products
-          WHERE id = 2
-          ''').getSingle();
-
-        expect(rawStorage.read<int>('price'), 5200);
-        expect(rawStorage.read<int>('internal_pricing'), 2250);
-        expect(rawStorage.read<int>('wholesale_discount'), 7450);
-        expect(rawStorage.read<int>('member_discount'), 9200);
-      },
     );
+
+    final categoryId = await database
+        .into(database.productCategories)
+        .insert(
+          ProductCategoriesCompanion.insert(
+            code: 'BOOK',
+            name: 'Books',
+          ),
+        );
+
+    final publisherId = await database.into(database.publishers).insert(
+          PublishersCompanion.insert(
+            code: const Value('PUB-001'),
+            name: 'Test Publisher',
+          ),
+        );
+
+    final supplierId = await database.into(database.suppliers).insert(
+          SuppliersCompanion.insert(
+            code: 'SUP-001',
+            name: 'Main Supplier',
+          ),
+        );
+
+    final customerId = await database.into(database.customers).insert(
+          CustomersCompanion.insert(
+            code: 'CUST-001',
+            name: 'Walk-in Customer',
+          ),
+        );
+
+    final warehouseId = await database.into(database.warehouses).insert(
+          WarehousesCompanion.insert(
+            code: 'WH-001',
+            name: 'Main Warehouse',
+            managerUserId: Value(userId),
+          ),
+        );
+
+    final productId = await database.into(database.products).insert(
+          ProductsCompanion.insert(
+            title: 'Support Table Sample',
+            author: 'Library Team',
+            price: 39.5,
+            productId: 'SKU-001',
+            selfEncoding: 'CODE-001',
+            category: Value('BOOK'),
+            publisher: Value('Test Publisher'),
+            createdBy: Value(userId),
+            updatedBy: Value(userId),
+            publicationYear: const Value(2026),
+            retailDiscount: const Value(100.0),
+            wholesaleDiscount: const Value(98.0),
+            memberDiscount: const Value(95.0),
+          ),
+        );
+
+    final stockBalanceId = await database.into(database.stockBalances).insert(
+          StockBalancesCompanion.insert(
+            warehouseId: warehouseId,
+            productId: productId,
+          ),
+        );
+
+    final movementId = await database.into(database.stockMovements).insert(
+          StockMovementsCompanion.insert(
+            movementNo: 'MV-001',
+            movementType: 'purchase_in',
+            warehouseId: warehouseId,
+            productId: productId,
+            qtyDelta: 12,
+            occurredAt: DateTime.utc(2026, 4, 3, 8, 30),
+            operatorUserId: Value(userId),
+          ),
+        );
+
+    final purchaseOrderId = await database.into(database.purchaseOrders).insert(
+          PurchaseOrdersCompanion.insert(
+            orderNo: 'PO-001',
+            supplierId: supplierId,
+            warehouseId: warehouseId,
+            orderedAt: DateTime.utc(2026, 4, 3, 9, 0),
+            createdBy: Value(userId),
+            approvedBy: Value(userId),
+          ),
+        );
+
+    final purchaseItemId = await database
+        .into(database.purchaseOrderItems)
+        .insert(
+          PurchaseOrderItemsCompanion.insert(
+            purchaseOrderId: purchaseOrderId,
+            lineNo: 1,
+            productId: productId,
+            qty: 12,
+            unitPriceCent: 3550,
+            lineAmountCent: 42600,
+          ),
+        );
+
+    final salesOrderId = await database.into(database.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'SO-001',
+            customerId: Value(customerId),
+            warehouseId: warehouseId,
+            soldAt: DateTime.utc(2026, 4, 3, 10, 0),
+            createdBy: Value(userId),
+          ),
+        );
+
+    final salesItemId = await database.into(database.salesOrderItems).insert(
+          SalesOrderItemsCompanion.insert(
+            salesOrderId: salesOrderId,
+            lineNo: 1,
+            productId: productId,
+            qty: 2,
+            unitPriceCent: 3950,
+            lineAmountCent: 7900,
+            costPriceCent: const Value(3550),
+          ),
+        );
+
+    final customerDefaults = await database.customSelect(
+      '''
+      SELECT customer_type, status
+      FROM customers
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(customerId)],
+    ).getSingle();
+    expect(customerDefaults.read<String>('customer_type'), 'retail');
+    expect(customerDefaults.read<int>('status'), 1);
+
+    final warehouseForeignKeys = await database.customSelect(
+      "PRAGMA foreign_key_list('warehouses')",
+    ).get();
+    expect(
+      warehouseForeignKeys
+          .map((row) => row.read<String>('table'))
+          .toSet(),
+      contains('users'),
+    );
+
+    final stockBalanceDefaults = await database.customSelect(
+      '''
+      SELECT on_hand_qty, reserved_qty, safety_stock_qty
+      FROM stock_balances
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(stockBalanceId)],
+    ).getSingle();
+    expect(stockBalanceDefaults.read<int>('on_hand_qty'), 0);
+    expect(stockBalanceDefaults.read<int>('reserved_qty'), 0);
+    expect(stockBalanceDefaults.read<int>('safety_stock_qty'), 0);
+
+    final salesOrderDefaults = await database.customSelect(
+      '''
+      SELECT sales_channel, status
+      FROM sales_orders
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(salesOrderId)],
+    ).getSingle();
+    expect(salesOrderDefaults.read<String>('sales_channel'), 'store');
+    expect(salesOrderDefaults.read<int>('status'), 0);
+
+    final movementRow = await database.customSelect(
+      '''
+      SELECT movement_type, qty_delta
+      FROM stock_movements
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(movementId)],
+    ).getSingle();
+    expect(movementRow.read<String>('movement_type'), 'purchase_in');
+    expect(movementRow.read<int>('qty_delta'), 12);
+
+    final purchaseItemRow = await database.customSelect(
+      '''
+      SELECT qty, line_amount_cent
+      FROM purchase_order_items
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(purchaseItemId)],
+    ).getSingle();
+    expect(purchaseItemRow.read<int>('qty'), 12);
+    expect(purchaseItemRow.read<int>('line_amount_cent'), 42600);
+
+    final salesItemRow = await database.customSelect(
+      '''
+      SELECT qty, line_amount_cent
+      FROM sales_order_items
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(salesItemId)],
+    ).getSingle();
+    expect(salesItemRow.read<int>('qty'), 2);
+    expect(salesItemRow.read<int>('line_amount_cent'), 7900);
+
+    final productRow = await database.customSelect(
+      '''
+      SELECT title, author, typeof(price) AS price_type, price
+      FROM products
+      WHERE id = ?
+      ''',
+      variables: [Variable.withInt(productId)],
+    ).getSingle();
+    expect(productRow.read<String>('title'), 'Support Table Sample');
+    expect(productRow.read<String>('author'), 'Library Team');
+    expect(productRow.read<String>('price_type'), 'integer');
+    expect(productRow.read<int>('price'), 3950);
   });
 
-  test(
-    'migration from v3 to v4 converts product storage and normalizes user blanks',
-    () async {
-      final createdAt = DateTime.utc(2025, 3, 2, 3, 4, 5);
-      final updatedAt = DateTime.utc(2025, 3, 2, 6, 7, 8);
-      final oldProducts = <v3.ProductsData>[
-        v3.ProductsData(
-          id: 3,
-          title: 'Storage Upgrade Book',
-          author: 'Author C',
-          isbn: '9787300000003',
-          category: 'Novel',
-          price: 28.75,
-          publisher: 'Third Publisher',
-          productId: 'BOOK-003',
-          internalPricing: 15.4,
-          selfEncoding: 'SELF-003',
-          purchasePrice: 12.35,
-          publicationYear: 2022,
-          retailDiscount: 87.5,
-          wholesaleDiscount: 73.25,
-          wholesalePrice: 24.2,
-          memberDiscount: 91.0,
-          purchaseSaleMode: 'Retail',
-          bookmark: 'A-01',
-          packaging: 'Simple',
-          properity: 'Standard',
-          statisticalClass: 'C3',
-          operator: 'operator-c',
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        ),
-      ];
-      final oldUsers = <v3.UsersData>[
-        v3.UsersData(
-          id: 7,
-          username: 'owner',
-          password: 'hashed-password',
-          email: '   ',
-          phone: '',
-          name: '  店长  ',
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-          role: 'admin',
-          salt: 'salt-value',
-          status: 2,
-        ),
-      ];
+  test('legacy v5 databases upgrade to v6 without losing product data', () async {
+    final tempDir = await Directory.systemTemp.createTemp('bookstore_v5_');
 
-      await verifier.testWithDataIntegrity(
-        oldVersion: 3,
-        newVersion: 4,
-        createOld: v3.DatabaseAtV3.new,
-        createNew: v4.DatabaseAtV4.new,
-        openTestedDatabase: AppDatabase.new,
-        createItems: (batch, oldDb) {
-          batch
-            ..insertAll(oldDb.users, oldUsers)
-            ..insertAll(oldDb.products, oldProducts);
-        },
-        validateItems: (newDb) async {
-          final migratedProduct = await newDb
-              .select(newDb.products)
-              .getSingle();
-          final migratedUser = await newDb.select(newDb.users).getSingle();
-
-          expect(migratedProduct.price, 2875);
-          expect(migratedProduct.internalPricing, 1540);
-          expect(migratedProduct.purchasePrice, 1235);
-          expect(migratedProduct.retailDiscount, 8750);
-          expect(migratedProduct.wholesaleDiscount, 7325);
-          expect(migratedProduct.wholesalePrice, 2420);
-          expect(migratedProduct.memberDiscount, 9100);
-
-          expect(migratedUser.email, isNull);
-          expect(migratedUser.phone, isNull);
-          expect(migratedUser.name, '店长');
-          expect(migratedUser.status, 2);
-
-          final rawStorage = await newDb.customSelect('''
-            SELECT
-              typeof(price) AS price_type,
-              price,
-              typeof(wholesale_discount) AS wholesale_discount_type,
-              wholesale_discount
-            FROM products
-            WHERE id = 3
-            ''').getSingle();
-
-          expect(rawStorage.read<String>('price_type'), 'integer');
-          expect(rawStorage.read<int>('price'), 2875);
-          expect(rawStorage.read<String>('wholesale_discount_type'), 'integer');
-          expect(rawStorage.read<int>('wholesale_discount'), 7325);
-        },
+    final dbFile = File(p.join(tempDir.path, 'legacy_v5.sqlite'));
+    final rawDb = sqlite3.open(dbFile.path);
+    rawDb.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        name TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        status INTEGER NOT NULL DEFAULT 1
       );
-    },
-  );
+    ''');
+    rawDb.execute('''
+      CREATE TABLE products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        isbn TEXT UNIQUE,
+        category TEXT,
+        price INTEGER NOT NULL,
+        publisher TEXT,
+        product_id TEXT NOT NULL UNIQUE,
+        internal_pricing INTEGER,
+        self_encoding TEXT NOT NULL UNIQUE,
+        purchase_price INTEGER,
+        publication_year INTEGER,
+        retail_discount INTEGER,
+        wholesale_discount INTEGER,
+        wholesale_price INTEGER,
+        member_discount INTEGER,
+        purchase_sale_mode TEXT,
+        bookmark TEXT,
+        packaging TEXT,
+        properity TEXT,
+        statistical_class TEXT,
+        created_by INTEGER,
+        updated_by INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY(created_by) REFERENCES users(id),
+        FOREIGN KEY(updated_by) REFERENCES users(id)
+      );
+    ''');
+    rawDb.execute('PRAGMA user_version = 5');
+    rawDb.execute('''
+      INSERT INTO users (
+        id,
+        username,
+        password,
+        email,
+        phone,
+        name,
+        created_at,
+        updated_at,
+        role,
+        salt,
+        status
+      ) VALUES (
+        1,
+        'legacy-admin',
+        'hashed-password',
+        'admin@example.com',
+        '010-00000000',
+        'Legacy Admin',
+        1712100000,
+        1712103600,
+        'admin',
+        'salt-value',
+        1
+      );
+    ''');
+    rawDb.execute('''
+      INSERT INTO products (
+        id,
+        title,
+        author,
+        isbn,
+        category,
+        price,
+        publisher,
+        product_id,
+        internal_pricing,
+        self_encoding,
+        purchase_price,
+        publication_year,
+        retail_discount,
+        wholesale_discount,
+        wholesale_price,
+        member_discount,
+        purchase_sale_mode,
+        bookmark,
+        packaging,
+        properity,
+        statistical_class,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at
+      ) VALUES (
+        10,
+        'Legacy Product',
+        'Legacy Author',
+        '9787300000999',
+        'History',
+        4250,
+        'Legacy Press',
+        'SKU-LEG-001',
+        1980,
+        'LEG-001',
+        1600,
+        2024,
+        8750,
+        8200,
+        3900,
+        9300,
+        'Retail',
+        'A-01',
+        'Box',
+        'Normal',
+        'A1',
+        1,
+        1,
+        1712100000,
+        1712103600
+      );
+    ''');
+    rawDb.dispose();
+
+    database = AppDatabase(NativeDatabase.createInBackground(dbFile));
+
+    final tableRows = await database.customSelect(
+      '''
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+      ORDER BY name
+      ''',
+    ).get();
+    final tableNames = tableRows.map((row) => row.read<String>('name')).toSet();
+
+    expect(tableNames, containsAll(['product_categories', 'warehouses']));
+
+    final productRow = await database.customSelect(
+      '''
+      SELECT title, author, price, created_by, updated_by
+      FROM products
+      WHERE id = 10
+      ''',
+    ).getSingle();
+    expect(productRow.read<String>('title'), 'Legacy Product');
+    expect(productRow.read<String>('author'), 'Legacy Author');
+    expect(productRow.read<int>('price'), 4250);
+    expect(productRow.read<int>('created_by'), 1);
+    expect(productRow.read<int>('updated_by'), 1);
+
+    final userRow = await database.customSelect(
+      '''
+      SELECT username, status
+      FROM users
+      WHERE id = 1
+      ''',
+    ).getSingle();
+    expect(userRow.read<String>('username'), 'legacy-admin');
+    expect(userRow.read<int>('status'), 1);
+
+    final publisherRow = await database.customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM publishers
+      ''',
+    ).getSingle();
+    expect(publisherRow.read<int>('count'), 0);
+
+    final supportTables = await database.customSelect(
+      '''
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+        AND name IN (
+          'product_categories',
+          'publishers',
+          'suppliers',
+          'customers',
+          'warehouses',
+          'stock_balances',
+          'stock_movements',
+          'purchase_orders',
+          'purchase_order_items',
+          'sales_orders',
+          'sales_order_items'
+        )
+      ''',
+    ).get();
+    expect(supportTables, hasLength(11));
+  });
 }

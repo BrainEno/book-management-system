@@ -10,10 +10,13 @@
 
 ## 现有 SQLite 结构结论
 
-当前项目真正落地到 SQLite 的业务表，主要只有两张：
+当前项目真正落地到 SQLite 的业务表，已经从最初的 2 张扩展到一组更完整的基础表：
 
-- `products`: 商品主数据表，当前已经承载了图书资料、价格、折扣、货架位、操作员等信息
+- `products`: 商品主数据表，当前仍保留现有商品字段结构
 - `users`: 登录用户表
+- `product_categories / publishers / suppliers / customers / warehouses`: 主数据层
+- `stock_balances / stock_movements`: 库存层
+- `purchase_orders / purchase_order_items / sales_orders / sales_order_items`: 业务单据层
 
 这套结构可以支撑“基础商品录入 + 查询 + 简单维护”，但距离“商用图书进销存”还有明显差距。更准确地说，当前更像是“图书资料库”，还不是完整的“进货/销售/库存业务库”。
 
@@ -98,19 +101,16 @@ MVP 阶段这样做很快，但一旦需要：
 
 就会开始吃力。更适合拆成基础资料表，或至少使用编码值。
 
-### 7. 当前表结构不包含真正的进销存流水
+### 7. 当前表结构已经有了，但上层业务流程还没完全接上
 
-项目目前没有以下业务核心表：
+支持表已经落到 Drift 里了，但它们还主要停留在“表结构 + 迁移 + 基础验证”层面，后面仍需要补齐：
 
-- 仓库
-- 库存结存
-- 库存流水
-- 采购单 / 采购明细
-- 销售单 / 销售明细
-- 供应商
-- 客户 / 会员
+- 采购入库和销售出库的业务服务
+- 库存结存的增减逻辑
+- 采购单 / 销售单与库存流水之间的联动
+- 主数据管理界面和筛选检索入口
 
-所以当前数据库还不能完整支撑“采购入库 -> 库存变化 -> 销售出库 -> 对账统计”这一套闭环。
+所以当前数据库结构已经能承载完整闭环，但应用层还需要继续往上接，才能真正把“采购入库 -> 库存变化 -> 销售出库 -> 对账统计”跑通。
 
 ## 推荐的商用图书进销存 Schema
 
@@ -172,17 +172,23 @@ MVP 阶段这样做很快，但一旦需要：
 - `1 / 2 / 3 / 4 / 5` 已落地
 - `products` 相关迁移逻辑已补齐，可兼容旧表数据归一到当前结构
 
+截至同一天，推荐 schema 里的支持表也已落地到 Drift：
+
+- `product_categories / publishers / suppliers / customers / warehouses`
+- `stock_balances / stock_movements`
+- `purchase_orders / purchase_order_items / sales_orders / sales_order_items`
+- `AppDatabase.schemaVersion` 已升级到 `6`
+
 当前仍未开始的部分：
 
 - `6 / 7`
-- `warehouses / stock_balances / stock_movements`
-- `purchase_orders / sales_orders`
-- 供应商、客户、会员等主数据表
+- `products` 主表还没有切换到推荐 schema 里的归一化字段设计
+- 仍需要把商品主表和主数据表进一步联动起来，才能完全贴近推荐方案
 
 ## 当前验证结果
 
 本次 product 第一阶段调整后，已通过：
 
-- `flutter test test/features/product`
+- `flutter test`
 
-这意味着当前 `product` 相关的数据库映射、本地数据源、编辑表单、查询导出和相关辅助逻辑都已通过现有测试验证。
+这意味着当前 `product` 相关的数据库映射、本地数据源、编辑表单、查询导出、数据库迁移和新增支持表都已经通过现有测试验证。

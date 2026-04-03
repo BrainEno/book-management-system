@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
+import 'package:bookstore_management_system/core/database/bookstore_tables.dart';
 import 'package:bookstore_management_system/core/database/sqlite_type_converters.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
 import 'package:bookstore_management_system/features/product/data/datasources/local/product_dao.dart';
@@ -15,7 +16,24 @@ import 'package:sqlite3/sqlite3.dart';
 part 'database.g.dart';
 
 // Define the database with tables and DAOs
-@DriftDatabase(tables: [Products, Users], daos: [ProductDao, UserDao])
+@DriftDatabase(
+  tables: [
+    Products,
+    Users,
+    ProductCategories,
+    Publishers,
+    Suppliers,
+    Customers,
+    Warehouses,
+    StockBalances,
+    StockMovements,
+    PurchaseOrders,
+    PurchaseOrderItems,
+    SalesOrders,
+    SalesOrderItems,
+  ],
+  daos: [ProductDao, UserDao],
+)
 class AppDatabase extends _$AppDatabase {
   // ignore: use_super_parameters
   AppDatabase._internal(QueryExecutor e) : super(e);
@@ -32,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,6 +66,10 @@ class AppDatabase extends _$AppDatabase {
         await _migrateLegacyBooksTableToV5(m);
       } else if (from < 5) {
         await _migrateProductsTableToV5(m);
+      }
+
+      if (from < 6) {
+        await _migrateSupportTablesToV6(m);
       }
 
       await _ensureRequiredTables(m);
@@ -135,12 +157,24 @@ END
   }
 
   Future<void> _ensureRequiredTables(Migrator m) async {
-    if (!await _tableExists(users.actualTableName)) {
-      await m.createTable(users);
-    }
+    await _createTableIfMissing(m, users);
+    await _createTableIfMissing(m, productCategories);
+    await _createTableIfMissing(m, publishers);
+    await _createTableIfMissing(m, suppliers);
+    await _createTableIfMissing(m, customers);
+    await _createTableIfMissing(m, warehouses);
+    await _createTableIfMissing(m, products);
+    await _createTableIfMissing(m, stockBalances);
+    await _createTableIfMissing(m, stockMovements);
+    await _createTableIfMissing(m, purchaseOrders);
+    await _createTableIfMissing(m, purchaseOrderItems);
+    await _createTableIfMissing(m, salesOrders);
+    await _createTableIfMissing(m, salesOrderItems);
+  }
 
-    if (!await _tableExists(products.actualTableName)) {
-      await _migrateLegacyBooksTableToV5(m);
+  Future<void> _createTableIfMissing(Migrator m, TableInfo table) async {
+    if (!await _tableExists(table.actualTableName)) {
+      await m.createTable(table);
     }
   }
 
@@ -411,6 +445,10 @@ END
       FROM normalized
     ''');
     await customStatement('DROP TABLE products_pre_v5_backup');
+  }
+
+  Future<void> _migrateSupportTablesToV6(Migrator m) async {
+    await _ensureRequiredTables(m);
   }
 
   Future<void> _migrateUsersTableToV4(Migrator m) async {
