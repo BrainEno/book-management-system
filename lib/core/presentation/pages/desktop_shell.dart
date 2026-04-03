@@ -257,11 +257,7 @@ void _floatWindow(
   WindowInfo windowInfo,
   BoxConstraints constraints,
 ) {
-  floatWindow(
-    context: context,
-    windowInfo: windowInfo,
-    availableSize: Size(constraints.maxWidth, constraints.maxHeight),
-  );
+  floatWindow(context: context, windowInfo: windowInfo);
 }
 
 class _CustomTitleBar extends StatelessWidget {

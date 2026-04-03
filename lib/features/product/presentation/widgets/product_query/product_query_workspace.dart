@@ -2,7 +2,6 @@ import 'package:bookstore_management_system/features/product/data/mappers/produc
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
-import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor_view.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_detail_form_controller.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_detail_panel.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_export_service.dart';
@@ -11,8 +10,14 @@ import 'package:bookstore_management_system/features/product/presentation/widget
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_table_source.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_utils.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_workspace_support.dart';
+import 'package:bookstore_management_system/core/window/window_pop_out_service.dart';
+import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
+import 'package:bookstore_management_system/core/di/service_locator.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 class ProductQueryWorkspace extends StatefulWidget {
@@ -30,6 +35,11 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   final _dataGridController = DataGridController();
   final _exportService = const ProductQueryExportService();
   final _detailFormController = ProductQueryDetailFormController();
+  final _isSubWindow = sl<AppRuntime>().isSubWindow;
+  final _editorChannel = const WindowMethodChannel(
+    'bookstore_product_editor',
+    mode: ChannelMode.unidirectional,
+  );
 
   List<ProductModel> _products = const [];
   ProductModel? _selectedProduct;
@@ -45,6 +55,9 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   void initState() {
     super.initState();
     _searchController.addListener(_handleQueryInputsChanged);
+    if (!_isSubWindow) {
+      unawaited(_editorChannel.setMethodCallHandler(_handleWindowMessage));
+    }
 
     if (widget.initialProducts != null && widget.initialProducts!.isNotEmpty) {
       _applyProducts(widget.initialProducts!);
@@ -65,6 +78,9 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     _searchController.dispose();
     _dataGridController.dispose();
     _detailFormController.dispose();
+    if (!_isSubWindow) {
+      unawaited(_editorChannel.setMethodCallHandler(null));
+    }
     super.dispose();
   }
 
@@ -149,17 +165,11 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   }
 
   Future<void> _openFullEditor({ProductModel? product}) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductInfoEditorView(product: product),
-      ),
+    await openSubWindow(
+      pageKey: 'product-editor',
+      title: product == null ? '新建商品资料' : '编辑商品资料',
+      state: {if (product != null) 'product': product.toJson()},
     );
-
-    if (!mounted) {
-      return;
-    }
-
-    _refreshProducts(preferredSelectionId: product?.id);
   }
 
   void _selectProduct(ProductModel product) {
@@ -340,6 +350,29 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
         context,
       ).showSnackBar(SnackBar(content: Text(state.message)));
     }
+  }
+
+  Future<dynamic> _handleWindowMessage(MethodCall call) async {
+    if (call.method != 'product-editor-saved') {
+      return null;
+    }
+
+    int? preferredSelectionId;
+    final arguments = call.arguments;
+    if (arguments is Map) {
+      final rawId = arguments['productId'];
+      if (rawId is int) {
+        preferredSelectionId = rawId;
+      } else if (rawId is num) {
+        preferredSelectionId = rawId.toInt();
+      }
+    }
+
+    if (mounted) {
+      _refreshProducts(preferredSelectionId: preferredSelectionId);
+    }
+
+    return null;
   }
 
   @override

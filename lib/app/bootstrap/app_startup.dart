@@ -9,8 +9,25 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:window_manager/window_manager.dart';
 
-bool isSubWindowLaunch(List<String> args) {
-  return args.isNotEmpty && args.first == 'multi_window';
+bool isSubWindowLaunch(String windowArguments) {
+  return windowArguments.isNotEmpty;
+}
+
+String? resolveSubWindowTitle(String windowArguments) {
+  if (windowArguments.isEmpty) {
+    return null;
+  }
+
+  try {
+    final arguments = jsonDecode(windowArguments);
+    if (arguments is Map) {
+      return arguments['title'] as String?;
+    }
+  } catch (_) {
+    return null;
+  }
+
+  return null;
 }
 
 Future<void> requestStartupPermissions() async {
@@ -54,21 +71,47 @@ Future<void> prepareDesktopWindow() async {
   });
 }
 
-Widget? resolveSubWindowPage(List<String> args) {
-  if (!isSubWindowLaunch(args)) {
+Future<void> prepareSubWindowWindow({String? title}) async {
+  if (kIsWeb || !(Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    return;
+  }
+
+  await windowManager.ensureInitialized();
+  const windowOptions = WindowOptions(
+    size: Size(1240, 900),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    if (title != null && title.isNotEmpty) {
+      await windowManager.setTitle(title);
+    }
+    await windowManager.show();
+    await windowManager.focus();
+  });
+}
+
+Widget? resolveSubWindowPage(String windowArguments) {
+  if (!isSubWindowLaunch(windowArguments)) {
     return null;
   }
 
   try {
-    final arguments = _decodeSubWindowArguments(args);
+    final arguments = _decodeSubWindowArguments(windowArguments);
     final pageKey = arguments['page'] as String? ?? '';
-    final destination = findAppWindowDestination(pageKey);
+    final destination =
+        findAppWindowDestination(pageKey) ??
+        findFloatingWindowDestination(pageKey);
     if (destination == null) {
       return Center(child: Text("Error: Unknown page key '$pageKey'"));
     }
 
     final payload = AppWindowPayload(
       initialProducts: _parseInitialProducts(arguments['state']),
+      initialProduct: _parseInitialProduct(arguments['state']),
     );
 
     return Builder(builder: (context) => destination.builder(context, payload));
@@ -82,12 +125,12 @@ Widget? resolveSubWindowPage(List<String> args) {
   }
 }
 
-Map<String, dynamic> _decodeSubWindowArguments(List<String> args) {
-  if (args.length < 3) {
+Map<String, dynamic> _decodeSubWindowArguments(String windowArguments) {
+  if (windowArguments.isEmpty) {
     return const {};
   }
 
-  final decoded = jsonDecode(args[2]);
+  final decoded = jsonDecode(windowArguments);
   if (decoded is Map<String, dynamic>) {
     return decoded;
   }
@@ -121,4 +164,22 @@ List<ProductModel>? _parseInitialProducts(dynamic initialStateJson) {
   }
 
   return products.isEmpty ? null : products;
+}
+
+ProductModel? _parseInitialProduct(dynamic initialStateJson) {
+  if (initialStateJson is! String || initialStateJson.isEmpty) {
+    return null;
+  }
+
+  final decodedState = jsonDecode(initialStateJson);
+  if (decodedState is! Map) {
+    return null;
+  }
+
+  final rawProduct = decodedState['product'];
+  if (rawProduct is! Map) {
+    return null;
+  }
+
+  return ProductModel.fromJson(Map<String, dynamic>.from(rawProduct));
 }

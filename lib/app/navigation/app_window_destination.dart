@@ -1,15 +1,17 @@
 import 'package:bookstore_management_system/core/window/app_window_manager.dart';
 import 'package:bookstore_management_system/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
+import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor_view.dart';
 import 'package:bookstore_management_system/features/product/presentation/pages/product_page.dart';
 import 'package:bookstore_management_system/inventory/presentation/pages/inventory_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class AppWindowPayload {
-  const AppWindowPayload({this.initialProducts});
+  const AppWindowPayload({this.initialProducts, this.initialProduct});
 
   final List<ProductModel>? initialProducts;
+  final ProductModel? initialProduct;
 }
 
 typedef AppWindowPageBuilder =
@@ -58,8 +60,29 @@ final List<AppWindowDestination> appWindowDestinations = [
   ),
 ];
 
+final List<AppWindowDestination> floatingWindowDestinations = [
+  AppWindowDestination(
+    pageKey: 'product-editor',
+    title: '商品编辑',
+    label: '商品编辑',
+    icon: Icons.edit_outlined,
+    builder: (_, payload) =>
+        ProductInfoEditorView(product: payload.initialProduct),
+  ),
+];
+
 AppWindowDestination? findAppWindowDestination(String pageKey) {
   for (final destination in appWindowDestinations) {
+    if (destination.pageKey == pageKey) {
+      return destination;
+    }
+  }
+
+  return null;
+}
+
+AppWindowDestination? findFloatingWindowDestination(String pageKey) {
+  for (final destination in floatingWindowDestinations) {
     if (destination.pageKey == pageKey) {
       return destination;
     }
