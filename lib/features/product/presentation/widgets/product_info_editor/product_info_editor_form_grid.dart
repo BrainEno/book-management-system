@@ -17,142 +17,36 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 1100;
-        final sectionGap = isWide ? 20.0 : 16.0;
+        final sectionGap = constraints.maxWidth >= 1000 ? 18.0 : 14.0;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            _EditorSection(
+              title: '核心信息',
+              subtitle: '优先填写书名、作者、ISBN、商品编码和售价',
+              child: _ResponsiveFields(
+                minFieldWidth: 240,
+                maxColumns: 3,
                 children: [
-                  Expanded(
-                    flex: 11,
-                    child: _EditorSection(
-                      title: '基础信息',
-                      subtitle: '录入图书识别信息与展示信息',
-                      child: _ResponsiveFields(
-                        minFieldWidth: 220,
-                        children: [
-                          _EditorTextField(
-                            controllers.bookIdController,
-                            '图书ID',
-                            required: true,
-                          ),
-                          _EditorTextField(
-                            controllers.idController,
-                            'ID',
-                            type: TextInputType.number,
-                            required: true,
-                          ),
-                          _EditorTextField(
-                            controllers.isbnController,
-                            'ISBN',
-                            required: true,
-                            suffixIcon: TextButton.icon(
-                              onPressed: onOpenScanner,
-                              icon: const Icon(Icons.qr_code_scanner, size: 18),
-                              label: const Text('扫码'),
-                            ),
-                          ),
-                          _EditorTextField(
-                            controllers.titleController,
-                            '书名',
-                            required: true,
-                          ),
-                          _EditorTextField(
-                            controllers.authorController,
-                            '作者',
-                            required: true,
-                          ),
-                          _EditorTextField(
-                            controllers.selfEncodingController,
-                            '自编码',
-                          ),
-                          _EditorTextField(
-                            controllers.operatorController,
-                            '操作人员',
-                            readOnly: true,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: sectionGap),
-                  Expanded(
-                    flex: 9,
-                    child: _EditorSection(
-                      title: '商品归类',
-                      subtitle: '用于列表展示和后续统计',
-                      child: _ResponsiveFields(
-                        minFieldWidth: 220,
-                        children: [
-                          _EditorDropdown(
-                            controller: controllers.categoryController,
-                            label: '商品分类',
-                            options: productCategoryOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorDropdown(
-                            controller: controllers.publisherController,
-                            label: '出版社',
-                            options: productPublisherOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorDropdown(
-                            controller: controllers.purchaseSaleModeController,
-                            label: '购销方式',
-                            options: productPurchaseSaleModeOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorDropdown(
-                            controller: controllers.packagingController,
-                            label: '包装',
-                            options: productPackagingOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorDropdown(
-                            controller: controllers.properityController,
-                            label: '商品属性',
-                            options: productProperityOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorDropdown(
-                            controller: controllers.statisticalClassController,
-                            label: '统计分类',
-                            options: productStatisticalClassOptions,
-                            onChanged: onDropdownChanged,
-                          ),
-                          _EditorTextField(
-                            controllers.bookmarkController,
-                            '书标',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else ...[
-              _EditorSection(
-                title: '基础信息',
-                subtitle: '录入图书识别信息与展示信息',
-                child: _ResponsiveFields(
-                  minFieldWidth: 240,
-                  children: [
-                    _EditorTextField(
-                      controllers.bookIdController,
-                      '图书ID',
+                  _GridFieldSpec(
+                    span: 2,
+                    child: _EditorTextField(
+                      controllers.titleController,
+                      '书名',
                       required: true,
                     ),
-                    _EditorTextField(
-                      controllers.idController,
-                      'ID',
-                      type: TextInputType.number,
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.authorController,
+                      '作者',
                       required: true,
                     ),
-                    _EditorTextField(
+                  ),
+                  _GridFieldSpec(
+                    span: 2,
+                    child: _EditorTextField(
                       controllers.isbnController,
                       'ISBN',
                       required: true,
@@ -162,120 +56,168 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
                         label: const Text('扫码'),
                       ),
                     ),
-                    _EditorTextField(
-                      controllers.titleController,
-                      '书名',
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.bookIdController,
+                      '商品编码',
                       required: true,
                     ),
-                    _EditorTextField(
-                      controllers.authorController,
-                      '作者',
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.priceController,
+                      '售价',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       required: true,
                     ),
-                    _EditorTextField(controllers.selfEncodingController, '自编码'),
-                    _EditorTextField(
-                      controllers.operatorController,
-                      '操作人员',
-                      readOnly: true,
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.selfEncodingController,
+                      '自编码',
+                      hintText: '不填将自动沿用 ISBN 或商品编码',
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              SizedBox(height: sectionGap),
-              _EditorSection(
-                title: '商品归类',
-                subtitle: '用于列表展示和后续统计',
-                child: _ResponsiveFields(
-                  minFieldWidth: 240,
-                  children: [
-                    _EditorDropdown(
+            ),
+            SizedBox(height: sectionGap),
+            _EditorSection(
+              title: '商品归类',
+              subtitle: '用于分类筛选、统计与标签展示',
+              child: _ResponsiveFields(
+                minFieldWidth: 240,
+                maxColumns: 3,
+                children: [
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.categoryController,
                       label: '商品分类',
                       options: productCategoryOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorDropdown(
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.publisherController,
                       label: '出版社',
                       options: productPublisherOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorDropdown(
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.purchaseSaleModeController,
                       label: '购销方式',
                       options: productPurchaseSaleModeOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorDropdown(
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.packagingController,
                       label: '包装',
                       options: productPackagingOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorDropdown(
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.properityController,
                       label: '商品属性',
                       options: productProperityOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorDropdown(
+                  ),
+                  _GridFieldSpec(
+                    child: _EditorDropdown(
                       controller: controllers.statisticalClassController,
                       label: '统计分类',
                       options: productStatisticalClassOptions,
                       onChanged: onDropdownChanged,
                     ),
-                    _EditorTextField(controllers.bookmarkController, '书标'),
-                  ],
-                ),
+                  ),
+                  _GridFieldSpec(
+                    span: 2,
+                    child: _EditorTextField(
+                      controllers.bookmarkController,
+                      '书标',
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
             SizedBox(height: sectionGap),
             _EditorSection(
               title: '价格与经营参数',
-              subtitle: '便于后续零售、批发与会员定价',
+              subtitle: '用于毛利、折扣和补充录入',
               child: _ResponsiveFields(
-                minFieldWidth: 200,
+                minFieldWidth: 220,
+                maxColumns: 3,
                 children: [
-                  _EditorTextField(
-                    controllers.priceController,
-                    '售价',
-                    type: const TextInputType.numberWithOptions(decimal: true),
-                    required: true,
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.internalPricingController,
+                      '内部定价',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.internalPricingController,
-                    '内部定价',
-                    type: const TextInputType.numberWithOptions(decimal: true),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.purchasePriceController,
+                      '进货价',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.purchasePriceController,
-                    '进货价',
-                    type: const TextInputType.numberWithOptions(decimal: true),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.publicationYearController,
+                      '出版年',
+                      type: TextInputType.number,
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.publicationYearController,
-                    '出版年',
-                    type: TextInputType.number,
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.retailDiscountController,
+                      '零售折扣',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.retailDiscountController,
-                    '零售折扣',
-                    type: const TextInputType.numberWithOptions(decimal: true),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.wholesaleDiscountController,
+                      '批发折扣',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.wholesaleDiscountController,
-                    '批发折扣',
-                    type: const TextInputType.numberWithOptions(decimal: true),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.wholesalePriceController,
+                      '批发价',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
-                  _EditorTextField(
-                    controllers.wholesalePriceController,
-                    '批发价',
-                    type: const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                  _EditorTextField(
-                    controllers.memberDiscountController,
-                    '会员折扣',
-                    type: const TextInputType.numberWithOptions(decimal: true),
+                  _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.memberDiscountController,
+                      '会员折扣',
+                      type: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -343,19 +285,24 @@ class _EditorSection extends StatelessWidget {
 class _ResponsiveFields extends StatelessWidget {
   const _ResponsiveFields({
     required this.minFieldWidth,
+    required this.maxColumns,
     required this.children,
   });
 
   final double minFieldWidth;
-  final List<Widget> children;
+  final int maxColumns;
+  final List<_GridFieldSpec> children;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
-        final columns = (availableWidth / minFieldWidth).floor().clamp(1, 4);
-        final spacing = 14.0;
+        final columns = (availableWidth / minFieldWidth).floor().clamp(
+          1,
+          maxColumns,
+        );
+        const spacing = 14.0;
         final fieldWidth = columns == 1
             ? availableWidth
             : (availableWidth - spacing * (columns - 1)) / columns;
@@ -365,12 +312,29 @@ class _ResponsiveFields extends StatelessWidget {
           runSpacing: spacing,
           children: [
             for (final child in children)
-              SizedBox(width: fieldWidth, child: child),
+              Builder(
+                builder: (_) {
+                  final effectiveSpan = child.span.clamp(1, columns).toDouble();
+                  return SizedBox(
+                    width:
+                        fieldWidth * effectiveSpan +
+                        spacing * (effectiveSpan - 1),
+                    child: child.child,
+                  );
+                },
+              ),
           ],
         );
       },
     );
   }
+}
+
+class _GridFieldSpec {
+  const _GridFieldSpec({required this.child, this.span = 1});
+
+  final Widget child;
+  final int span;
 }
 
 class _EditorTextField extends StatelessWidget {
@@ -380,7 +344,7 @@ class _EditorTextField extends StatelessWidget {
     this.type = TextInputType.text,
     this.required = false,
     this.suffixIcon,
-    this.readOnly = false,
+    this.hintText,
   });
 
   final TextEditingController controller;
@@ -388,16 +352,16 @@ class _EditorTextField extends StatelessWidget {
   final TextInputType type;
   final bool required;
   final Widget? suffixIcon;
-  final bool readOnly;
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
       keyboardType: type,
-      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
+        hintText: hintText,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
         fillColor: const Color(0xFFF8F3EA),

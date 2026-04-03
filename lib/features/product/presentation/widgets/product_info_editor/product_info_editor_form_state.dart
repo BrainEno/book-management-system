@@ -158,7 +158,7 @@ class ProductInfoEditorFormControllers {
 
     return ProductModel(
       productId: bookIdController.text.trim(),
-      id: existingProduct?.id ?? (int.tryParse(idController.text) ?? 0),
+      id: existingProduct?.id ?? 0,
       title: titleController.text.trim(),
       author: authorController.text.trim(),
       isbn: normalizedIsbn,

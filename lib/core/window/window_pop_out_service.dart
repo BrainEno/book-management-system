@@ -7,10 +7,26 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+Future<WindowController> openSubWindow({
+  required String pageKey,
+  required String title,
+  required Map<String, dynamic> state,
+}) async {
+  final arguments = {
+    'page': pageKey,
+    'title': title,
+    'state': jsonEncode(state),
+  };
+
+  final controller = await WindowController.create(
+    WindowConfiguration(hiddenAtLaunch: true, arguments: jsonEncode(arguments)),
+  );
+  return controller;
+}
+
 Future<void> floatWindow({
   required BuildContext context,
   required WindowInfo windowInfo,
-  required Size availableSize,
 }) async {
   final productBloc = context.read<ProductBloc>();
   final currentState = productBloc.state;
@@ -24,16 +40,9 @@ Future<void> floatWindow({
     };
   }
 
-  final arguments = {
-    'page': windowInfo.popOutPageKey,
-    'title': windowInfo.title,
-    'width': availableSize.width,
-    'height': availableSize.height,
-    'state': jsonEncode(windowState),
-  };
-
-  final controller = await WindowController.create(
-    WindowConfiguration(arguments: jsonEncode(arguments)),
+  await openSubWindow(
+    pageKey: windowInfo.popOutPageKey,
+    title: windowInfo.title,
+    state: windowState,
   );
-  await controller.show();
 }

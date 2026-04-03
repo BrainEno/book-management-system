@@ -5,6 +5,7 @@ import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
@@ -17,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import 'package:window_manager/window_manager.dart';
 
 class ProductInfoEditorView extends StatefulWidget {
   const ProductInfoEditorView({super.key, this.product});
@@ -36,6 +38,10 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   late final Box<Map<String, String>> _draftBox;
   late final ProductEditorIsbnReceiverService _isbnReceiverService;
   late final AppRuntime _appRuntime;
+  final _editorChannel = const WindowMethodChannel(
+    'bookstore_product_editor',
+    mode: ChannelMode.unidirectional,
+  );
 
   @override
   void initState() {
@@ -167,12 +173,31 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     });
   }
 
-  void _handleProductState(ProductState state) {
+  Future<void> _closeEditor() async {
+    if (_appRuntime.isSubWindow) {
+      await windowManager.close();
+      return;
+    }
+
+    if (mounted && Navigator.of(context).canPop()) {
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _handleProductState(ProductState state) async {
     if (state is ProductAdded ||
         state is ProductUpdated ||
         state is ProductDeleted) {
       _dismissTextInput();
-      Navigator.pop(context);
+      final savedProductId = state is ProductAdded
+          ? state.product.id
+          : widget.product?.id;
+      if (_appRuntime.isSubWindow && savedProductId != null) {
+        await _editorChannel.invokeMethod('product-editor-saved', {
+          'productId': savedProductId,
+        });
+      }
+      await _closeEditor();
       return;
     }
 
@@ -186,13 +211,12 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   @override
   Widget build(BuildContext context) {
     final isUpdate = widget.product != null;
+    final theme = Theme.of(context);
+    final windowId = _appRuntime.windowId;
+    final idBadge = isUpdate ? '内部 ID ${widget.product!.id}' : '内部 ID 保存后生成';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isUpdate ? '更新图书信息' : '添加图书信息'),
-        backgroundColor: AppPallete.transparentColor,
-      ),
-      backgroundColor: const Color(0xFFF6F1E8),
+      backgroundColor: const Color(0xFFF2EBDD),
       body: MultiBlocListener(
         listeners: [
           BlocListener<AuthBloc, AuthState>(
@@ -206,65 +230,173 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
             listener: (context, state) => _handleProductState(state),
           ),
         ],
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '图书信息',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 1320,
+                  maxHeight: MediaQuery.sizeOf(context).height - 40,
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.98),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: const Color(0xFFE3D6C5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 28,
+                        offset: const Offset(0, 16),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 18),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFF9F4EB), Color(0xFFF4EADF)],
+                            ),
+                            border: Border(
+                              bottom: BorderSide(color: Color(0xFFE6D8C6)),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isUpdate ? '编辑商品资料' : '新建商品资料',
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '把最重要的字段放在前面，保存后会自动同步到商品查询页。',
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFF6F6B65),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: [
+                                        _HeaderPill(
+                                          label: '内部主键',
+                                          value: idBadge,
+                                        ),
+                                        _HeaderPill(
+                                          label: '操作人员',
+                                          value:
+                                              _formControllers
+                                                  .operatorController
+                                                  .text
+                                                  .isEmpty
+                                              ? '加载中'
+                                              : _formControllers
+                                                    .operatorController
+                                                    .text,
+                                        ),
+                                        if (_appRuntime.isSubWindow &&
+                                            windowId?.isNotEmpty == true)
+                                          _HeaderPill(
+                                            label: '子窗口',
+                                            value: '#$windowId',
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                alignment: WrapAlignment.end,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: _saveDraft,
+                                    icon: const Icon(Icons.note_add_outlined),
+                                    label: const Text('保存草稿'),
+                                  ),
+                                  FilledButton.icon(
+                                    onPressed: _saveOrUpdateBook,
+                                    icon: const Icon(Icons.save_outlined),
+                                    label: Text(isUpdate ? '保存修改' : '保存资料'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24),
+                            child: Form(
+                              key: _formKey,
+                              child: ProductInfoEditorFormGrid(
+                                controllers: _formControllers,
+                                onOpenScanner: _openDesktopScanner,
+                                onDropdownChanged: () => setState(() {}),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '完善商品基础资料、归类信息与经营参数，保存后会同步到查询页面。',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF6F6B65),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ProductInfoEditorFormGrid(
-                  controllers: _formControllers,
-                  onOpenScanner: _openDesktopScanner,
-                  onDropdownChanged: () => setState(() {}),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-          decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.surface.withValues(alpha: 0.96),
-            border: const Border(top: BorderSide(color: Color(0xFFE6DCCF))),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              OutlinedButton(onPressed: _saveDraft, child: const Text('保存草稿')),
-              const SizedBox(width: 12),
-              FilledButton(
-                onPressed: _saveOrUpdateBook,
-                child: Text(isUpdate ? '保存修改' : '保存资料'),
-              ),
-            ],
-          ),
+    );
+  }
+}
+
+class _HeaderPill extends StatelessWidget {
+  const _HeaderPill({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F1E7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2D3BF)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppPallete.ink),
+          children: [
+            TextSpan(
+              text: '$label\n',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
       ),
     );
