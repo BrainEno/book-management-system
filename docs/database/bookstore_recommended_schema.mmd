@@ -1,0 +1,146 @@
+erDiagram
+  USERS {
+    INTEGER id PK
+    TEXT username UK
+    TEXT role_code
+    INTEGER status
+    INTEGER created_at
+    INTEGER updated_at
+  }
+
+  PRODUCT_CATEGORIES {
+    INTEGER id PK
+    INTEGER parent_id FK
+    TEXT code UK
+    TEXT name
+    INTEGER status
+  }
+
+  PUBLISHERS {
+    INTEGER id PK
+    TEXT code UK
+    TEXT name UK
+    INTEGER status
+  }
+
+  SUPPLIERS {
+    INTEGER id PK
+    TEXT code UK
+    TEXT name UK
+    TEXT settlement_term
+    INTEGER status
+  }
+
+  CUSTOMERS {
+    INTEGER id PK
+    TEXT code UK
+    TEXT name
+    TEXT customer_type
+    TEXT member_level
+    INTEGER status
+  }
+
+  WAREHOUSES {
+    INTEGER id PK
+    TEXT code UK
+    TEXT name UK
+    INTEGER manager_user_id FK
+    INTEGER status
+  }
+
+  PRODUCTS {
+    INTEGER id PK
+    TEXT sku UK
+    TEXT isbn UK
+    TEXT title
+    TEXT author_text
+    INTEGER publisher_id FK
+    INTEGER category_id FK
+    INTEGER retail_price_cent
+    INTEGER purchase_price_cent
+    INTEGER created_by FK
+    INTEGER updated_by FK
+  }
+
+  STOCK_BALANCES {
+    INTEGER id PK
+    INTEGER warehouse_id FK
+    INTEGER product_id FK
+    INTEGER on_hand_qty
+    INTEGER reserved_qty
+    INTEGER safety_stock_qty
+  }
+
+  STOCK_MOVEMENTS {
+    INTEGER id PK
+    TEXT movement_no UK
+    TEXT movement_type
+    TEXT ref_type
+    INTEGER ref_id
+    INTEGER warehouse_id FK
+    INTEGER product_id FK
+    INTEGER qty_delta
+    INTEGER operator_user_id FK
+  }
+
+  PURCHASE_ORDERS {
+    INTEGER id PK
+    TEXT order_no UK
+    INTEGER supplier_id FK
+    INTEGER warehouse_id FK
+    INTEGER status
+    INTEGER total_amount_cent
+    INTEGER created_by FK
+    INTEGER approved_by FK
+  }
+
+  PURCHASE_ORDER_ITEMS {
+    INTEGER id PK
+    INTEGER purchase_order_id FK
+    INTEGER line_no
+    INTEGER product_id FK
+    INTEGER qty
+    INTEGER unit_price_cent
+    INTEGER line_amount_cent
+  }
+
+  SALES_ORDERS {
+    INTEGER id PK
+    TEXT order_no UK
+    INTEGER customer_id FK
+    INTEGER warehouse_id FK
+    INTEGER status
+    INTEGER total_amount_cent
+    INTEGER created_by FK
+  }
+
+  SALES_ORDER_ITEMS {
+    INTEGER id PK
+    INTEGER sales_order_id FK
+    INTEGER line_no
+    INTEGER product_id FK
+    INTEGER qty
+    INTEGER unit_price_cent
+    INTEGER line_amount_cent
+  }
+
+  PRODUCT_CATEGORIES ||--o{ PRODUCT_CATEGORIES : parent_of
+  PRODUCT_CATEGORIES ||--o{ PRODUCTS : classifies
+  PUBLISHERS ||--o{ PRODUCTS : publishes
+  USERS ||--o{ PRODUCTS : creates
+  USERS ||--o{ WAREHOUSES : manages
+  WAREHOUSES ||--o{ STOCK_BALANCES : stores
+  PRODUCTS ||--o{ STOCK_BALANCES : stocked_as
+  WAREHOUSES ||--o{ STOCK_MOVEMENTS : records
+  PRODUCTS ||--o{ STOCK_MOVEMENTS : moves
+  USERS ||--o{ STOCK_MOVEMENTS : operates
+  SUPPLIERS ||--o{ PURCHASE_ORDERS : supplies
+  WAREHOUSES ||--o{ PURCHASE_ORDERS : receives_into
+  USERS ||--o{ PURCHASE_ORDERS : creates
+  PURCHASE_ORDERS ||--o{ PURCHASE_ORDER_ITEMS : contains
+  PRODUCTS ||--o{ PURCHASE_ORDER_ITEMS : purchased
+  CUSTOMERS ||--o{ SALES_ORDERS : buys
+  WAREHOUSES ||--o{ SALES_ORDERS : ships_from
+  USERS ||--o{ SALES_ORDERS : creates
+  SALES_ORDERS ||--o{ SALES_ORDER_ITEMS : contains
+  PRODUCTS ||--o{ SALES_ORDER_ITEMS : sold

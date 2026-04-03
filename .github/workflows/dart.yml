@@ -1,14 +1,19 @@
 name: Multi-Platform Release Build v0.35
+run-name: Release build for ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
   workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
 env:
   RELEASE_TAG: v0.35
-  RELEASE_BODY: "Release v0.35: architecture cleanup, product workspace refactor, and a more reliable multi-platform release pipeline."
+  RELEASE_BODY: "Release v0.35: architecture cleanup, product workspace refactor, database design docs, and a more reliable multi-platform release pipeline."
 
 jobs:
   build-ios:

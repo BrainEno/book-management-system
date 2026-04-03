@@ -1,0 +1,210 @@
+Project bookstore_management_system_recommended {
+  database_type: "SQLite"
+  Note: "Recommended bookstore inventory-sales-purchase schema based on the current products/users tables."
+}
+
+Table users {
+  id integer [pk, increment]
+  username text [not null, unique]
+  password_hash text [not null]
+  salt text [not null]
+  display_name text
+  email text
+  phone text
+  role_code text [not null, note: "admin, manager, clerk"]
+  status integer [not null, default: 1, note: "0=inactive, 1=active, 2=suspended, 3=deleted"]
+  created_at integer [not null, note: "unix epoch seconds"]
+  updated_at integer [not null, note: "unix epoch seconds"]
+}
+
+Table product_categories {
+  id integer [pk, increment]
+  parent_id integer [ref: > product_categories.id]
+  code text [not null, unique]
+  name text [not null]
+  sort_order integer [not null, default: 0]
+  status integer [not null, default: 1]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table publishers {
+  id integer [pk, increment]
+  code text [unique]
+  name text [not null, unique]
+  contact_name text
+  phone text
+  address text
+  status integer [not null, default: 1]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table suppliers {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null, unique]
+  contact_name text
+  phone text
+  address text
+  settlement_term text
+  status integer [not null, default: 1]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table customers {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null]
+  customer_type text [not null, default: "retail", note: "retail, member, wholesale"]
+  phone text
+  email text
+  address text
+  member_level text
+  status integer [not null, default: 1]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table warehouses {
+  id integer [pk, increment]
+  code text [not null, unique]
+  name text [not null, unique]
+  address text
+  manager_user_id integer [ref: > users.id]
+  status integer [not null, default: 1]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table products {
+  id integer [pk, increment]
+  sku text [not null, unique, note: "Recommended replacement for current product_id"]
+  isbn text [unique, note: "Allow NULL for non-book extensions; keep unique for book master data"]
+  title text [not null]
+  subtitle text
+  author_text text [not null]
+  publisher_id integer [ref: > publishers.id]
+  category_id integer [ref: > product_categories.id]
+  internal_code text [unique, note: "Recommended replacement for current self_encoding"]
+  publication_year integer
+  binding_type text [note: "Current packaging"]
+  product_property text [note: "Current properity"]
+  classification_code text [note: "Current statistical_class"]
+  default_shelf_code text [note: "Current bookmark"]
+  sale_mode text [note: "Current purchase_sale_mode"]
+  stock_unit text [not null, default: "册"]
+  retail_price_cent integer [not null]
+  purchase_price_cent integer
+  internal_price_cent integer
+  wholesale_price_cent integer
+  retail_discount_bp integer [not null, default: 10000, note: "10000 = 100%"]
+  wholesale_discount_bp integer [not null, default: 10000, note: "10000 = 100%"]
+  member_discount_bp integer [not null, default: 10000, note: "10000 = 100%"]
+  is_active integer [not null, default: 1]
+  created_by integer [ref: > users.id]
+  updated_by integer [ref: > users.id]
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table stock_balances {
+  id integer [pk, increment]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  product_id integer [not null, ref: > products.id]
+  on_hand_qty integer [not null, default: 0]
+  reserved_qty integer [not null, default: 0]
+  safety_stock_qty integer [not null, default: 0]
+  shelf_code text
+  updated_at integer [not null]
+
+  indexes {
+    (warehouse_id, product_id) [unique]
+  }
+}
+
+Table stock_movements {
+  id integer [pk, increment]
+  movement_no text [not null, unique]
+  movement_type text [not null, note: "purchase_in, sale_out, return_in, return_out, adjust_in, adjust_out"]
+  ref_type text [note: "purchase_order, sales_order, manual_adjustment"]
+  ref_id integer
+  warehouse_id integer [not null, ref: > warehouses.id]
+  product_id integer [not null, ref: > products.id]
+  qty_delta integer [not null]
+  unit_cost_cent integer
+  amount_cent integer
+  occurred_at integer [not null]
+  operator_user_id integer [ref: > users.id]
+  note text
+  created_at integer [not null]
+}
+
+Table purchase_orders {
+  id integer [pk, increment]
+  order_no text [not null, unique]
+  supplier_id integer [not null, ref: > suppliers.id]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  status integer [not null, default: 0, note: "0=draft, 1=approved, 2=part_received, 3=completed, 4=cancelled"]
+  ordered_at integer [not null]
+  expected_at integer
+  total_amount_cent integer [not null, default: 0]
+  paid_amount_cent integer [not null, default: 0]
+  created_by integer [ref: > users.id]
+  approved_by integer [ref: > users.id]
+  note text
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table purchase_order_items {
+  id integer [pk, increment]
+  purchase_order_id integer [not null, ref: > purchase_orders.id]
+  line_no integer [not null]
+  product_id integer [not null, ref: > products.id]
+  qty integer [not null]
+  unit_price_cent integer [not null]
+  discount_bp integer [not null, default: 10000]
+  line_amount_cent integer [not null]
+  received_qty integer [not null, default: 0]
+  note text
+
+  indexes {
+    (purchase_order_id, line_no) [unique]
+  }
+}
+
+Table sales_orders {
+  id integer [pk, increment]
+  order_no text [not null, unique]
+  customer_id integer [ref: > customers.id]
+  warehouse_id integer [not null, ref: > warehouses.id]
+  status integer [not null, default: 0, note: "0=draft, 1=confirmed, 2=completed, 3=cancelled, 4=refunded"]
+  sales_channel text [not null, default: "store"]
+  sold_at integer [not null]
+  total_amount_cent integer [not null, default: 0]
+  receivable_amount_cent integer [not null, default: 0]
+  received_amount_cent integer [not null, default: 0]
+  created_by integer [ref: > users.id]
+  note text
+  created_at integer [not null]
+  updated_at integer [not null]
+}
+
+Table sales_order_items {
+  id integer [pk, increment]
+  sales_order_id integer [not null, ref: > sales_orders.id]
+  line_no integer [not null]
+  product_id integer [not null, ref: > products.id]
+  qty integer [not null]
+  unit_price_cent integer [not null]
+  discount_bp integer [not null, default: 10000]
+  line_amount_cent integer [not null]
+  cost_price_cent integer
+  note text
+
+  indexes {
+    (sales_order_id, line_no) [unique]
+  }
+}
