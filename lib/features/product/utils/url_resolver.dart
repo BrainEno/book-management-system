@@ -1,4 +1,8 @@
-String? resolveDesktopUrl(Map<String, dynamic> attributes, int port, bool isAndroid) {
+String? resolveDesktopUrl(
+  Map<String, dynamic> attributes,
+  int port,
+  bool isAndroid,
+) {
   if (port <= 0) {
     return null;
   }

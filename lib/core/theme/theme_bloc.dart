@@ -17,8 +17,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   ThemeBloc() : super(ThemeState(ThemeMode.light)) {
     on<ToggleTheme>((event, emit) {
       // Toggle between light and dark themes
-      final newThemeMode =
-          state.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      final newThemeMode = state.themeMode == ThemeMode.light
+          ? ThemeMode.dark
+          : ThemeMode.light;
       emit(ThemeState(newThemeMode));
     });
   }

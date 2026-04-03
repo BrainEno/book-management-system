@@ -356,10 +356,9 @@ class _ResponsiveFields extends StatelessWidget {
         final availableWidth = constraints.maxWidth;
         final columns = (availableWidth / minFieldWidth).floor().clamp(1, 4);
         final spacing = 14.0;
-        final fieldWidth =
-            columns == 1
-                ? availableWidth
-                : (availableWidth - spacing * (columns - 1)) / columns;
+        final fieldWidth = columns == 1
+            ? availableWidth
+            : (availableWidth - spacing * (columns - 1)) / columns;
 
         return Wrap(
           spacing: spacing,
@@ -412,10 +411,9 @@ class _EditorTextField extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
       ),
-      validator:
-          required
-              ? (value) => value == null || value.isEmpty ? '$label 不能为空' : null
-              : null,
+      validator: required
+          ? (value) => value == null || value.isEmpty ? '$label 不能为空' : null
+          : null,
     );
   }
 }
@@ -437,8 +435,9 @@ class _EditorDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       key: ValueKey('$label:${controller.text}'),
-      initialValue:
-          options.contains(controller.text) ? controller.text : options.first,
+      initialValue: options.contains(controller.text)
+          ? controller.text
+          : options.first,
       decoration: InputDecoration(
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -453,13 +452,9 @@ class _EditorDropdown extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
       ),
-      items:
-          options
-              .map(
-                (option) =>
-                    DropdownMenuItem(value: option, child: Text(option)),
-              )
-              .toList(),
+      items: options
+          .map((option) => DropdownMenuItem(value: option, child: Text(option)))
+          .toList(),
       onChanged: (value) {
         if (value == null) return;
         controller.text = value;

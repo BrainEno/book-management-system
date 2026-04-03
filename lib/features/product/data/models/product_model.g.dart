@@ -30,14 +30,12 @@ _ProductModel _$ProductModelFromJson(Map<String, dynamic> json) =>
       properity: json['properity'] as String? ?? '不区分',
       statisticalClass: json['statisticalClass'] as String? ?? '不区分',
       operator: json['operator'] as String,
-      createdAt:
-          json['createdAt'] == null
-              ? null
-              : DateTime.parse(json['createdAt'] as String),
-      updatedAt:
-          json['updatedAt'] == null
-              ? null
-              : DateTime.parse(json['updatedAt'] as String),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
       additionalField: json['additionalField'] as String? ?? '',
     );
 

@@ -66,19 +66,15 @@ class _AuthFieldState extends State<AuthField> {
         hintStyle:
             widget.hintStyle ??
             theme.textTheme.bodySmall?.copyWith(fontSize: 16),
-        prefixIcon:
-            widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, color: theme.iconTheme.color)
-                : null,
-        suffixIcon:
-            widget.isPassword
-                ? IconButton(
-                  icon: Icon(
-                    _obscure ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                )
-                : null,
+        prefixIcon: widget.prefixIcon != null
+            ? Icon(widget.prefixIcon, color: theme.iconTheme.color)
+            : null,
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              )
+            : null,
         filled: true,
         fillColor:
             theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface,

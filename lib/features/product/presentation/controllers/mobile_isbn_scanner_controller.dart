@@ -212,10 +212,9 @@ class MobileIsbnScannerController extends ChangeNotifier {
     _debugState = _debugState.copyWith(
       cooldownActive: remainingSeconds > 0,
       cooldownRemainingSeconds: remainingSeconds,
-      status:
-          remainingSeconds > 0
-              ? 'ISBN 已发送到桌面端，请移开当前图书，$remainingSeconds 秒后可继续扫描。'
-              : 'ISBN 已发送到桌面端，请扫描下一本图书。',
+      status: remainingSeconds > 0
+          ? 'ISBN 已发送到桌面端，请移开当前图书，$remainingSeconds 秒后可继续扫描。'
+          : 'ISBN 已发送到桌面端，请扫描下一本图书。',
     );
     notifyListeners();
 
@@ -315,13 +314,13 @@ class MobileIsbnScannerController extends ChangeNotifier {
       _previousIsbn = normalized;
       final success = await _sender.sendIsbn(normalized, desktopUrl);
       _debugState = _debugState.copyWith(
-        lastSuccessfulIsbn:
-            success ? normalized : _debugState.lastSuccessfulIsbn,
+        lastSuccessfulIsbn: success
+            ? normalized
+            : _debugState.lastSuccessfulIsbn,
         sentCount: success ? _debugState.sentCount + 1 : _debugState.sentCount,
-        sendFailureCount:
-            success
-                ? _debugState.sendFailureCount
-                : _debugState.sendFailureCount + 1,
+        sendFailureCount: success
+            ? _debugState.sendFailureCount
+            : _debugState.sendFailureCount + 1,
         lastSendResult: success ? 'success' : 'failure',
         status: success ? 'ISBN 已发送到桌面端' : 'ISBN 发送失败，请检查网络连接',
       );

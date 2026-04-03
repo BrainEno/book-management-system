@@ -25,15 +25,14 @@ class ProductQueryExportService {
       queryMode: queryMode,
       query: query,
     );
-    final path =
-        pickSavePath != null
-            ? await pickSavePath!(suggestedName)
-            : await FilePicker.platform.saveFile(
-              dialogTitle: '导出商品资料',
-              fileName: suggestedName,
-              type: FileType.custom,
-              allowedExtensions: const ['csv'],
-            );
+    final path = pickSavePath != null
+        ? await pickSavePath!(suggestedName)
+        : await FilePicker.platform.saveFile(
+            dialogTitle: '导出商品资料',
+            fileName: suggestedName,
+            type: FileType.custom,
+            allowedExtensions: const ['csv'],
+          );
 
     if (path == null || path.trim().isEmpty) {
       return null;

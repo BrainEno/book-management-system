@@ -6,10 +6,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
   bonsoir_windows
   desktop_multi_window
-  flutter_lite_camera
   permission_handler_windows
   screen_retriever_windows
-  system_tray
   webview_windows
   window_manager
 )

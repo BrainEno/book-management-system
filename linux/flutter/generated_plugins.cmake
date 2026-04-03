@@ -5,9 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   desktop_multi_window
-  flutter_lite_camera
   screen_retriever_linux
-  system_tray
   window_manager
 )
 

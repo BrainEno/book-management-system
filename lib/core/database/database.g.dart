@@ -530,126 +530,102 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   Product map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Product(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      title:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}title'],
-          )!,
-      author:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}author'],
-          )!,
-      isbn:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}isbn'],
-          )!,
-      category:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}category'],
-          )!,
-      price:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}price'],
-          )!,
-      publisher:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}publisher'],
-          )!,
-      productId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}product_id'],
-          )!,
-      internalPricing:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}internal_pricing'],
-          )!,
-      selfEncoding:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}self_encoding'],
-          )!,
-      purchasePrice:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}purchase_price'],
-          )!,
-      publicationYear:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}publication_year'],
-          )!,
-      retailDiscount:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}retail_discount'],
-          )!,
-      wholesaleDiscount:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}wholesale_discount'],
-          )!,
-      wholesalePrice:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}wholesale_price'],
-          )!,
-      memberDiscount:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.double,
-            data['${effectivePrefix}member_discount'],
-          )!,
-      purchaseSaleMode:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}purchase_sale_mode'],
-          )!,
-      bookmark:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}bookmark'],
-          )!,
-      packaging:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}packaging'],
-          )!,
-      properity:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}properity'],
-          )!,
-      statisticalClass:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}statistical_class'],
-          )!,
-      operator:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}operator'],
-          )!,
-      createdAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}created_at'],
-          )!,
-      updatedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}updated_at'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      author: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author'],
+      )!,
+      isbn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}isbn'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      price: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price'],
+      )!,
+      publisher: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}publisher'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_id'],
+      )!,
+      internalPricing: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}internal_pricing'],
+      )!,
+      selfEncoding: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}self_encoding'],
+      )!,
+      purchasePrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}purchase_price'],
+      )!,
+      publicationYear: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}publication_year'],
+      )!,
+      retailDiscount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}retail_discount'],
+      )!,
+      wholesaleDiscount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}wholesale_discount'],
+      )!,
+      wholesalePrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}wholesale_price'],
+      )!,
+      memberDiscount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}member_discount'],
+      )!,
+      purchaseSaleMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_sale_mode'],
+      )!,
+      bookmark: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bookmark'],
+      )!,
+      packaging: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}packaging'],
+      )!,
+      properity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}properity'],
+      )!,
+      statisticalClass: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}statistical_class'],
+      )!,
+      operator: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operator'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -893,49 +869,39 @@ class Product extends DataClass implements Insertable<Product> {
       price: data.price.present ? data.price.value : this.price,
       publisher: data.publisher.present ? data.publisher.value : this.publisher,
       productId: data.productId.present ? data.productId.value : this.productId,
-      internalPricing:
-          data.internalPricing.present
-              ? data.internalPricing.value
-              : this.internalPricing,
-      selfEncoding:
-          data.selfEncoding.present
-              ? data.selfEncoding.value
-              : this.selfEncoding,
-      purchasePrice:
-          data.purchasePrice.present
-              ? data.purchasePrice.value
-              : this.purchasePrice,
-      publicationYear:
-          data.publicationYear.present
-              ? data.publicationYear.value
-              : this.publicationYear,
-      retailDiscount:
-          data.retailDiscount.present
-              ? data.retailDiscount.value
-              : this.retailDiscount,
-      wholesaleDiscount:
-          data.wholesaleDiscount.present
-              ? data.wholesaleDiscount.value
-              : this.wholesaleDiscount,
-      wholesalePrice:
-          data.wholesalePrice.present
-              ? data.wholesalePrice.value
-              : this.wholesalePrice,
-      memberDiscount:
-          data.memberDiscount.present
-              ? data.memberDiscount.value
-              : this.memberDiscount,
-      purchaseSaleMode:
-          data.purchaseSaleMode.present
-              ? data.purchaseSaleMode.value
-              : this.purchaseSaleMode,
+      internalPricing: data.internalPricing.present
+          ? data.internalPricing.value
+          : this.internalPricing,
+      selfEncoding: data.selfEncoding.present
+          ? data.selfEncoding.value
+          : this.selfEncoding,
+      purchasePrice: data.purchasePrice.present
+          ? data.purchasePrice.value
+          : this.purchasePrice,
+      publicationYear: data.publicationYear.present
+          ? data.publicationYear.value
+          : this.publicationYear,
+      retailDiscount: data.retailDiscount.present
+          ? data.retailDiscount.value
+          : this.retailDiscount,
+      wholesaleDiscount: data.wholesaleDiscount.present
+          ? data.wholesaleDiscount.value
+          : this.wholesaleDiscount,
+      wholesalePrice: data.wholesalePrice.present
+          ? data.wholesalePrice.value
+          : this.wholesalePrice,
+      memberDiscount: data.memberDiscount.present
+          ? data.memberDiscount.value
+          : this.memberDiscount,
+      purchaseSaleMode: data.purchaseSaleMode.present
+          ? data.purchaseSaleMode.value
+          : this.purchaseSaleMode,
       bookmark: data.bookmark.present ? data.bookmark.value : this.bookmark,
       packaging: data.packaging.present ? data.packaging.value : this.packaging,
       properity: data.properity.present ? data.properity.value : this.properity,
-      statisticalClass:
-          data.statisticalClass.present
-              ? data.statisticalClass.value
-              : this.statisticalClass,
+      statisticalClass: data.statisticalClass.present
+          ? data.statisticalClass.value
+          : this.statisticalClass,
       operator: data.operator.present ? data.operator.value : this.operator,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1571,21 +1537,18 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   User map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return User(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      username:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}username'],
-          )!,
-      password:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}password'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      )!,
+      password: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}password'],
+      )!,
       email: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}email'],
@@ -1598,31 +1561,26 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       ),
-      createdAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}created_at'],
-          )!,
-      updatedAt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.dateTime,
-            data['${effectivePrefix}updated_at'],
-          )!,
-      role:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}role'],
-          )!,
-      salt:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}salt'],
-          )!,
-      status:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}status'],
-          )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      salt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}salt'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}status'],
+      )!,
     );
   }
 
@@ -1685,10 +1643,12 @@ class User extends DataClass implements Insertable<User> {
       id: Value(id),
       username: Value(username),
       password: Value(password),
-      email:
-          email == null && nullToAbsent ? const Value.absent() : Value(email),
-      phone:
-          phone == null && nullToAbsent ? const Value.absent() : Value(phone),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -2431,12 +2391,12 @@ class $$ProductsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$ProductsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$ProductsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$ProductsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$ProductsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProductsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProductsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -2541,16 +2501,9 @@ class $$ProductsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2791,12 +2744,12 @@ class $$UsersTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$UsersTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$UsersTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$UsersTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$UsersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UsersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UsersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -2849,16 +2802,9 @@ class $$UsersTableTableManager
                 salt: salt,
                 status: status,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );

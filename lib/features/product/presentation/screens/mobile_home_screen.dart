@@ -46,9 +46,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) =>
-                ScannerScreen(desktopUrl: desktopUrl, debugMode: _debugMode),
+        builder: (context) =>
+            ScannerScreen(desktopUrl: desktopUrl, debugMode: _debugMode),
       ),
     );
   }

@@ -25,18 +25,16 @@ void main() {
 
       final handler = const Pipeline()
           .addMiddleware(logRequests())
-          .addHandler(router);
+          .addHandler(router.call);
 
       // 使用 127.0.0.1 避免 Windows 上的 localhost (IPv6) 解析延迟或冲突
       server = await shelf_io.serve(handler, '127.0.0.1', 0);
       serverUrl = Uri.parse('http://127.0.0.1:${server.port}');
-      print('Test server running at $serverUrl');
     });
 
     tearDown(() async {
       httpClient.close();
       await server.close(force: true);
-      print('Test server closed.');
     });
 
     test('should receive the correct ISBN via POST request', () async {

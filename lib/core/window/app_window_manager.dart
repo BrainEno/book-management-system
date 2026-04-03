@@ -30,13 +30,12 @@ class AppWindowManager extends ChangeNotifier {
     // Check if a window with this key already exists
     var existingWindow = _openedWindows.values.firstWhere(
       (w) => w.popOutPageKey == popOutPageKey,
-      orElse:
-          () => WindowInfo(
-            id: '',
-            title: '',
-            content: Container(),
-            popOutPageKey: '',
-          ),
+      orElse: () => WindowInfo(
+        id: '',
+        title: '',
+        content: Container(),
+        popOutPageKey: '',
+      ),
     );
 
     if (existingWindow.id.isNotEmpty) {

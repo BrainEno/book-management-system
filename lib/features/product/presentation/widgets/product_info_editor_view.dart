@@ -1,26 +1,22 @@
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:bonsoir/bonsoir.dart';
+import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
-import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
+import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
+import 'package:bookstore_management_system/features/product/presentation/controllers/product_editor_isbn_receiver_service.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/desktop_isbn_scanner_dialog.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_grid.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
 import 'package:bookstore_management_system/features/product/utils/isbn_scanner_utils.dart';
-import 'package:bookstore_management_system/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-import 'package:shelf/shelf.dart';
-import 'package:shelf/shelf_io.dart' as io;
-import 'package:shelf_router/shelf_router.dart' as shelf_router;
 
 class ProductInfoEditorView extends StatefulWidget {
   const ProductInfoEditorView({super.key, this.product});
@@ -38,23 +34,23 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
   late final ProductInfoEditorFormControllers _formControllers;
   late final Box<Map<String, String>> _draftBox;
-
-  HttpServer? _server;
-  BonsoirBroadcast? _broadcast;
+  late final ProductEditorIsbnReceiverService _isbnReceiverService;
+  late final AppRuntime _appRuntime;
 
   @override
   void initState() {
     super.initState();
     _formControllers = ProductInfoEditorFormControllers();
-    _draftBox = GetIt.instance<Box<Map<String, String>>>();
-    _startService();
+    _draftBox = sl<Box<Map<String, String>>>();
+    _isbnReceiverService = ProductEditorIsbnReceiverService();
+    _appRuntime = sl<AppRuntime>();
+    _startIsbnReceiverService();
     context.read<AuthBloc>().add(GetCurrentUserEvent());
   }
 
   @override
   void dispose() {
-    _broadcast?.stop();
-    _server?.close();
+    _isbnReceiverService.stop();
     _audioPlayer.dispose();
     _formControllers.dispose();
     super.dispose();
@@ -64,57 +60,20 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
-  Future<void> _startService() async {
-    if (isSubWindowInstance) {
+  Future<void> _startIsbnReceiverService() async {
+    if (_appRuntime.isSubWindow) {
       AppLogger.logger.i('Detected sub-window, skipping HTTP server start.');
       return;
     }
 
     try {
-      final router =
-          shelf_router.Router()..post('/isbn', (Request req) async {
-            final isbn = await req.readAsString();
-            _logger.i('Received ISBN via HTTP: $isbn');
-            _formControllers.updateIsbn(isbn);
-            return Response.ok('OK');
-          });
-
-      _server = await io.serve(
-        logRequests().addHandler(router.call),
-        InternetAddress.anyIPv4,
-        AppSecrets.servicePort,
-      );
-
-      final port = _server!.port;
-      final interfaces = await NetworkInterface.list(
-        type: InternetAddressType.IPv4,
-        includeLoopback: false,
-      );
-      final localAddress = interfaces
-          .expand((interface) => interface.addresses)
-          .firstWhere((address) => !address.isLoopback);
-      final ipv4 = localAddress.address;
-
-      _logger.i('HTTP server listening on http://$ipv4:$port');
-
-      final service = BonsoirService(
-        name: 'Bookstore Desktop',
-        type: AppSecrets.serviceType!,
-        port: port,
-        attributes: {'ip': ipv4},
-      );
-
-      _broadcast = BonsoirBroadcast(service: service);
-      await _broadcast!.initialize();
-      await _broadcast!.start();
-
-      _logger.i(
-        'Advertised Bonsoir service ${AppSecrets.serviceType} on port $port with IP $ipv4',
+      await _isbnReceiverService.start(
+        onIsbnReceived: _formControllers.updateIsbn,
       );
     } on SocketException catch (e) {
       if (e.osError?.errorCode == 10013) {
         _logger.e(
-          '端口绑定失败 (errno 10013)。请检查：1. 端口 ${AppSecrets.servicePort} 是否被其他进程占用（命令：netstat -ano | findstr ${AppSecrets.servicePort}）；2. Windows 防火墙/杀毒软件是否阻挡；3. 以管理员身份运行应用。',
+          '端口绑定失败 (errno 10013)。请检查：1. 当前服务端口是否被其他进程占用；2. Windows 防火墙/杀毒软件是否阻挡；3. 以管理员身份运行应用。',
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

@@ -36,8 +36,9 @@ class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
   }
 
   Future<User?> getUserByUsername(String username) {
-    return (select(users)
-      ..where((t) => t.username.equals(username))).getSingleOrNull();
+    return (select(
+      users,
+    )..where((t) => t.username.equals(username))).getSingleOrNull();
   }
 
   // Login with username and password
@@ -46,6 +47,7 @@ class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
     String password,
   ) =>
       (select(users)..where(
-        (u) => u.username.equals(username) & u.password.equals(password),
-      )).getSingleOrNull();
+            (u) => u.username.equals(username) & u.password.equals(password),
+          ))
+          .getSingleOrNull();
 }

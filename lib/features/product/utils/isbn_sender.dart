@@ -1,7 +1,11 @@
 import 'package:http/http.dart' as http;
 
 class IsbnSender {
-  Future<bool> sendIsbn(String isbn, String desktopUrl, {http.Client? client}) async {
+  Future<bool> sendIsbn(
+    String isbn,
+    String desktopUrl, {
+    http.Client? client,
+  }) async {
     final httpClient = client ?? http.Client();
     try {
       final uri = Uri.parse('$desktopUrl/isbn');

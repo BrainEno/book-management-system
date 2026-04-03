@@ -1,15 +1,9 @@
-import 'dart:convert';
-import 'package:bookstore_management_system/core/window/window_info.dart';
+import 'package:bookstore_management_system/app/navigation/app_window_destination.dart';
 import 'package:bookstore_management_system/core/window/app_window_manager.dart';
-import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
-import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
-import 'package:bookstore_management_system/inventory/presentation/pages/inventory_page.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:bookstore_management_system/core/window/window_info.dart';
+import 'package:bookstore_management_system/core/window/window_pop_out_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-
-import 'package:bookstore_management_system/features/product/presentation/pages/product_page.dart';
 
 class DesktopShell extends StatefulWidget {
   const DesktopShell({super.key});
@@ -19,22 +13,18 @@ class DesktopShell extends StatefulWidget {
 }
 
 class _DesktopShellState extends State<DesktopShell> {
-  int _selectedIndex = 0; // Local state for selected index
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // Open the default product window once after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final windowManager = context.read<AppWindowManager>();
-      // Only open if there is no active window yet
-      if (windowManager.activeWindow == null) {
-        windowManager.openOrFocusWindow(
-          title: '商品资料',
-          content: const ProductPage(),
-          popOutPageKey: 'product',
-        );
+      if (windowManager.activeWindow != null || appWindowDestinations.isEmpty) {
+        return;
       }
+
+      _openDestination(windowManager, appWindowDestinations.first);
     });
   }
 
@@ -42,79 +32,51 @@ class _DesktopShellState extends State<DesktopShell> {
   Widget build(BuildContext context) {
     final windowManager = context.watch<AppWindowManager>();
     final activeWindow = windowManager.activeWindow;
-
-    // Update selectedIndex based on activeWindow
-    if (activeWindow?.popOutPageKey == 'inventory') {
-      _selectedIndex = 1;
-    } else if (activeWindow?.popOutPageKey == 'product') {
-      _selectedIndex = 0;
-    }
+    final activeIndex = _indexForPageKey(activeWindow?.popOutPageKey);
+    final selectedIndex = activeIndex ?? _selectedIndex;
 
     return Scaffold(
       body: Row(
         children: [
-          // Left Navigation Rail
           NavigationRail(
-            selectedIndex: _selectedIndex,
+            selectedIndex: selectedIndex,
             onDestinationSelected: (index) {
               setState(() {
                 _selectedIndex = index;
               });
-              if (index == 0) {
-                windowManager.openOrFocusWindow(
-                  title: '商品资料',
-                  content: const ProductPage(),
-                  popOutPageKey: 'product',
-                );
-              } else if (index == 1) {
-                windowManager.openOrFocusWindow(
-                  title: '库存',
-                  content: const InventoryPage(),
-                  popOutPageKey: 'inventory',
-                );
-              }
+              _openDestination(windowManager, appWindowDestinations[index]);
             },
             labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.shopping_bag_outlined),
-                label: Text('商品资料'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.inventory_2_outlined),
-                label: Text('库存'),
-              ),
+            destinations: [
+              for (final destination in appWindowDestinations)
+                NavigationRailDestination(
+                  icon: Icon(destination.icon),
+                  label: Text(destination.label),
+                ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
-          // Main Content Area
           Expanded(
             child: LayoutBuilder(
-              // We use LayoutBuilder to get the size for the float window
               builder: (context, constraints) {
                 return Stack(
                   children: [
-                    // The main docked view
                     if (activeWindow != null)
                       Column(
                         children: [
                           _CustomTitleBar(
                             windowInfo: activeWindow,
-                            // Pass the available size to the float function
-                            onFloat:
-                                () => _floatWindow(
-                                  context,
-                                  activeWindow,
-                                  constraints,
-                                ),
+                            onFloat: () => _floatWindow(
+                              context,
+                              activeWindow,
+                              constraints,
+                            ),
                           ),
                           Expanded(child: activeWindow.content),
                         ],
                       )
-                    else // Show a placeholder if no window is active
-                      const Center(child: Text("Select an item from the menu")),
-
-                    // Minimized windows bar at the bottom-left
+                    else
+                      const Center(child: Text('Select an item from the menu')),
                     if (windowManager.minimizedWindows.isNotEmpty)
                       Positioned(
                         left: 0,
@@ -131,21 +93,21 @@ class _DesktopShellState extends State<DesktopShell> {
                             ),
                           ),
                           child: Row(
-                            children:
-                                windowManager.minimizedWindows.map((w) {
-                                  return InkWell(
-                                    onTap:
-                                        () => windowManager
-                                            .restoreMinimizedWindow(w.id),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                        vertical: 4.0,
-                                      ),
-                                      child: Text(w.title),
-                                    ),
-                                  );
-                                }).toList(),
+                            children: windowManager.minimizedWindows.map((
+                              window,
+                            ) {
+                              return InkWell(
+                                onTap: () => windowManager
+                                    .restoreMinimizedWindow(window.id),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  child: Text(window.title),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ),
@@ -160,52 +122,53 @@ class _DesktopShellState extends State<DesktopShell> {
   }
 }
 
-// Helper function to create the new window
+void _openDestination(
+  AppWindowManager windowManager,
+  AppWindowDestination destination,
+) {
+  windowManager.openOrFocusWindow(
+    title: destination.title,
+    content: destination.builder(const AppWindowPayload()),
+    popOutPageKey: destination.pageKey,
+  );
+}
+
+int? _indexForPageKey(String? pageKey) {
+  if (pageKey == null) {
+    return null;
+  }
+
+  for (var index = 0; index < appWindowDestinations.length; index++) {
+    if (appWindowDestinations[index].pageKey == pageKey) {
+      return index;
+    }
+  }
+
+  return null;
+}
+
 void _floatWindow(
   BuildContext context,
   WindowInfo windowInfo,
   BoxConstraints constraints,
-) async {
-  final productBloc = context.read<ProductBloc>();
-  final currentState = productBloc.state;
-  Map<String, dynamic> windowState = {};
-
-  if (currentState is ProductsLoaded) {
-    // Assuming ProductFetchSuccess has a list of products
-    // And your Product entity has a toJson() method
-    windowState = {
-      'products':
-          currentState.products
-              .map((p) => (p as ProductModel).toJson())
-              .toList(),
-    };
-  }
-  // This is where we define the arguments for the new window
-  final arguments = {
-    'page': windowInfo.popOutPageKey,
-    'title': windowInfo.title,
-    'width': constraints.maxWidth, // Pass current width
-    'height': constraints.maxHeight, // Pass current height
-    'state': jsonEncode(windowState),
-  };
-
-  // Create the OS window
-  final controller = await WindowController.create(
-    WindowConfiguration(arguments: jsonEncode(arguments)),
+) {
+  floatWindow(
+    context: context,
+    windowInfo: windowInfo,
+    availableSize: Size(constraints.maxWidth, constraints.maxHeight),
   );
-  await controller.show();
 }
 
-// A new private widget for the title bar of the docked view
 class _CustomTitleBar extends StatelessWidget {
+  const _CustomTitleBar({required this.windowInfo, required this.onFloat});
+
   final WindowInfo windowInfo;
   final VoidCallback onFloat;
-
-  const _CustomTitleBar({required this.windowInfo, required this.onFloat});
 
   @override
   Widget build(BuildContext context) {
     final windowManager = context.read<AppWindowManager>();
+
     return Container(
       height: 32,
       color: Colors.blue.shade100,
@@ -222,9 +185,7 @@ class _CustomTitleBar extends StatelessWidget {
             icon: const Icon(Icons.open_in_new, size: 16),
             tooltip: 'Float Window',
             onPressed: () {
-              // 1. Call the onFloat callback which creates the OS window
               onFloat();
-              // 2. Tell the state manager to close the internal version
               windowManager.floatActiveWindow();
             },
           ),

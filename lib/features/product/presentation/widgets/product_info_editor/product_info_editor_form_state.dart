@@ -102,16 +102,21 @@ class ProductInfoEditorFormControllers {
     wholesaleDiscountController.text = product.wholesaleDiscount.toString();
     wholesalePriceController.text = product.wholesalePrice.toString();
     memberDiscountController.text = product.memberDiscount.toString();
-    purchaseSaleModeController.text =
-        product.purchaseSaleMode.isEmpty ? '不区分' : product.purchaseSaleMode;
-    bookmarkController.text =
-        product.bookmark.isEmpty ? '08/404' : product.bookmark;
-    packagingController.text =
-        product.packaging.isEmpty ? '不区分' : product.packaging;
-    properityController.text =
-        product.properity.isEmpty ? '不区分' : product.properity;
-    statisticalClassController.text =
-        product.statisticalClass.isEmpty ? '不区分' : product.statisticalClass;
+    purchaseSaleModeController.text = product.purchaseSaleMode.isEmpty
+        ? '不区分'
+        : product.purchaseSaleMode;
+    bookmarkController.text = product.bookmark.isEmpty
+        ? '08/404'
+        : product.bookmark;
+    packagingController.text = product.packaging.isEmpty
+        ? '不区分'
+        : product.packaging;
+    properityController.text = product.properity.isEmpty
+        ? '不区分'
+        : product.properity;
+    statisticalClassController.text = product.statisticalClass.isEmpty
+        ? '不区分'
+        : product.statisticalClass;
   }
 
   void setOperator(String username) {
@@ -143,8 +148,9 @@ class ProductInfoEditorFormControllers {
       wholesalePrice: double.tryParse(wholesalePriceController.text) ?? 0.0,
       memberDiscount: double.tryParse(memberDiscountController.text) ?? 100.0,
       purchaseSaleMode: purchaseSaleModeController.text,
-      bookmark:
-          bookmarkController.text.isEmpty ? '不区分' : bookmarkController.text,
+      bookmark: bookmarkController.text.isEmpty
+          ? '不区分'
+          : bookmarkController.text,
       packaging: packagingController.text,
       properity: properityController.text,
       statisticalClass: statisticalClassController.text,

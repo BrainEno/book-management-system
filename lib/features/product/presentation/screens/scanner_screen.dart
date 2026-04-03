@@ -221,17 +221,16 @@ class _MobileScanWindowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final dimmedPaint =
-        Paint()
-          ..color = Colors.black.withAlpha(110)
-          ..style = PaintingStyle.fill;
+    final dimmedPaint = Paint()
+      ..color = Colors.black.withAlpha(110)
+      ..style = PaintingStyle.fill;
 
-    final clearPath =
-        Path()..addRRect(
-          RRect.fromRectAndRadius(scanWindow, const Radius.circular(14)),
-        );
-    final backgroundPath =
-        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final clearPath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(scanWindow, const Radius.circular(14)),
+      );
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final overlayPath = Path.combine(
       PathOperation.difference,
       backgroundPath,
@@ -240,11 +239,10 @@ class _MobileScanWindowPainter extends CustomPainter {
 
     canvas.drawPath(overlayPath, dimmedPaint);
 
-    final borderPaint =
-        Paint()
-          ..color = Colors.lightGreenAccent
-          ..strokeWidth = 3
-          ..style = PaintingStyle.stroke;
+    final borderPaint = Paint()
+      ..color = Colors.lightGreenAccent
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
     canvas.drawRRect(
       RRect.fromRectAndRadius(scanWindow, const Radius.circular(14)),
       borderPaint,

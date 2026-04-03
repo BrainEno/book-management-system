@@ -53,15 +53,14 @@ class AppDatabase extends _$AppDatabase {
   Migrator get migrator => Migrator(this);
 
   Future<bool> _tableExists(String tableName) async {
-    final result =
-        await customSelect(
-          '''
+    final result = await customSelect(
+      '''
       SELECT name
       FROM sqlite_master
       WHERE type = 'table' AND name = ?
       ''',
-          variables: [Variable.withString(tableName)],
-        ).get();
+      variables: [Variable.withString(tableName)],
+    ).get();
     return result.isNotEmpty;
   }
 

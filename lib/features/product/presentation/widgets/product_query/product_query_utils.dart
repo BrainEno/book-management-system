@@ -59,14 +59,13 @@ List<ProductModel> filterAndSortProducts(
   required String query,
 }) {
   final needle = query.trim().toLowerCase();
-  final filtered =
-      needle.isEmpty
-          ? List<ProductModel>.from(products)
-          : products
-              .where(
-                (product) => _queryValueForMode(product, mode).contains(needle),
-              )
-              .toList();
+  final filtered = needle.isEmpty
+      ? List<ProductModel>.from(products)
+      : products
+            .where(
+              (product) => _queryValueForMode(product, mode).contains(needle),
+            )
+            .toList();
 
   filtered.sort((a, b) {
     final primary = _productSortKey(a).compareTo(_productSortKey(b));
