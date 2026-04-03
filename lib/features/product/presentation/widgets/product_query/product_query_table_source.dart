@@ -59,7 +59,11 @@ class ProductQueryTableSource extends DataGridSource {
           textStyle,
           alignment: Alignment.centerLeft,
         ),
-        _buildCell(product.isbn, textStyle, alignment: Alignment.centerLeft),
+        _buildCell(
+          product.isbn ?? '',
+          textStyle,
+          alignment: Alignment.centerLeft,
+        ),
         _buildCell(product.author, textStyle, alignment: Alignment.centerLeft),
         _buildCell(
           '¥${formatProductPrice(product.price)}',
@@ -67,7 +71,7 @@ class ProductQueryTableSource extends DataGridSource {
           alignment: Alignment.centerRight,
         ),
         _buildCell(
-          product.category,
+          product.category ?? '',
           textStyle,
           alignment: Alignment.centerLeft,
         ),
@@ -81,13 +85,16 @@ class ProductQueryTableSource extends DataGridSource {
       cells: [
         DataGridCell<String>(columnName: 'title', value: product.title),
         DataGridCell<String>(columnName: 'productId', value: product.productId),
-        DataGridCell<String>(columnName: 'isbn', value: product.isbn),
+        DataGridCell<String>(columnName: 'isbn', value: product.isbn ?? ''),
         DataGridCell<String>(columnName: 'author', value: product.author),
         DataGridCell<String>(
           columnName: 'price',
           value: formatProductPrice(product.price),
         ),
-        DataGridCell<String>(columnName: 'category', value: product.category),
+        DataGridCell<String>(
+          columnName: 'category',
+          value: product.category ?? '',
+        ),
         DataGridCell<String>(
           columnName: 'inventory',
           value: formatInventory(product),

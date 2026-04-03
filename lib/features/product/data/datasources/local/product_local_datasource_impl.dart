@@ -8,21 +8,52 @@ import 'package:sqlite3/sqlite3.dart';
 
 class BookLocalDataSourceImpl implements ProductLocalDataSource {
   final AppDatabase database;
+  static const Set<String> _nullPlaceholders = {'不区分'};
 
   BookLocalDataSourceImpl(this.database);
 
   String _normalizeRequiredText(String value) => value.trim();
+
+  String? _normalizeOptionalText(
+    String? value, {
+    Set<String> nullPlaceholders = _nullPlaceholders,
+  }) {
+    final normalized = value?.trim();
+    if (normalized == null ||
+        normalized.isEmpty ||
+        nullPlaceholders.contains(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
 
   String _resolveSelfEncoding(ProductModel productModel) {
     final selfEncoding = productModel.selfEncoding.trim();
     if (selfEncoding.isNotEmpty) {
       return selfEncoding;
     }
-    return productModel.isbn.trim();
+    final isbn = productModel.isbn?.trim();
+    if (isbn != null && isbn.isNotEmpty) {
+      return isbn;
+    }
+    return productModel.productId.trim();
+  }
+
+  Future<int?> _resolveOperatorUserId(String? username) async {
+    final normalized = _normalizeOptionalText(username, nullPlaceholders: {});
+    if (normalized == null) {
+      return null;
+    }
+
+    final user = await database.userDao.getUserByUsername(normalized);
+    return user?.id;
   }
 
   String _productConstraintMessage(SqliteException error) {
     final message = error.message.toLowerCase();
+    if (message.contains('products.isbn')) {
+      return 'ISBN 已存在，请检查是否重复建档。';
+    }
     if (message.contains('products.product_id')) {
       return '商品编码已存在，请使用新的商品编码。';
     }
@@ -44,14 +75,23 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
   Future<ProductModel> addProduct(ProductModel productModel) async {
     try {
       final productDao = database.productDao;
+      final operatorUserId = await _resolveOperatorUserId(
+        productModel.operator,
+      );
+      final normalizedOperator = _normalizeOptionalText(
+        productModel.operator,
+        nullPlaceholders: {},
+      );
       final ProductsCompanion newProduct = ProductsCompanion(
         id: productModel.id > 0 ? Value(productModel.id) : const Value.absent(),
         title: Value(_normalizeRequiredText(productModel.title)),
         author: Value(_normalizeRequiredText(productModel.author)),
-        isbn: Value(_normalizeRequiredText(productModel.isbn)),
-        category: Value(_normalizeRequiredText(productModel.category)),
+        isbn: Value(
+          _normalizeOptionalText(productModel.isbn, nullPlaceholders: {}),
+        ),
+        category: Value(_normalizeOptionalText(productModel.category)),
         price: Value(productModel.price),
-        publisher: Value(_normalizeRequiredText(productModel.publisher)),
+        publisher: Value(_normalizeOptionalText(productModel.publisher)),
         productId: Value(_normalizeRequiredText(productModel.productId)),
         internalPricing: Value(productModel.internalPricing),
         selfEncoding: Value(_resolveSelfEncoding(productModel)),
@@ -62,15 +102,16 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
         wholesalePrice: Value(productModel.wholesalePrice),
         memberDiscount: Value(productModel.memberDiscount),
         purchaseSaleMode: Value(
-          _normalizeRequiredText(productModel.purchaseSaleMode),
+          _normalizeOptionalText(productModel.purchaseSaleMode),
         ),
-        bookmark: Value(_normalizeRequiredText(productModel.bookmark)),
-        packaging: Value(_normalizeRequiredText(productModel.packaging)),
-        properity: Value(_normalizeRequiredText(productModel.properity)),
+        bookmark: Value(_normalizeOptionalText(productModel.bookmark)),
+        packaging: Value(_normalizeOptionalText(productModel.packaging)),
+        properity: Value(_normalizeOptionalText(productModel.properity)),
         statisticalClass: Value(
-          _normalizeRequiredText(productModel.statisticalClass),
+          _normalizeOptionalText(productModel.statisticalClass),
         ),
-        operator: Value(_normalizeRequiredText(productModel.operator)),
+        createdBy: Value(productModel.createdBy ?? operatorUserId),
+        updatedBy: Value(productModel.updatedBy ?? operatorUserId),
         createdAt: Value(productModel.createdAt ?? DateTime.now()),
         updatedAt: Value(productModel.updatedAt ?? DateTime.now()),
       );
@@ -78,6 +119,9 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       return productModel.copyWith(
         id: insertedId,
         selfEncoding: _resolveSelfEncoding(productModel),
+        createdBy: productModel.createdBy ?? operatorUserId,
+        updatedBy: productModel.updatedBy ?? operatorUserId,
+        operator: normalizedOperator,
       );
     } on SqliteException catch (error) {
       throw ServerException(_productConstraintMessage(error));
@@ -88,40 +132,57 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
   Future<List<ProductModel>> getAllProducts() async {
     final productDao = database.productDao;
     final products = await productDao.getAllProducts();
-    return products.map(mapProductRecordToModel).toList();
+    return products
+        .map(
+          (entry) => mapProductRecordToModel(
+            entry.product,
+            createdByUsername: entry.createdByUsername,
+            updatedByUsername: entry.updatedByUsername,
+          ),
+        )
+        .toList(growable: false);
   }
 
   @override
   Future<void> updateProduct(ProductModel productModel) async {
     try {
       final productDao = database.productDao;
-      final product = Product(
-        id: productModel.id,
-        title: _normalizeRequiredText(productModel.title),
-        author: _normalizeRequiredText(productModel.author),
-        isbn: _normalizeRequiredText(productModel.isbn),
-        category: _normalizeRequiredText(productModel.category),
-        price: productModel.price,
-        publisher: _normalizeRequiredText(productModel.publisher),
-        productId: _normalizeRequiredText(productModel.productId),
-        internalPricing: productModel.internalPricing,
-        selfEncoding: _resolveSelfEncoding(productModel),
-        purchasePrice: productModel.purchasePrice,
-        publicationYear: productModel.publicationYear,
-        retailDiscount: productModel.retailDiscount,
-        wholesaleDiscount: productModel.wholesaleDiscount,
-        wholesalePrice: productModel.wholesalePrice,
-        memberDiscount: productModel.memberDiscount,
-        purchaseSaleMode: _normalizeRequiredText(productModel.purchaseSaleMode),
-        bookmark: _normalizeRequiredText(productModel.bookmark),
-        packaging: _normalizeRequiredText(productModel.packaging),
-        properity: _normalizeRequiredText(productModel.properity),
-        statisticalClass: _normalizeRequiredText(productModel.statisticalClass),
-        operator: _normalizeRequiredText(productModel.operator),
-        createdAt: productModel.createdAt ?? DateTime.now(),
-        updatedAt: DateTime.now(),
+      final operatorUserId = await _resolveOperatorUserId(
+        productModel.operator,
       );
-      await productDao.updateProduct(product);
+      final product = ProductsCompanion(
+        title: Value(_normalizeRequiredText(productModel.title)),
+        author: Value(_normalizeRequiredText(productModel.author)),
+        isbn: Value(
+          _normalizeOptionalText(productModel.isbn, nullPlaceholders: {}),
+        ),
+        category: Value(_normalizeOptionalText(productModel.category)),
+        price: Value(productModel.price),
+        publisher: Value(_normalizeOptionalText(productModel.publisher)),
+        productId: Value(_normalizeRequiredText(productModel.productId)),
+        internalPricing: Value(productModel.internalPricing),
+        selfEncoding: Value(_resolveSelfEncoding(productModel)),
+        purchasePrice: Value(productModel.purchasePrice),
+        publicationYear: Value(productModel.publicationYear),
+        retailDiscount: Value(productModel.retailDiscount),
+        wholesaleDiscount: Value(productModel.wholesaleDiscount),
+        wholesalePrice: Value(productModel.wholesalePrice),
+        memberDiscount: Value(productModel.memberDiscount),
+        purchaseSaleMode: Value(
+          _normalizeOptionalText(productModel.purchaseSaleMode),
+        ),
+        bookmark: Value(_normalizeOptionalText(productModel.bookmark)),
+        packaging: Value(_normalizeOptionalText(productModel.packaging)),
+        properity: Value(_normalizeOptionalText(productModel.properity)),
+        statisticalClass: Value(
+          _normalizeOptionalText(productModel.statisticalClass),
+        ),
+        createdBy: Value(productModel.createdBy),
+        updatedBy: Value(operatorUserId ?? productModel.updatedBy),
+        createdAt: Value(productModel.createdAt ?? DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+      );
+      await productDao.updateProduct(productModel.id, product);
     } on SqliteException catch (error) {
       throw ServerException(_productConstraintMessage(error));
     }
@@ -137,13 +198,27 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
   Future<ProductModel> searchByISBN(String isbn) async {
     final productDao = database.productDao;
     final product = await productDao.searchByISBN(isbn);
-    return mapProductRecordToModel(product);
+    if (product == null) {
+      throw const ServerException('未找到对应 ISBN 的商品。');
+    }
+    return mapProductRecordToModel(
+      product.product,
+      createdByUsername: product.createdByUsername,
+      updatedByUsername: product.updatedByUsername,
+    );
   }
 
   @override
   Future<ProductModel> searchByTitle(String title) async {
     final productDao = database.productDao;
     final product = await productDao.searchByTitle(title);
-    return mapProductRecordToModel(product);
+    if (product == null) {
+      throw const ServerException('未找到对应名称的商品。');
+    }
+    return mapProductRecordToModel(
+      product.product,
+      createdByUsername: product.createdByUsername,
+      updatedByUsername: product.updatedByUsername,
+    );
   }
 }

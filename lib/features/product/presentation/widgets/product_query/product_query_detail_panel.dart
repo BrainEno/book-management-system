@@ -83,7 +83,8 @@ class ProductQueryDetailPanel extends StatelessWidget {
                                     label: '商品编码 ${selectedProduct.productId}',
                                   ),
                                   BadgeLabel(
-                                    label: '类别 ${selectedProduct.category}',
+                                    label:
+                                        '类别 ${selectedProduct.category ?? '--'}',
                                   ),
                                   BadgeLabel(
                                     label:
@@ -246,15 +247,15 @@ class ProductQueryDetailPanel extends StatelessWidget {
                           ),
                           MetaText(
                             label: '购销方式',
-                            value: selectedProduct.purchaseSaleMode,
+                            value: selectedProduct.purchaseSaleMode ?? '--',
                           ),
                           MetaText(
                             label: '包装',
-                            value: selectedProduct.packaging,
+                            value: selectedProduct.packaging ?? '--',
                           ),
                           MetaText(
                             label: '统计分类',
-                            value: selectedProduct.statisticalClass,
+                            value: selectedProduct.statisticalClass ?? '--',
                           ),
                           MetaText(
                             label: '创建时间',

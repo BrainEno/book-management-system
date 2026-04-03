@@ -56,7 +56,7 @@ class ProductInfoEditorFormControllers {
       wholesalePriceController = TextEditingController(),
       memberDiscountController = TextEditingController(),
       purchaseSaleModeController = TextEditingController(text: '不区分'),
-      bookmarkController = TextEditingController(text: '08/404'),
+      bookmarkController = TextEditingController(),
       packagingController = TextEditingController(text: '不区分'),
       properityController = TextEditingController(text: '不区分'),
       statisticalClassController = TextEditingController(text: '不区分'),
@@ -85,38 +85,57 @@ class ProductInfoEditorFormControllers {
   final TextEditingController statisticalClassController;
   final TextEditingController operatorController;
 
+  String? _normalizeOptionalText(
+    String value, {
+    Set<String> nullPlaceholders = const {'不区分'},
+  }) {
+    final normalized = value.trim();
+    if (normalized.isEmpty || nullPlaceholders.contains(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
+
+  double? _parseOptionalDouble(TextEditingController controller) {
+    final normalized = controller.text.trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return double.tryParse(normalized);
+  }
+
+  int? _parseOptionalInt(TextEditingController controller) {
+    final normalized = controller.text.trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return int.tryParse(normalized);
+  }
+
   void populateFromProduct(ProductModel product) {
     bookIdController.text = product.productId;
     idController.text = product.id.toString();
     titleController.text = product.title;
     authorController.text = product.author;
-    isbnController.text = product.isbn;
+    isbnController.text = product.isbn ?? '';
     priceController.text = product.price.toString();
-    categoryController.text = product.category;
-    publisherController.text = product.publisher;
+    categoryController.text = product.category ?? '不区分';
+    publisherController.text = product.publisher ?? '不区分';
     selfEncodingController.text = product.selfEncoding;
-    internalPricingController.text = product.internalPricing.toString();
-    purchasePriceController.text = product.purchasePrice.toString();
-    publicationYearController.text = product.publicationYear.toString();
-    retailDiscountController.text = product.retailDiscount.toString();
-    wholesaleDiscountController.text = product.wholesaleDiscount.toString();
-    wholesalePriceController.text = product.wholesalePrice.toString();
-    memberDiscountController.text = product.memberDiscount.toString();
-    purchaseSaleModeController.text = product.purchaseSaleMode.isEmpty
-        ? '不区分'
-        : product.purchaseSaleMode;
-    bookmarkController.text = product.bookmark.isEmpty
-        ? '08/404'
-        : product.bookmark;
-    packagingController.text = product.packaging.isEmpty
-        ? '不区分'
-        : product.packaging;
-    properityController.text = product.properity.isEmpty
-        ? '不区分'
-        : product.properity;
-    statisticalClassController.text = product.statisticalClass.isEmpty
-        ? '不区分'
-        : product.statisticalClass;
+    internalPricingController.text = product.internalPricing?.toString() ?? '';
+    purchasePriceController.text = product.purchasePrice?.toString() ?? '';
+    publicationYearController.text = product.publicationYear?.toString() ?? '';
+    retailDiscountController.text = product.retailDiscount?.toString() ?? '';
+    wholesaleDiscountController.text =
+        product.wholesaleDiscount?.toString() ?? '';
+    wholesalePriceController.text = product.wholesalePrice?.toString() ?? '';
+    memberDiscountController.text = product.memberDiscount?.toString() ?? '';
+    purchaseSaleModeController.text = product.purchaseSaleMode ?? '不区分';
+    bookmarkController.text = product.bookmark ?? '';
+    packagingController.text = product.packaging ?? '不区分';
+    properityController.text = product.properity ?? '不区分';
+    statisticalClassController.text = product.statisticalClass ?? '不区分';
+    operatorController.text = product.operator ?? '';
   }
 
   void setOperator(String username) {
@@ -129,9 +148,12 @@ class ProductInfoEditorFormControllers {
   }
 
   ProductModel buildProduct({ProductModel? existingProduct}) {
-    final normalizedIsbn = isbnController.text.trim();
+    final normalizedIsbn = _normalizeOptionalText(
+      isbnController.text,
+      nullPlaceholders: const {},
+    );
     final normalizedSelfEncoding = selfEncodingController.text.trim().isEmpty
-        ? normalizedIsbn
+        ? (normalizedIsbn ?? bookIdController.text.trim())
         : selfEncodingController.text.trim();
 
     return ProductModel(
@@ -141,25 +163,30 @@ class ProductInfoEditorFormControllers {
       author: authorController.text.trim(),
       isbn: normalizedIsbn,
       price: double.tryParse(priceController.text) ?? 0.0,
-      category: categoryController.text.trim(),
-      publisher: publisherController.text.trim(),
+      category: _normalizeOptionalText(categoryController.text),
+      publisher: _normalizeOptionalText(publisherController.text),
       selfEncoding: normalizedSelfEncoding,
-      internalPricing: double.tryParse(internalPricingController.text) ?? 0.0,
-      purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
-      publicationYear: int.tryParse(publicationYearController.text) ?? 2025,
-      retailDiscount: double.tryParse(retailDiscountController.text) ?? 100.0,
-      wholesaleDiscount:
-          double.tryParse(wholesaleDiscountController.text) ?? 100.0,
-      wholesalePrice: double.tryParse(wholesalePriceController.text) ?? 0.0,
-      memberDiscount: double.tryParse(memberDiscountController.text) ?? 100.0,
-      purchaseSaleMode: purchaseSaleModeController.text.trim(),
-      bookmark: bookmarkController.text.trim().isEmpty
-          ? '不区分'
-          : bookmarkController.text.trim(),
-      packaging: packagingController.text.trim(),
-      properity: properityController.text.trim(),
-      statisticalClass: statisticalClassController.text.trim(),
-      operator: operatorController.text.trim(),
+      createdBy: existingProduct?.createdBy,
+      updatedBy: existingProduct?.updatedBy,
+      internalPricing: _parseOptionalDouble(internalPricingController),
+      purchasePrice: _parseOptionalDouble(purchasePriceController),
+      publicationYear: _parseOptionalInt(publicationYearController),
+      retailDiscount: _parseOptionalDouble(retailDiscountController),
+      wholesaleDiscount: _parseOptionalDouble(wholesaleDiscountController),
+      wholesalePrice: _parseOptionalDouble(wholesalePriceController),
+      memberDiscount: _parseOptionalDouble(memberDiscountController),
+      purchaseSaleMode: _normalizeOptionalText(purchaseSaleModeController.text),
+      bookmark: _normalizeOptionalText(
+        bookmarkController.text,
+        nullPlaceholders: const {},
+      ),
+      packaging: _normalizeOptionalText(packagingController.text),
+      properity: _normalizeOptionalText(properityController.text),
+      statisticalClass: _normalizeOptionalText(statisticalClassController.text),
+      operator: _normalizeOptionalText(
+        operatorController.text,
+        nullPlaceholders: const {},
+      ),
       createdAt: existingProduct?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

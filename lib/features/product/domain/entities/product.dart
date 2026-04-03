@@ -3,15 +3,19 @@ class Product {
   final int id;
   final String title;
   final String author;
-  final String isbn;
+  final String? isbn;
   //售价
   final double price;
   //商品分类
-  final String category;
+  final String? category;
   //出版社
-  final String publisher;
+  final String? publisher;
   //自编码
   final String selfEncoding;
+  //创建人用户 ID
+  final int? createdBy;
+  //最后修改人用户 ID
+  final int? updatedBy;
   //内部定价
   final double? internalPricing;
   //进货价
@@ -36,8 +40,8 @@ class Product {
   final String? properity;
   //统计分类
   final String? statisticalClass;
-  //操作人员
-  final String operator;
+  //当前界面展示的操作人员名称
+  final String? operator;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -46,17 +50,19 @@ class Product {
     required this.id,
     required this.title,
     required this.author,
-    required this.isbn,
+    this.isbn,
     //售价
     required this.price,
     //商品分类
-    required this.category,
+    this.category,
     //出版社
-    required this.publisher,
+    this.publisher,
     //自编码
     required this.selfEncoding,
+    this.createdBy,
+    this.updatedBy,
     //操作人员
-    required this.operator,
+    this.operator,
     //内部定价
     this.internalPricing,
     //进货价

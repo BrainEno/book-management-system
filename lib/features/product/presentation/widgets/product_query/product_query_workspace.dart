@@ -349,11 +349,11 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     final theme = Theme.of(context);
     final publisherOptions = mergeProductQueryOptions(
       productPublisherOptions,
-      _products.map((product) => product.publisher),
+      _products.map((product) => product.publisher ?? '不区分'),
     );
     final categoryOptions = mergeProductQueryOptions(
       productCategoryOptions,
-      _products.map((product) => product.category),
+      _products.map((product) => product.category ?? '不区分'),
     );
     final isCompactLayout = MediaQuery.sizeOf(context).width < 1280;
     final tableSource = ProductQueryTableSource(

@@ -26,16 +26,26 @@ void main() {
       packaging: '精装',
       properity: '普通图书',
       statisticalClass: '小说',
-      operator: 'tester',
+      createdBy: 3,
+      updatedBy: 5,
       createdAt: DateTime(2026, 4, 1, 10, 0),
       updatedAt: DateTime(2026, 4, 2, 11, 30),
     );
 
-    final model = mapProductRecordToModel(record);
+    final model = mapProductRecordToModel(
+      record,
+      createdByUsername: 'creator',
+      updatedByUsername: 'tester',
+    );
 
     expect(model.id, 12);
     expect(model.productId, 'A-012');
     expect(model.title, '夜航船');
+    expect(model.price, 58);
+    expect(model.internalPricing, 45);
+    expect(model.createdBy, 3);
+    expect(model.updatedBy, 5);
+    expect(model.operator, 'tester');
     expect(model.createdAt, DateTime(2026, 4, 1, 10, 0));
     expect(model.updatedAt, DateTime(2026, 4, 2, 11, 30));
   });

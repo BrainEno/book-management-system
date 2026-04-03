@@ -32,23 +32,24 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
-      await m.createAll(); // Creates all tables defined in @DriftDatabase
+      await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 3) {
-        await _migrateLegacyBooksTable(m);
-      }
-      if (from == 3) {
-        await _migrateProductsTableToV4(m);
-      }
       if (from < 4) {
         await _migrateUsersTableToV4(m);
       }
+
+      if (from < 3) {
+        await _migrateLegacyBooksTableToV5(m);
+      } else if (from < 5) {
+        await _migrateProductsTableToV5(m);
+      }
+
       await _ensureRequiredTables(m);
     },
     beforeOpen: (details) async {
@@ -76,17 +77,78 @@ class AppDatabase extends _$AppDatabase {
     return result.any((row) => row.read<String>('name') == columnName);
   }
 
+  Future<String?> _columnDeclaredType(
+    String tableName,
+    String columnName,
+  ) async {
+    final result = await customSelect('PRAGMA table_info($tableName)').get();
+    for (final row in result) {
+      if (row.read<String>('name') == columnName) {
+        final type = row.data['type'];
+        return type == null ? null : type.toString().toUpperCase();
+      }
+    }
+    return null;
+  }
+
+  bool _isIntegerColumnType(String? declaredType) {
+    if (declaredType == null) {
+      return false;
+    }
+    return declaredType.contains('INT');
+  }
+
+  String _normalizeRequiredTextSql(String columnName) {
+    return "TRIM(COALESCE($columnName, ''))";
+  }
+
+  String _normalizeOptionalTextSql(
+    String columnName, {
+    bool treatUnspecifiedAsNull = true,
+  }) {
+    final trimmed = "NULLIF(TRIM(COALESCE($columnName, '')), '')";
+    if (!treatUnspecifiedAsNull) {
+      return trimmed;
+    }
+    return "CASE WHEN $trimmed = '不区分' THEN NULL ELSE $trimmed END";
+  }
+
+  String _scaledNumberSql(String columnName, {required bool alreadyInteger}) {
+    if (alreadyInteger) {
+      return 'CAST($columnName AS INTEGER)';
+    }
+    return 'CAST(ROUND(CAST($columnName AS REAL) * 100.0) AS INTEGER)';
+  }
+
+  String _userLookupSql(String usernameExpression) {
+    return '''
+CASE
+  WHEN $usernameExpression IS NULL THEN NULL
+  ELSE (
+    SELECT id
+    FROM users
+    WHERE username = $usernameExpression
+    LIMIT 1
+  )
+END
+''';
+  }
+
   Future<void> _ensureRequiredTables(Migrator m) async {
     if (!await _tableExists(users.actualTableName)) {
       await m.createTable(users);
     }
 
     if (!await _tableExists(products.actualTableName)) {
-      await _migrateLegacyBooksTable(m);
+      await _migrateLegacyBooksTableToV5(m);
     }
   }
 
   Future<void> _migrateLegacyBooksTable(Migrator m) async {
+    await _migrateLegacyBooksTableToV5(m);
+  }
+
+  Future<void> _migrateLegacyBooksTableToV5(Migrator m) async {
     if (await _tableExists(products.actualTableName)) {
       return;
     }
@@ -98,10 +160,47 @@ class AppDatabase extends _$AppDatabase {
     }
 
     final hasOperatorColumn = await _columnExists('books', 'operator');
-    final operatorSelect = hasOperatorColumn ? 'operator' : "''";
+    final operatorSelect = hasOperatorColumn
+        ? _normalizeOptionalTextSql('operator', treatUnspecifiedAsNull: false)
+        : 'NULL';
 
     await m.createTable(products);
     await customStatement('''
+      WITH normalized AS (
+        SELECT
+          id,
+          ${_normalizeRequiredTextSql('title')} AS normalized_title,
+          ${_normalizeRequiredTextSql('author')} AS normalized_author,
+          ${_normalizeOptionalTextSql('isbn', treatUnspecifiedAsNull: false)} AS normalized_isbn,
+          ROW_NUMBER() OVER (
+            PARTITION BY ${_normalizeOptionalTextSql('isbn', treatUnspecifiedAsNull: false)}
+            ORDER BY id
+          ) AS isbn_rank,
+          ${_normalizeOptionalTextSql('category')} AS normalized_category,
+          CAST(ROUND(CAST(price AS REAL) * 100.0) AS INTEGER) AS normalized_price,
+          ${_normalizeOptionalTextSql('publisher')} AS normalized_publisher,
+          ${_normalizeRequiredTextSql('book_id')} AS normalized_product_id,
+          ${_normalizeOptionalTextSql('self_encoding', treatUnspecifiedAsNull: false)} AS normalized_self_encoding,
+          CAST(ROUND(CAST(internal_pricing AS REAL) * 100.0) AS INTEGER) AS normalized_internal_pricing,
+          CAST(ROUND(CAST(purchase_price AS REAL) * 100.0) AS INTEGER) AS normalized_purchase_price,
+          CASE
+            WHEN CAST(publication_year AS INTEGER) <= 0 THEN NULL
+            ELSE CAST(publication_year AS INTEGER)
+          END AS normalized_publication_year,
+          CAST(ROUND(CAST(retail_discount AS REAL) * 100.0) AS INTEGER) AS normalized_retail_discount,
+          CAST(ROUND(CAST(wholesale_discount AS REAL) * 100.0) AS INTEGER) AS normalized_wholesale_discount,
+          CAST(ROUND(CAST(wholesale_price AS REAL) * 100.0) AS INTEGER) AS normalized_wholesale_price,
+          CAST(ROUND(CAST(member_discount AS REAL) * 100.0) AS INTEGER) AS normalized_member_discount,
+          ${_normalizeOptionalTextSql('purchase_sale_mode')} AS normalized_purchase_sale_mode,
+          ${_normalizeOptionalTextSql('bookmark')} AS normalized_bookmark,
+          ${_normalizeOptionalTextSql('packaging')} AS normalized_packaging,
+          ${_normalizeOptionalTextSql('properity')} AS normalized_properity,
+          ${_normalizeOptionalTextSql('statistical_class')} AS normalized_statistical_class,
+          $operatorSelect AS operator_username,
+          created_at,
+          updated_at
+        FROM books
+      )
       INSERT INTO products (
         id,
         title,
@@ -124,49 +223,128 @@ class AppDatabase extends _$AppDatabase {
         packaging,
         properity,
         statistical_class,
-        operator,
+        created_by,
+        updated_by,
         created_at,
         updated_at
       )
       SELECT
         id,
-        title,
-        author,
-        isbn,
-        category,
-        CAST(ROUND(price * 100.0) AS INTEGER),
-        publisher,
-        book_id,
-        CAST(ROUND(CAST(internal_pricing AS REAL) * 100.0) AS INTEGER),
-        self_encoding,
-        CAST(ROUND(CAST(purchase_price AS REAL) * 100.0) AS INTEGER),
-        CAST(publication_year AS INTEGER),
-        CAST(ROUND(CAST(retail_discount AS REAL) * 100.0) AS INTEGER),
-        CAST(ROUND(CAST(wholesale_discount AS REAL) * 100.0) AS INTEGER),
-        CAST(ROUND(CAST(wholesale_price AS REAL) * 100.0) AS INTEGER),
-        CAST(ROUND(CAST(member_discount AS REAL) * 100.0) AS INTEGER),
-        purchase_sale_mode,
-        bookmark,
-        packaging,
-        properity,
-        statistical_class,
-        $operatorSelect,
+        normalized_title,
+        normalized_author,
+        CASE
+          WHEN normalized_isbn IS NULL THEN NULL
+          WHEN isbn_rank = 1 THEN normalized_isbn
+          ELSE NULL
+        END,
+        normalized_category,
+        normalized_price,
+        normalized_publisher,
+        normalized_product_id,
+        normalized_internal_pricing,
+        COALESCE(
+          normalized_self_encoding,
+          CASE
+            WHEN normalized_isbn IS NOT NULL THEN normalized_isbn
+            ELSE normalized_product_id
+          END
+        ),
+        normalized_purchase_price,
+        normalized_publication_year,
+        normalized_retail_discount,
+        normalized_wholesale_discount,
+        normalized_wholesale_price,
+        normalized_member_discount,
+        normalized_purchase_sale_mode,
+        normalized_bookmark,
+        normalized_packaging,
+        normalized_properity,
+        normalized_statistical_class,
+        ${_userLookupSql('operator_username')},
+        ${_userLookupSql('operator_username')},
         created_at,
         updated_at
-      FROM books
+      FROM normalized
     ''');
     await customStatement('DROP TABLE books');
   }
 
-  Future<void> _migrateProductsTableToV4(Migrator m) async {
+  Future<void> _migrateProductsTableToV5(Migrator m) async {
     if (!await _tableExists(products.actualTableName)) {
       await m.createTable(products);
       return;
     }
 
-    await customStatement('ALTER TABLE products RENAME TO products_v3_backup');
+    final hasCreatedByColumn = await _columnExists('products', 'created_by');
+    final hasUpdatedByColumn = await _columnExists('products', 'updated_by');
+    final hasOperatorColumn = await _columnExists('products', 'operator');
+
+    if (hasCreatedByColumn && hasUpdatedByColumn && !hasOperatorColumn) {
+      return;
+    }
+
+    final priceIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'price'),
+    );
+    final internalPricingIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'internal_pricing'),
+    );
+    final purchasePriceIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'purchase_price'),
+    );
+    final retailDiscountIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'retail_discount'),
+    );
+    final wholesaleDiscountIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'wholesale_discount'),
+    );
+    final wholesalePriceIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'wholesale_price'),
+    );
+    final memberDiscountIsInteger = _isIntegerColumnType(
+      await _columnDeclaredType('products', 'member_discount'),
+    );
+
+    await customStatement(
+      'ALTER TABLE products RENAME TO products_pre_v5_backup',
+    );
     await m.createTable(products);
     await customStatement('''
+      WITH normalized AS (
+        SELECT
+          id,
+          ${_normalizeRequiredTextSql('title')} AS normalized_title,
+          ${_normalizeRequiredTextSql('author')} AS normalized_author,
+          ${_normalizeOptionalTextSql('isbn', treatUnspecifiedAsNull: false)} AS normalized_isbn,
+          ROW_NUMBER() OVER (
+            PARTITION BY ${_normalizeOptionalTextSql('isbn', treatUnspecifiedAsNull: false)}
+            ORDER BY id
+          ) AS isbn_rank,
+          ${_normalizeOptionalTextSql('category')} AS normalized_category,
+          ${_scaledNumberSql('price', alreadyInteger: priceIsInteger)} AS normalized_price,
+          ${_normalizeOptionalTextSql('publisher')} AS normalized_publisher,
+          ${_normalizeRequiredTextSql('product_id')} AS normalized_product_id,
+          ${_normalizeOptionalTextSql('self_encoding', treatUnspecifiedAsNull: false)} AS normalized_self_encoding,
+          ${_scaledNumberSql('internal_pricing', alreadyInteger: internalPricingIsInteger)} AS normalized_internal_pricing,
+          ${_scaledNumberSql('purchase_price', alreadyInteger: purchasePriceIsInteger)} AS normalized_purchase_price,
+          CASE
+            WHEN CAST(publication_year AS INTEGER) <= 0 THEN NULL
+            ELSE CAST(publication_year AS INTEGER)
+          END AS normalized_publication_year,
+          ${_scaledNumberSql('retail_discount', alreadyInteger: retailDiscountIsInteger)} AS normalized_retail_discount,
+          ${_scaledNumberSql('wholesale_discount', alreadyInteger: wholesaleDiscountIsInteger)} AS normalized_wholesale_discount,
+          ${_scaledNumberSql('wholesale_price', alreadyInteger: wholesalePriceIsInteger)} AS normalized_wholesale_price,
+          ${_scaledNumberSql('member_discount', alreadyInteger: memberDiscountIsInteger)} AS normalized_member_discount,
+          ${_normalizeOptionalTextSql('purchase_sale_mode')} AS normalized_purchase_sale_mode,
+          ${_normalizeOptionalTextSql('bookmark')} AS normalized_bookmark,
+          ${_normalizeOptionalTextSql('packaging')} AS normalized_packaging,
+          ${_normalizeOptionalTextSql('properity')} AS normalized_properity,
+          ${_normalizeOptionalTextSql('statistical_class')} AS normalized_statistical_class,
+          ${hasOperatorColumn ? _normalizeOptionalTextSql('operator', treatUnspecifiedAsNull: false) : 'NULL'} AS operator_username,
+          created_at,
+          updated_at
+        FROM products_pre_v5_backup
+      )
       INSERT INTO products (
         id,
         title,
@@ -189,38 +367,50 @@ class AppDatabase extends _$AppDatabase {
         packaging,
         properity,
         statistical_class,
-        operator,
+        created_by,
+        updated_by,
         created_at,
         updated_at
       )
       SELECT
         id,
-        title,
-        author,
-        isbn,
-        category,
-        CAST(ROUND(price * 100.0) AS INTEGER),
-        publisher,
-        product_id,
-        CAST(ROUND(internal_pricing * 100.0) AS INTEGER),
-        self_encoding,
-        CAST(ROUND(purchase_price * 100.0) AS INTEGER),
-        publication_year,
-        CAST(ROUND(retail_discount * 100.0) AS INTEGER),
-        CAST(ROUND(wholesale_discount * 100.0) AS INTEGER),
-        CAST(ROUND(wholesale_price * 100.0) AS INTEGER),
-        CAST(ROUND(member_discount * 100.0) AS INTEGER),
-        purchase_sale_mode,
-        bookmark,
-        packaging,
-        properity,
-        statistical_class,
-        operator,
+        normalized_title,
+        normalized_author,
+        CASE
+          WHEN normalized_isbn IS NULL THEN NULL
+          WHEN isbn_rank = 1 THEN normalized_isbn
+          ELSE NULL
+        END,
+        normalized_category,
+        normalized_price,
+        normalized_publisher,
+        normalized_product_id,
+        normalized_internal_pricing,
+        COALESCE(
+          normalized_self_encoding,
+          CASE
+            WHEN normalized_isbn IS NOT NULL THEN normalized_isbn
+            ELSE normalized_product_id
+          END
+        ),
+        normalized_purchase_price,
+        normalized_publication_year,
+        normalized_retail_discount,
+        normalized_wholesale_discount,
+        normalized_wholesale_price,
+        normalized_member_discount,
+        normalized_purchase_sale_mode,
+        normalized_bookmark,
+        normalized_packaging,
+        normalized_properity,
+        normalized_statistical_class,
+        ${_userLookupSql('operator_username')},
+        ${_userLookupSql('operator_username')},
         created_at,
         updated_at
-      FROM products_v3_backup
+      FROM normalized
     ''');
-    await customStatement('DROP TABLE products_v3_backup');
+    await customStatement('DROP TABLE products_pre_v5_backup');
   }
 
   Future<void> _migrateUsersTableToV4(Migrator m) async {

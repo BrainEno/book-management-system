@@ -67,11 +67,11 @@ Widget? resolveSubWindowPage(List<String> args) {
       return Center(child: Text("Error: Unknown page key '$pageKey'"));
     }
 
-    return destination.builder(
-      AppWindowPayload(
-        initialProducts: _parseInitialProducts(arguments['state']),
-      ),
+    final payload = AppWindowPayload(
+      initialProducts: _parseInitialProducts(arguments['state']),
     );
+
+    return Builder(builder: (context) => destination.builder(context, payload));
   } catch (error, stackTrace) {
     AppLogger.logger.e(
       'Failed to resolve sub-window page',

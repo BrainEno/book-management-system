@@ -25,97 +25,58 @@
 - `created_at / updated_at` 在 Drift 中声明为 `DateTimeColumn`，项目当前实际按 Unix Epoch 秒落库，作为 SQLite 存储策略是可行的
 - `users.status` 用整数状态码表达生命周期，也是常见做法
 
-## 当前设计里更建议调整的部分
+## 当前设计里已完成的调整
 
-### 1. 金额字段使用 `REAL`
+截至 `2026-04-03`，下面这些原本建议调整的 `product` 相关项已经落地完成：
 
-当前 `price / purchase_price / internal_pricing / wholesale_price` 都是 `REAL`。
+### 1. 金额字段改为整数存储
 
-对商用进销存来说，这会带来金额精度风险。更稳妥的方式是：
+已完成：
 
-- 用 `INTEGER` 存“分”为单位
-- 或统一用定点规则存储，例如 `INTEGER` 基点值
+- `price / purchase_price / internal_pricing / wholesale_price` 已改为 SQLite `INTEGER`
+- Drift 层通过 type converter 继续暴露为 Dart `double`
+- 相关测试已经覆盖“金额按分落库”的行为
 
-建议后续迁移为：
+### 2. 折扣字段改为整数基点
 
-- `retail_price_cent`
-- `purchase_price_cent`
-- `internal_price_cent`
-- `wholesale_price_cent`
+已完成：
 
-### 2. 折扣字段语义不够清晰
+- `retail_discount / wholesale_discount / member_discount` 已改为整数基点存储
+- Dart 层仍按原有百分数语义读取和写入
+- 相关测试已经覆盖“折扣按基点落库”的行为
 
-当前 `retail_discount / wholesale_discount / member_discount` 是 `REAL`，界面默认值却是 `100`。这说明它实际上更像“百分数”而不是“浮点折扣系数”。
+### 3. 非关键字段不再强制 `NOT NULL`
 
-建议改成整数基点，例如：
+已完成：
 
-- `10000 = 100%`
-- `8500 = 85 折`
+- `isbn / category / publisher / purchase_sale_mode / packaging / properity / statistical_class / publication_year` 等字段已调整为可空
+- 应用层写库时会把空字符串和约定占位值统一归一
 
-这样更适合价格计算，也便于和金额整数化保持一致。
+### 4. `operator` 改为用户外键
 
-### 3. `products` 表里大量字段被强制 `NOT NULL`
+已完成：
 
-当前领域实体里很多字段是可空的，但 SQLite 表全部要求必填，最后通过界面和 mapper 填充：
+- 商品表已不再直接保存 `operator TEXT`
+- 已改为 `created_by / updated_by`
+- 已通过标准 Drift `references(Users, #id)` 建立外键关系
+- 查询层会回填创建人与最后修改人的用户名，供界面展示
 
-- `0`
-- `100`
-- `2025`
-- `不区分`
+### 5. 增加关键唯一约束
 
-这能降低录入门槛，但会让“未知”和“真实值就是 0 / 不区分”混在一起。对统计、筛选、后续数据治理都不友好。
+已完成：
 
-更建议：
+- `product_id` 已保持 `NOT NULL UNIQUE`
+- `self_encoding` 已保持 `NOT NULL UNIQUE`
+- `isbn` 已改为“允许为空，但非空唯一”
+- 应用层写库时会把空白 ISBN 归一为 `NULL`
 
-- 真正必填的字段继续 `NOT NULL`
-- 非关键字段允许为空
-- 如果业务上必须有默认值，优先使用明确的代码字段或字典表
-
-### 4. `operator` 目前是 `TEXT`
-
-当前商品表里的 `operator` 保存的是用户名文本，不是外键。
-
-这会导致：
-
-- 用户改名后历史记录难以追溯
-- 无法做可靠的用户关联查询
-- 无法表达“创建人”和“最后修改人”的区别
-
-建议改成：
-
-- `created_by INTEGER`
-- `updated_by INTEGER`
-
-并外键关联 `users.id`。
-
-### 5. 缺少关键唯一约束
-
-当前 `products` 表没有明显的唯一约束，尤其缺少：
-
-- `isbn`
-- `product_id`
-- `self_encoding`
-
-在图书业务里，同一 ISBN 通常代表同一版本图书主数据，不应该靠重复商品行来表示库存数量。库存数量应该落在库存表，而不是靠重复商品记录表达。
-
-### 5.1 ISBN 约束的当前设计决策
-
-考虑到后续商品范围不只包含图书，还会扩展到饮品、文创、杂志及其他非书商品，`isbn` 不适合设计成“全表 `NOT NULL UNIQUE`”。
-
-当前更推荐的决策是：
+当前关于 ISBN 的设计决策仍然保持如下：
 
 - `product_id` 作为全品类统一商品编码，保持 `NOT NULL UNIQUE`
 - `isbn` 允许为空，但在“非空时”保持唯一
-- 应用层写库时应把空字符串 ISBN 归一成 `NULL`，不要写成 `''`
-- “图书必须填写 ISBN” 应由业务规则控制，而不是由全表字段约束一刀切
+- “图书必须填写 ISBN” 继续由业务规则控制，而不是由全表字段约束一刀切
 
-这样处理的原因是：
-
-- 图书仍然可以通过 ISBN 防止重复建档
-- 饮品、文创等天然没有 ISBN 的商品不需要伪造编码
-- 多品类场景下，真正稳定的全局唯一键应该是系统内部的 `product_id`
-
-后续如果要把“图书必填 ISBN、非图书可为空”进一步做严谨，建议新增独立的 `product_type`（如 `book / drink / merch`），再基于 `product_type` 做条件校验，而不是依赖 `category` 文本值判断。
+## 当前仍建议后续处理的部分
 
 ### 6. 字典类字段全部直接存 `TEXT`
 
@@ -203,3 +164,25 @@ MVP 阶段这样做很快，但一旦需要：
 3. 最后引入 `purchase_orders / sales_orders` 两类业务单据表
 
 这样迁移风险最低，也最容易和你当前 UI 逐步对齐。
+
+## 当前落地进度
+
+截至 `2026-04-03`，`product` 第一阶段已完成：
+
+- `1 / 2 / 3 / 4 / 5` 已落地
+- `products` 相关迁移逻辑已补齐，可兼容旧表数据归一到当前结构
+
+当前仍未开始的部分：
+
+- `6 / 7`
+- `warehouses / stock_balances / stock_movements`
+- `purchase_orders / sales_orders`
+- 供应商、客户、会员等主数据表
+
+## 当前验证结果
+
+本次 product 第一阶段调整后，已通过：
+
+- `flutter test test/features/product`
+
+这意味着当前 `product` 相关的数据库映射、本地数据源、编辑表单、查询导出和相关辅助逻辑都已通过现有测试验证。

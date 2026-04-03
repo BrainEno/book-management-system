@@ -2,7 +2,11 @@ import 'package:bookstore_management_system/core/database/database.dart'
     show Product;
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 
-ProductModel mapProductRecordToModel(Product product) {
+ProductModel mapProductRecordToModel(
+  Product product, {
+  String? createdByUsername,
+  String? updatedByUsername,
+}) {
   return ProductModel(
     productId: product.productId,
     id: product.id,
@@ -13,6 +17,8 @@ ProductModel mapProductRecordToModel(Product product) {
     category: product.category,
     publisher: product.publisher,
     selfEncoding: product.selfEncoding,
+    createdBy: product.createdBy,
+    updatedBy: product.updatedBy,
     internalPricing: product.internalPricing,
     purchasePrice: product.purchasePrice,
     publicationYear: product.publicationYear,
@@ -25,7 +31,7 @@ ProductModel mapProductRecordToModel(Product product) {
     packaging: product.packaging,
     properity: product.properity,
     statisticalClass: product.statisticalClass,
-    operator: product.operator,
+    operator: updatedByUsername ?? createdByUsername,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   );

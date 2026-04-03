@@ -22,6 +22,17 @@ class ProductQueryDetailFormController {
   final TextEditingController categoryController;
   final TextEditingController selfEncodingController;
 
+  String? _normalizeOptionalText(
+    String value, {
+    Set<String> nullPlaceholders = const {'不区分'},
+  }) {
+    final normalized = value.trim();
+    if (normalized.isEmpty || nullPlaceholders.contains(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
+
   void populate(ProductModel? product) {
     if (product == null) {
       clear();
@@ -30,11 +41,11 @@ class ProductQueryDetailFormController {
 
     titleController.text = product.title;
     productIdController.text = product.productId;
-    isbnController.text = product.isbn;
+    isbnController.text = product.isbn ?? '';
     authorController.text = product.author;
     priceController.text = formatProductPrice(product.price);
-    publisherController.text = product.publisher;
-    categoryController.text = product.category;
+    publisherController.text = product.publisher ?? '不区分';
+    categoryController.text = product.category ?? '不区分';
     selfEncodingController.text = product.selfEncoding;
   }
 
@@ -54,9 +65,12 @@ class ProductQueryDetailFormController {
   }
 
   ProductModel buildUpdatedProduct(ProductModel selectedProduct) {
-    final normalizedIsbn = isbnController.text.trim();
+    final normalizedIsbn = _normalizeOptionalText(
+      isbnController.text,
+      nullPlaceholders: const {},
+    );
     final normalizedSelfEncoding = selfEncodingController.text.trim().isEmpty
-        ? normalizedIsbn
+        ? (normalizedIsbn ?? productIdController.text.trim())
         : selfEncodingController.text.trim();
 
     return selectedProduct.copyWith(
@@ -65,8 +79,8 @@ class ProductQueryDetailFormController {
       isbn: normalizedIsbn,
       author: authorController.text.trim(),
       price: parsePrice() ?? selectedProduct.price,
-      publisher: publisherController.text.trim(),
-      category: categoryController.text.trim(),
+      publisher: _normalizeOptionalText(publisherController.text),
+      category: _normalizeOptionalText(categoryController.text),
       selfEncoding: normalizedSelfEncoding,
       updatedAt: DateTime.now(),
     );

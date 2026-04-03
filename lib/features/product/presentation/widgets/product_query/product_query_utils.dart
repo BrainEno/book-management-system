@@ -192,15 +192,15 @@ String _queryValueForMode(ProductModel product, ProductQueryMode mode) {
     case ProductQueryMode.productId:
       return product.productId.toLowerCase();
     case ProductQueryMode.isbn:
-      return product.isbn.toLowerCase();
+      return (product.isbn ?? '').toLowerCase();
     case ProductQueryMode.author:
       return product.author.toLowerCase();
     case ProductQueryMode.selfEncoding:
       return product.selfEncoding.toLowerCase();
     case ProductQueryMode.category:
-      return product.category.toLowerCase();
+      return (product.category ?? '').toLowerCase();
     case ProductQueryMode.publisher:
-      return product.publisher.toLowerCase();
+      return (product.publisher ?? '').toLowerCase();
   }
 }
 
@@ -209,7 +209,7 @@ String _productSortKey(ProductModel product) {
     product.productId.trim(),
     product.selfEncoding.trim(),
     product.title.trim(),
-    product.isbn.trim(),
+    (product.isbn ?? '').trim(),
   ];
 
   for (final key in keys) {
@@ -226,12 +226,12 @@ List<String> _buildProductExportRow(ProductModel product) {
     '${product.id}',
     product.title,
     product.productId,
-    product.isbn,
+    product.isbn ?? '',
     product.author,
     _formatNumber(product.price),
-    product.category,
+    product.category ?? '',
     formatInventory(product),
-    product.publisher,
+    product.publisher ?? '',
     product.selfEncoding,
     _formatNumber(product.internalPricing),
     _formatNumber(product.purchasePrice),
@@ -240,12 +240,12 @@ List<String> _buildProductExportRow(ProductModel product) {
     _formatNumber(product.wholesaleDiscount),
     _formatNumber(product.wholesalePrice),
     _formatNumber(product.memberDiscount),
-    product.purchaseSaleMode,
-    product.bookmark,
-    product.packaging,
-    product.properity,
-    product.statisticalClass,
-    product.operator,
+    product.purchaseSaleMode ?? '',
+    product.bookmark ?? '',
+    product.packaging ?? '',
+    product.properity ?? '',
+    product.statisticalClass ?? '',
+    product.operator ?? '',
     _formatDateTime(product.createdAt),
     _formatDateTime(product.updatedAt),
     product.additionalField,

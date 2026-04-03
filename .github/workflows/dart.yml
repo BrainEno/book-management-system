@@ -1,4 +1,4 @@
-name: Multi-Platform Release Build v0.36
+name: Multi-Platform Release Build v0.37
 run-name: Release build for ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
@@ -12,8 +12,9 @@ permissions:
   contents: write
 
 env:
-  RELEASE_TAG: v0.36
-  RELEASE_BODY: "Release v0.36: Drift schema v4 migration, integer-backed pricing storage, normalized local auth/product inputs, refreshed database notes, and a bookstore offline PRD."
+  RELEASE_TAG: v0.37
+  RELEASE_ARTIFACT_PREFIX: bookstore-management-system-v0.37
+  RELEASE_BODY: "Release v0.37: normalized product database migration, integer-backed pricing and discounts, nullable product metadata, creator/updater foreign keys, unified cross-platform artifact names, and refreshed database notes."
 
 jobs:
   build-ios:
@@ -51,14 +52,14 @@ jobs:
         working-directory: build/ios/iphoneos
 
       - name: Zip iOS output
-        run: zip -qq -r -9 BMS.ipa Payload
+        run: zip -qq -r -9 "${{ env.RELEASE_ARTIFACT_PREFIX }}-ios.ipa" Payload
         working-directory: build/ios/iphoneos
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-release
-          path: build/ios/iphoneos/BMS.ipa
+          name: release-ios
+          path: build/ios/iphoneos/${{ env.RELEASE_ARTIFACT_PREFIX }}-ios.ipa
           if-no-files-found: error
 
   build-android:
@@ -91,11 +92,16 @@ jobs:
       - name: Build Android APK
         run: flutter build apk --release
 
+      - name: Standardize Android artifact name
+        run: |
+          mkdir -p build/artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk build/artifacts/${{ env.RELEASE_ARTIFACT_PREFIX }}-android.apk
+
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: release-android
+          path: build/artifacts/${{ env.RELEASE_ARTIFACT_PREFIX }}-android.apk
           if-no-files-found: error
 
   build-macos:
@@ -123,14 +129,14 @@ jobs:
       - run: flutter build macos --release
 
       - name: Zip macOS output
-        run: zip -qq -r -9 BMS-macos.zip . -i Runner.app
+        run: zip -qq -r -9 "${{ env.RELEASE_ARTIFACT_PREFIX }}-macos.zip" . -i Runner.app
         working-directory: build/macos/Build/Products/Release
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-release
-          path: build/macos/Build/Products/Release/BMS-macos.zip
+          name: release-macos
+          path: build/macos/Build/Products/Release/${{ env.RELEASE_ARTIFACT_PREFIX }}-macos.zip
           if-no-files-found: error
 
   build-windows:
@@ -183,7 +189,7 @@ jobs:
         shell: pwsh
         run: |
           $releasePath = "build/windows/x64/runner/Release"
-          $artifactPath = "build/artifacts/BMS-windows-v0.36.zip"
+          $artifactPath = "build/artifacts/${{ env.RELEASE_ARTIFACT_PREFIX }}-windows.zip"
 
           if (!(Test-Path $releasePath)) {
             throw "Windows build output not found at $releasePath"
@@ -199,8 +205,8 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
-          path: build/artifacts/BMS-windows-v0.36.zip
+          name: release-windows
+          path: build/artifacts/${{ env.RELEASE_ARTIFACT_PREFIX }}-windows.zip
           if-no-files-found: error
 
   publish-release:
@@ -211,32 +217,32 @@ jobs:
       - name: Download iOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: ios-release
+          name: release-ios
           path: dist/ios
 
       - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
-          name: android-release
+          name: release-android
           path: dist/android
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: macos-release
+          name: release-macos
           path: dist/macos
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: windows-release
+          name: release-windows
           path: dist/windows
 
       - name: Upload iOS binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/ios/BMS.ipa
+          file: dist/ios/${{ env.RELEASE_ARTIFACT_PREFIX }}-ios.ipa
           tag: ${{ env.RELEASE_TAG }}
           overwrite: true
           body: ${{ env.RELEASE_BODY }}
@@ -245,7 +251,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/android/app-release.apk
+          file: dist/android/${{ env.RELEASE_ARTIFACT_PREFIX }}-android.apk
           tag: ${{ env.RELEASE_TAG }}
           overwrite: true
           body: ${{ env.RELEASE_BODY }}
@@ -254,7 +260,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/macos/BMS-macos.zip
+          file: dist/macos/${{ env.RELEASE_ARTIFACT_PREFIX }}-macos.zip
           tag: ${{ env.RELEASE_TAG }}
           overwrite: true
           body: ${{ env.RELEASE_BODY }}
@@ -263,7 +269,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/windows/BMS-windows-v0.36.zip
+          file: dist/windows/${{ env.RELEASE_ARTIFACT_PREFIX }}-windows.zip
           tag: ${{ env.RELEASE_TAG }}
           overwrite: true
           body: ${{ env.RELEASE_BODY }}
