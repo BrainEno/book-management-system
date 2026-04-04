@@ -338,7 +338,7 @@ List<DashboardModuleGroup> buildDashboardModuleGroups() {
     ),
     DashboardModuleGroup(
       title: '订收管理',
-      subtitle: '承接老系统里最关键的收货入库和采购退货逻辑，是库存闭环的起点。',
+      subtitle: '最关键的收货入库和采购退货逻辑，是库存闭环的起点。',
       icon: Icons.receipt_long_outlined,
       accent: AppPallete.copper,
       badges: ['P0', '待接入'],

@@ -2,7 +2,7 @@ import 'package:bookstore_management_system/features/product/data/mappers/produc
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
 import 'package:bookstore_management_system/core/di/service_locator.dart';
-import 'package:bookstore_management_system/features/auth/core/error/auth_exceptions.dart';
+import 'package:bookstore_management_system/core/presentation/widgets/admin_support.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
@@ -27,12 +27,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
-
-typedef AdminModeVerifier =
-    Future<AppUser> Function({
-      required String username,
-      required String password,
-    });
 
 class ProductQueryWorkspace extends StatefulWidget {
   const ProductQueryWorkspace({
@@ -163,13 +157,8 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     return _operatorUsername;
   }
 
-  String get _adminModeTimeoutLabel {
-    final duration = widget.adminModeTimeout;
-    if (duration.inMinutes >= 1 && duration.inSeconds % 60 == 0) {
-      return '${duration.inMinutes}分钟';
-    }
-    return '${duration.inSeconds}秒';
-  }
+  String get _adminModeTimeoutLabel =>
+      AdminSupport.formatTimeoutLabel(widget.adminModeTimeout);
 
   void _logAdminAudit(
     String event, {
@@ -249,8 +238,14 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     final verifiedUser = await showDialog<AppUser>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          _AdminModeCredentialsDialog(verifier: widget.adminModeVerifier),
+      builder: (dialogContext) => AdminCredentialsDialog(
+        verifier: widget.adminModeVerifier,
+        modeDescription:
+            '请输入管理员级别账户的名称和密码。验证通过后，本次商品查询页会进入管理员模式，允许编辑 ISBN 和售价。',
+        usernameFieldKey: const ValueKey('product-query-admin-username'),
+        passwordFieldKey: const ValueKey('product-query-admin-password'),
+        auditLogPrefix: 'Product query admin audit',
+      ),
     );
 
     if (!mounted || verifiedUser == null) {
@@ -868,167 +863,6 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _AdminModeCredentialsDialog extends StatefulWidget {
-  const _AdminModeCredentialsDialog({required this.verifier});
-
-  final AdminModeVerifier verifier;
-
-  @override
-  State<_AdminModeCredentialsDialog> createState() =>
-      _AdminModeCredentialsDialogState();
-}
-
-class _AdminModeCredentialsDialogState
-    extends State<_AdminModeCredentialsDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  bool _isSubmitting = false;
-  bool _obscurePassword = true;
-  String? _errorMessage;
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (_isSubmitting || !_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final verifiedUser = await widget.verifier(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(verifiedUser);
-    } catch (error) {
-      final message = error is AuthException
-          ? error.message
-          : '管理员权限验证失败，请稍后重试。';
-      AppLogger.logger.w(
-        'Product query admin audit: event=admin-mode.verification-failed, username=${_usernameController.text.trim()}, message=$message',
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _isSubmitting = false;
-        _errorMessage = message;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: const Icon(Icons.lock_outline),
-      title: const Text('验证管理员权限'),
-      content: SizedBox(
-        width: 420,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '请输入管理员级别账户的名称和密码。验证通过后，本次商品查询页会进入管理员模式，允许编辑 ISBN 和售价。',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                key: const ValueKey('product-query-admin-username'),
-                controller: _usernameController,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: '管理员账户',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '请输入管理员账户';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                key: const ValueKey('product-query-admin-password'),
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                onFieldSubmitted: (_) => _submit(),
-                decoration: InputDecoration(
-                  labelText: '管理员密码',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '请输入管理员密码';
-                  }
-                  return null;
-                },
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _errorMessage!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _isSubmitting
-              ? null
-              : () => Navigator.of(context).pop<AppUser?>(null),
-          child: const Text('取消'),
-        ),
-        FilledButton.icon(
-          onPressed: _isSubmitting ? null : _submit,
-          icon: _isSubmitting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.verified_user_outlined),
-          label: Text(_isSubmitting ? '验证中...' : '验证并开启'),
-        ),
-      ],
     );
   }
 }

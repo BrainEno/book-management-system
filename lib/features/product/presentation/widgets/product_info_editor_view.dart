@@ -18,6 +18,9 @@ import 'package:bookstore_management_system/features/product/presentation/widget
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_grid.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
 import 'package:bookstore_management_system/features/product/utils/isbn_scanner_utils.dart';
+import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
+import 'package:bookstore_management_system/core/presentation/widgets/admin_support.dart';
+import 'package:bookstore_management_system/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,15 +28,29 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
+Future<AppUser> _defaultAdminModeVerifier({
+  required String username,
+  required String password,
+}) {
+  return sl<AuthLocalDataSource>().verifyAdminCredentials(
+    username: username,
+    password: password,
+  );
+}
+
 class ProductInfoEditorView extends StatefulWidget {
   const ProductInfoEditorView({
     super.key,
     this.product,
     this.initialOperatorUsername,
+    this.adminModeVerifier = _defaultAdminModeVerifier,
+    this.adminModeTimeout = const Duration(minutes: 5),
   });
 
   final ProductModel? product;
   final String? initialOperatorUsername;
+  final AdminModeVerifier adminModeVerifier;
+  final Duration adminModeTimeout;
 
   @override
   State<ProductInfoEditorView> createState() => _ProductInfoEditorViewState();
@@ -53,12 +70,17 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   );
   Timer? _feedbackClearTimer;
   _EditorFeedbackState? _feedbackState;
+  bool _isAdminModeEnabled = false;
+  AppUser? _adminModeUser;
+  Timer? _adminModeTimer;
 
   @override
   void initState() {
     super.initState();
     _formControllers = ProductInfoEditorFormControllers();
     _isbnReceiverService = ProductEditorIsbnReceiverService();
+    _formControllers.isbnController.addListener(_handleSensitiveFieldEdited);
+    _formControllers.priceController.addListener(_handleSensitiveFieldEdited);
     _appRuntime = sl<AppRuntime>();
     if (_supportsAudioFeedback) {
       _audioPlayer = AudioPlayer();
@@ -79,7 +101,10 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
   @override
   void dispose() {
-    _feedbackClearTimer?.cancel();
+    if (_isAdminModeEnabled) {
+      _logAdminAudit('admin-mode.ended', reason: 'editor-disposed');
+    }
+
     _isbnReceiverService.stop();
     final audioPlayer = _audioPlayer;
     if (audioPlayer != null) {
@@ -156,6 +181,179 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     messenger
       ?..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _handleSensitiveFieldEdited() {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+    _restartAdminModeTimer();
+  }
+
+  String _currentOperatorUsername() {
+    final operatorName = _formControllers.operatorController.text.trim();
+    if (operatorName.isNotEmpty) {
+      return operatorName;
+    }
+
+    final initialOperator = widget.initialOperatorUsername?.trim();
+    if (initialOperator != null && initialOperator.isNotEmpty) {
+      return initialOperator;
+    }
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthSuccess) {
+      return authState.user.username;
+    }
+
+    return '当前操作员';
+  }
+
+  String get _adminModeTimeoutLabel =>
+      AdminSupport.formatTimeoutLabel(widget.adminModeTimeout);
+
+  void _logAdminAudit(
+    String event, {
+    ProductModel? before,
+    ProductModel? after,
+    String? reason,
+    Map<String, Object?> extras = const {},
+  }) {
+    final anchor = after ?? before ?? widget.product;
+    final fields = <String, Object?>{
+      'event': event,
+      'operator': _currentOperatorUsername(),
+      'admin': _adminModeUser?.username,
+      'productId': anchor?.id,
+      'businessId': anchor?.productId,
+      if (reason != null) 'reason': reason,
+      ...extras,
+    };
+    final serialized = fields.entries
+        .map((entry) => '${entry.key}=${entry.value ?? '-'}')
+        .join(', ');
+    _logger.i('Product editor admin audit: $serialized');
+  }
+
+  void _restartAdminModeTimer() {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+    _adminModeTimer?.cancel();
+    _adminModeTimer = Timer(widget.adminModeTimeout, _handleAdminModeTimeout);
+  }
+
+  void _handleAdminModeTimeout() {
+    if (!_isAdminModeEnabled || !mounted) {
+      return;
+    }
+    _disableAdminMode(reason: 'timeout', showFeedback: true);
+  }
+
+  bool _hasSensitiveFieldChanges(
+    ProductModel? existingProduct,
+    ProductModel nextProduct,
+  ) {
+    if (existingProduct == null) {
+      return false;
+    }
+
+    return existingProduct.isbn != nextProduct.isbn ||
+        existingProduct.price != nextProduct.price;
+  }
+
+  Future<bool> _requestAdminMode({String reason = 'manual'}) async {
+    if (_isAdminModeEnabled) {
+      _restartAdminModeTimer();
+      return true;
+    }
+
+    _logAdminAudit(
+      'admin-mode.requested',
+      reason: reason,
+      extras: {'timeout': _adminModeTimeoutLabel},
+    );
+
+    final shouldContinue = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.admin_panel_settings_outlined),
+        title: const Text('需要管理员权限'),
+        content: Text(
+          '修改 ISBN 和售价需要管理员权限。\n\n当前操作员：${_currentOperatorUsername()}\n\n是否进入管理员模式？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('暂不'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('进入管理员模式'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || shouldContinue != true) {
+      _logAdminAudit('admin-mode.request-cancelled', reason: reason);
+      return false;
+    }
+
+    final verifiedUser = await showDialog<AppUser>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AdminCredentialsDialog(
+        verifier: widget.adminModeVerifier,
+        modeDescription:
+            '请输入管理员级别账户的名称和密码。验证通过后，本次商品资料编辑页会进入管理员模式，允许修改 ISBN 和售价。',
+        usernameFieldKey: const ValueKey('product-editor-admin-username'),
+        passwordFieldKey: const ValueKey('product-editor-admin-password'),
+        auditLogPrefix: 'Product editor admin audit',
+      ),
+    );
+
+    if (!mounted || verifiedUser == null) {
+      _logAdminAudit('admin-mode.verification-cancelled', reason: reason);
+      return false;
+    }
+
+    setState(() {
+      _isAdminModeEnabled = true;
+      _adminModeUser = verifiedUser;
+    });
+    _restartAdminModeTimer();
+    _logAdminAudit(
+      'admin-mode.granted',
+      extras: {'timeout': _adminModeTimeoutLabel},
+    );
+
+    _showEditorFeedback('管理员模式已开启：${verifiedUser.username}');
+    return true;
+  }
+
+  void _disableAdminMode({String reason = 'manual', bool showFeedback = true}) {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+
+    _adminModeTimer?.cancel();
+    _logAdminAudit('admin-mode.ended', reason: reason);
+
+    setState(() {
+      _isAdminModeEnabled = false;
+      _adminModeUser = null;
+    });
+
+    if (!showFeedback || !mounted) {
+      return;
+    }
+
+    final message = switch (reason) {
+      'timeout' => '管理员模式已因长时间未操作自动退出',
+      _ => '已退出管理员模式',
+    };
+    _showEditorFeedback(message);
   }
 
   Future<void> _startIsbnReceiverService() async {
@@ -243,16 +441,55 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     }
   }
 
-  void _saveOrUpdateBook() {
+  Future<void> _saveOrUpdateBook() async {
     _dismissTextInput();
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final product = _formControllers.buildProduct(
-      existingProduct: widget.product,
+    final existingProduct = widget.product;
+    final draftProduct = _formControllers.buildProduct(
+      existingProduct: existingProduct,
     );
-    if (widget.product != null) {
+
+    final requiresAdmin = _hasSensitiveFieldChanges(
+      existingProduct,
+      draftProduct,
+    );
+
+    if (requiresAdmin) {
+      final granted = await _requestAdminMode(reason: 'save-sensitive-fields');
+      if (!mounted || !granted) {
+        return;
+      }
+    }
+
+    final product = _formControllers.buildProduct(
+      existingProduct: existingProduct,
+    );
+
+    if (_isAdminModeEnabled && existingProduct != null) {
+      final isbnChanged = product.isbn != existingProduct.isbn;
+      final priceChanged = product.price != existingProduct.price;
+
+      if (isbnChanged || priceChanged) {
+        _logAdminAudit(
+          'sensitive-fields.updated',
+          before: existingProduct,
+          after: product,
+          extras: {
+            'isbnBefore': existingProduct.isbn,
+            'isbnAfter': product.isbn,
+            'priceBefore': existingProduct.price,
+            'priceAfter': product.price,
+          },
+        );
+      }
+
+      _restartAdminModeTimer();
+    }
+
+    if (existingProduct != null) {
       context.read<ProductBloc>().add(UpdateBookEvent(product));
     } else {
       context.read<ProductBloc>().add(AddBookEvent(product));
@@ -446,15 +683,55 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
                                                 fontWeight: FontWeight.w800,
                                               ),
                                         ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          isUpdate
+                                              ? (_isAdminModeEnabled
+                                                    ? '管理员模式已开启：${_adminModeUser?.username ?? '-'} · $_adminModeTimeoutLabel无操作自动退出'
+                                                    : '修改 ISBN / 售价时需要管理员权限')
+                                              : '新建商品资料',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: const Color(0xFF6B6258),
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                        ),
                                       ],
                                     ),
                                   ),
+
                                   const SizedBox(width: 16),
                                   Wrap(
                                     spacing: 12,
                                     runSpacing: 12,
                                     alignment: WrapAlignment.end,
                                     children: [
+                                      if (isUpdate)
+                                        _isAdminModeEnabled
+                                            ? OutlinedButton.icon(
+                                                onPressed: () =>
+                                                    _disableAdminMode(),
+                                                icon: const Icon(
+                                                  Icons.lock_open_outlined,
+                                                ),
+                                                label: Text(
+                                                  '管理员模式 · ${_adminModeUser?.username ?? ''}',
+                                                ),
+                                              )
+                                            : OutlinedButton.icon(
+                                                onPressed: () {
+                                                  unawaited(
+                                                    _requestAdminMode(
+                                                      reason: 'manual',
+                                                    ),
+                                                  );
+                                                },
+                                                icon: const Icon(
+                                                  Icons
+                                                      .admin_panel_settings_outlined,
+                                                ),
+                                                label: const Text('进入管理员模式'),
+                                              ),
                                       FilledButton.icon(
                                         onPressed: _saveOrUpdateBook,
                                         icon: const Icon(Icons.save_outlined),
