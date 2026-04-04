@@ -1,4 +1,4 @@
-name: Multi-Platform Release Build v0.37
+name: Multi-Platform Release Build v0.38
 run-name: Release build for ${{ github.ref_name }} @ ${{ github.sha }}
 
 on:
@@ -12,9 +12,9 @@ permissions:
   contents: write
 
 env:
-  RELEASE_TAG: v0.37
-  RELEASE_ARTIFACT_PREFIX: bookstore-management-system-v0.37
-  RELEASE_BODY: "Release v0.37: normalized product database migration, integer-backed pricing and discounts, nullable product metadata, creator/updater foreign keys, unified cross-platform artifact names, refreshed database notes, and current desktop multi-window updates. Known issue: the new product editor sub-window can still intermittently crash when closing and reopening the create form on desktop."
+  RELEASE_TAG: v0.38
+  RELEASE_ARTIFACT_PREFIX: bookstore-management-system-v0.38
+  RELEASE_BODY: "Release v0.38: synced spreadsheet checkbox selection with the product detail panel so the right-side detail view now follows checkbox-driven row selection, while keeping multi-select export behavior intact."
 
 jobs:
   build-ios:

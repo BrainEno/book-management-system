@@ -5,6 +5,7 @@ import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/presentation/widgets/admin_support.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:bookstore_management_system/features/product/domain/entities/product.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_detail_form_controller.dart';
@@ -449,17 +450,36 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     _detailFormController.populate(product);
   }
 
+  ProductModel? _resolveDetailProductFromSelectedIds(
+    ProductQueryTableSource source,
+    Set<int> selectedIds,
+  ) {
+    if (selectedIds.isEmpty) {
+      return null;
+    }
+
+    for (final product in source.products) {
+      if (selectedIds.contains(product.id)) {
+        return product;
+      }
+    }
+
+    return null;
+  }
+
   void _handleTableSelectionChanged(
     List<DataGridRow> addedRows,
     List<DataGridRow> removedRows,
     ProductQueryTableSource source,
   ) {
     final nextIds = Set<int>.from(_selectedProductIds);
+    ProductModel? lastAddedProduct;
 
     for (final row in addedRows) {
       final product = source.productForRow(row);
       if (product != null) {
         nextIds.add(product.id);
+        lastAddedProduct = product;
       }
     }
 
@@ -470,9 +490,23 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
       }
     }
 
+    ProductModel? nextSelection = _selectedProduct;
+
+    // 优先把“刚刚通过 checkbox 勾选的商品”作为右侧详情商品
+    if (lastAddedProduct != null) {
+      nextSelection = lastAddedProduct;
+    } else if (nextSelection == null || !nextIds.contains(nextSelection.id)) {
+      // 如果当前详情商品被取消勾选了，则回退到剩余勾选中的一项
+      nextSelection = _resolveDetailProductFromSelectedIds(source, nextIds);
+    }
+
     setState(() {
       _selectedProductIds = nextIds;
+      _selectedProduct = nextSelection;
+      _selectionAfterRefreshId = nextSelection?.id;
     });
+
+    _detailFormController.populate(nextSelection);
   }
 
   void _handleTableTap(
