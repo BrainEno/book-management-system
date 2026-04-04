@@ -28,7 +28,7 @@ String formatProductQueryDateTime(DateTime? value) {
   if (value == null) {
     return '--';
   }
-  return DateFormat('yyyy-MM-dd HH:mm').format(value);
+  return DateFormat('yyyy-MM-dd').format(value);
 }
 
 Rect resolveProductEditorFloatingBounds(Size workspaceSize) {

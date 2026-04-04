@@ -9,10 +9,7 @@ void main() {
     test('opens multiple windows for the same page key by default', () {
       final manager = AppWindowManager();
 
-      final first = manager.openWindow(
-        title: '商品资料',
-        popOutPageKey: 'product',
-      );
+      final first = manager.openWindow(title: '商品资料', popOutPageKey: 'product');
       final second = manager.openWindow(
         title: '商品资料',
         popOutPageKey: 'product',
@@ -80,42 +77,41 @@ void main() {
       );
 
       expect(manager.minimizedWindows.single.id, window.id);
-      expect(manager.windowById(window.id)!.displayMode,
-          AppWindowDisplayMode.minimized);
+      expect(
+        manager.windowById(window.id)!.displayMode,
+        AppWindowDisplayMode.minimized,
+      );
     });
 
-    test('restoring a docked minimized window keeps it embedded and detached from old floating child', () {
-      final manager = AppWindowManager();
-      final window = manager.openWindow(
-        title: '新建商品资料',
-        popOutPageKey: 'product-editor',
-        bounds: const Rect.fromLTWH(0, 0, 1480, 920),
-      );
+    test(
+      'restoring a docked minimized window keeps it embedded and detached from old floating child',
+      () {
+        final manager = AppWindowManager();
+        final window = manager.openWindow(
+          title: '新建商品资料',
+          popOutPageKey: 'product-editor',
+          bounds: const Rect.fromLTWH(0, 0, 1480, 920),
+        );
 
-      manager.markWindowFloating(window.id, floatingWindowId: 'child-editor');
-      manager.dockWindow(
-        window.id,
-        bounds: const Rect.fromLTWH(0, 0, 1480, 920),
-        minimized: true,
-      );
-      manager.restoreMinimizedWindow(window.id);
+        manager.markWindowFloating(window.id, floatingWindowId: 'child-editor');
+        manager.dockWindow(
+          window.id,
+          bounds: const Rect.fromLTWH(0, 0, 1480, 920),
+          minimized: true,
+        );
+        manager.restoreMinimizedWindow(window.id);
 
-      final restored = manager.windowById(window.id)!;
-      expect(restored.displayMode, AppWindowDisplayMode.embedded);
-      expect(restored.floatingWindowId, isNull);
-      expect(restored.bounds, const Rect.fromLTWH(0, 0, 1480, 920));
-    });
+        final restored = manager.windowById(window.id)!;
+        expect(restored.displayMode, AppWindowDisplayMode.embedded);
+        expect(restored.floatingWindowId, isNull);
+        expect(restored.bounds, const Rect.fromLTWH(0, 0, 1480, 920));
+      },
+    );
 
     test('focus raises z-order and keeps window embedded', () {
       final manager = AppWindowManager();
-      final first = manager.openWindow(
-        title: 'A',
-        popOutPageKey: 'dashboard',
-      );
-      final second = manager.openWindow(
-        title: 'B',
-        popOutPageKey: 'inventory',
-      );
+      final first = manager.openWindow(title: 'A', popOutPageKey: 'dashboard');
+      final second = manager.openWindow(title: 'B', popOutPageKey: 'inventory');
 
       manager.focusWindow(first.id);
 
@@ -136,23 +132,23 @@ void main() {
       expect(manager.windows, isEmpty);
     });
 
-    test('updateWindowPayload keeps tracked draft for later dock restore', () {
-      final manager = AppWindowManager();
-      final window = manager.openWindow(
-        title: '商品编辑',
-        popOutPageKey: 'product-editor',
-      );
+    test(
+      'updateWindowPayload keeps operator username for floating editor launch data',
+      () {
+        final manager = AppWindowManager();
+        final window = manager.openWindow(
+          title: '商品编辑',
+          popOutPageKey: 'product-editor',
+        );
 
-      manager.updateWindowPayload(
-        window.id,
-        window.payload.copyWith(
-          productEditorDraft: const {'title': '未保存书名', 'isbn': '9787'},
-        ),
-      );
+        manager.updateWindowPayload(
+          window.id,
+          window.payload.copyWith(currentOperatorUsername: 'admin'),
+        );
 
-      final updated = manager.windowById(window.id)!;
-      expect(updated.payload.productEditorDraft?['title'], '未保存书名');
-      expect(updated.payload.productEditorDraft?['isbn'], '9787');
-    });
+        final updated = manager.windowById(window.id)!;
+        expect(updated.payload.currentOperatorUsername, 'admin');
+      },
+    );
   });
 }

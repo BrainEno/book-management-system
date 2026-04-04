@@ -26,6 +26,7 @@ class FakeWindowPopOutService implements WindowPopOutService {
   final List<SubWindowLaunchData> launches = [];
   final List<String> hiddenWindowIds = [];
   final List<String> closedWindowIds = [];
+  final List<String> trackedClosingWindowIds = [];
   String nextWindowId = 'floating-child';
   Object? error;
 
@@ -46,6 +47,11 @@ class FakeWindowPopOutService implements WindowPopOutService {
   @override
   Future<void> closeSubWindow(String windowId) async {
     closedWindowIds.add(windowId);
+  }
+
+  @override
+  void trackClosingWindow(String windowId) {
+    trackedClosingWindowIds.add(windowId);
   }
 }
 

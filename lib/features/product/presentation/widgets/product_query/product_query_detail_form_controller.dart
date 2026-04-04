@@ -9,6 +9,10 @@ class ProductQueryDetailFormController {
       isbnController = TextEditingController(),
       authorController = TextEditingController(),
       priceController = TextEditingController(),
+      publicationYearController = TextEditingController(),
+      purchaseSaleModeController = TextEditingController(),
+      packagingController = TextEditingController(),
+      statisticalClassController = TextEditingController(),
       publisherController = TextEditingController(),
       categoryController = TextEditingController(),
       selfEncodingController = TextEditingController();
@@ -18,6 +22,10 @@ class ProductQueryDetailFormController {
   final TextEditingController isbnController;
   final TextEditingController authorController;
   final TextEditingController priceController;
+  final TextEditingController publicationYearController;
+  final TextEditingController purchaseSaleModeController;
+  final TextEditingController packagingController;
+  final TextEditingController statisticalClassController;
   final TextEditingController publisherController;
   final TextEditingController categoryController;
   final TextEditingController selfEncodingController;
@@ -44,6 +52,10 @@ class ProductQueryDetailFormController {
     isbnController.text = product.isbn ?? '';
     authorController.text = product.author;
     priceController.text = formatProductPrice(product.price);
+    publicationYearController.text = product.publicationYear?.toString() ?? '';
+    purchaseSaleModeController.text = product.purchaseSaleMode ?? '';
+    packagingController.text = product.packaging ?? '';
+    statisticalClassController.text = product.statisticalClass ?? '';
     publisherController.text = product.publisher ?? '不区分';
     categoryController.text = product.category ?? '不区分';
     selfEncodingController.text = product.selfEncoding;
@@ -55,6 +67,10 @@ class ProductQueryDetailFormController {
     isbnController.clear();
     authorController.clear();
     priceController.clear();
+    publicationYearController.clear();
+    purchaseSaleModeController.clear();
+    packagingController.clear();
+    statisticalClassController.clear();
     publisherController.clear();
     categoryController.clear();
     selfEncodingController.clear();
@@ -64,21 +80,46 @@ class ProductQueryDetailFormController {
     return double.tryParse(priceController.text.trim());
   }
 
-  ProductModel buildUpdatedProduct(ProductModel selectedProduct) {
+  int? parsePublicationYear() {
+    return int.tryParse(publicationYearController.text.trim());
+  }
+
+  ProductModel buildUpdatedProduct(
+    ProductModel selectedProduct, {
+    required bool allowSensitiveFieldUpdates,
+  }) {
     final normalizedIsbn = _normalizeOptionalText(
       isbnController.text,
       nullPlaceholders: const {},
     );
+    final effectiveIsbn = allowSensitiveFieldUpdates
+        ? normalizedIsbn
+        : selectedProduct.isbn;
     final normalizedSelfEncoding = selfEncodingController.text.trim().isEmpty
-        ? (normalizedIsbn ?? productIdController.text.trim())
+        ? (effectiveIsbn ?? productIdController.text.trim())
         : selfEncodingController.text.trim();
 
     return selectedProduct.copyWith(
       title: titleController.text.trim(),
       productId: productIdController.text.trim(),
-      isbn: normalizedIsbn,
+      isbn: effectiveIsbn,
       author: authorController.text.trim(),
-      price: parsePrice() ?? selectedProduct.price,
+      price: allowSensitiveFieldUpdates
+          ? (parsePrice() ?? selectedProduct.price)
+          : selectedProduct.price,
+      publicationYear: parsePublicationYear(),
+      purchaseSaleMode: _normalizeOptionalText(
+        purchaseSaleModeController.text,
+        nullPlaceholders: const {},
+      ),
+      packaging: _normalizeOptionalText(
+        packagingController.text,
+        nullPlaceholders: const {},
+      ),
+      statisticalClass: _normalizeOptionalText(
+        statisticalClassController.text,
+        nullPlaceholders: const {},
+      ),
       publisher: _normalizeOptionalText(publisherController.text),
       category: _normalizeOptionalText(categoryController.text),
       selfEncoding: normalizedSelfEncoding,
@@ -92,6 +133,10 @@ class ProductQueryDetailFormController {
     isbnController.dispose();
     authorController.dispose();
     priceController.dispose();
+    publicationYearController.dispose();
+    purchaseSaleModeController.dispose();
+    packagingController.dispose();
+    statisticalClassController.dispose();
     publisherController.dispose();
     categoryController.dispose();
     selfEncodingController.dispose();

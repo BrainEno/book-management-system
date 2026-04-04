@@ -39,6 +39,14 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
     return productModel.productId.trim();
   }
 
+  String _resolveStockUnit(String? stockUnit) {
+    final normalized = stockUnit?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return '册';
+    }
+    return normalized;
+  }
+
   Future<int?> _resolveOperatorUserId(String? username) async {
     final normalized = _normalizeOptionalText(username, nullPlaceholders: {});
     if (normalized == null) {
@@ -47,6 +55,39 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
 
     final user = await database.userDao.getUserByUsername(normalized);
     return user?.id;
+  }
+
+  Future<int?> _resolveMasterDataId({
+    required int? explicitId,
+    required String? rawValue,
+    required String tableName,
+  }) async {
+    if (explicitId != null && explicitId > 0) {
+      return explicitId;
+    }
+
+    final normalized = _normalizeOptionalText(rawValue);
+    if (normalized == null) {
+      return null;
+    }
+
+    final row = await database.customSelect(
+      '''
+      SELECT id
+      FROM $tableName
+      WHERE code = ?
+         OR name = ?
+      ORDER BY CASE WHEN code = ? THEN 0 ELSE 1 END
+      LIMIT 1
+      ''',
+      variables: [
+        Variable.withString(normalized),
+        Variable.withString(normalized),
+        Variable.withString(normalized),
+      ],
+    ).getSingleOrNull();
+
+    return row?.read<int>('id');
   }
 
   String _productConstraintMessage(SqliteException error) {
@@ -68,6 +109,9 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
         message.contains('products.member_discount')) {
       return '折扣必须在 0 到 100 之间。';
     }
+    if (message.contains('products.status')) {
+      return '商品状态无效，请检查启用、停用或作废状态。';
+    }
     return '保存商品资料失败：${error.message}';
   }
 
@@ -77,6 +121,21 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       final productDao = database.productDao;
       final operatorUserId = await _resolveOperatorUserId(
         productModel.operator,
+      );
+      final categoryId = await _resolveMasterDataId(
+        explicitId: productModel.categoryId,
+        rawValue: productModel.category,
+        tableName: 'product_categories',
+      );
+      final publisherId = await _resolveMasterDataId(
+        explicitId: productModel.publisherId,
+        rawValue: productModel.publisher,
+        tableName: 'publishers',
+      );
+      final purchaseSaleModeId = await _resolveMasterDataId(
+        explicitId: productModel.purchaseSaleModeId,
+        rawValue: productModel.purchaseSaleMode,
+        tableName: 'purchase_sale_modes',
       );
       final normalizedOperator = _normalizeOptionalText(
         productModel.operator,
@@ -90,8 +149,10 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
           _normalizeOptionalText(productModel.isbn, nullPlaceholders: {}),
         ),
         category: Value(_normalizeOptionalText(productModel.category)),
+        categoryId: Value(categoryId),
         price: Value(productModel.price),
         publisher: Value(_normalizeOptionalText(productModel.publisher)),
+        publisherId: Value(publisherId),
         productId: Value(_normalizeRequiredText(productModel.productId)),
         internalPricing: Value(productModel.internalPricing),
         selfEncoding: Value(_resolveSelfEncoding(productModel)),
@@ -104,12 +165,17 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
         purchaseSaleMode: Value(
           _normalizeOptionalText(productModel.purchaseSaleMode),
         ),
+        purchaseSaleModeId: Value(purchaseSaleModeId),
         bookmark: Value(_normalizeOptionalText(productModel.bookmark)),
         packaging: Value(_normalizeOptionalText(productModel.packaging)),
         properity: Value(_normalizeOptionalText(productModel.properity)),
         statisticalClass: Value(
           _normalizeOptionalText(productModel.statisticalClass),
         ),
+        status: Value(productModel.status),
+        stockUnit: Value(_resolveStockUnit(productModel.stockUnit)),
+        minStockAlertQty: Value(productModel.minStockAlertQty),
+        maxStockAlertQty: Value(productModel.maxStockAlertQty),
         createdBy: Value(productModel.createdBy ?? operatorUserId),
         updatedBy: Value(productModel.updatedBy ?? operatorUserId),
         createdAt: Value(productModel.createdAt ?? DateTime.now()),
@@ -119,6 +185,10 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       return productModel.copyWith(
         id: insertedId,
         selfEncoding: _resolveSelfEncoding(productModel),
+        categoryId: categoryId,
+        publisherId: publisherId,
+        purchaseSaleModeId: purchaseSaleModeId,
+        stockUnit: _resolveStockUnit(productModel.stockUnit),
         createdBy: productModel.createdBy ?? operatorUserId,
         updatedBy: productModel.updatedBy ?? operatorUserId,
         operator: normalizedOperator,
@@ -150,6 +220,21 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       final operatorUserId = await _resolveOperatorUserId(
         productModel.operator,
       );
+      final categoryId = await _resolveMasterDataId(
+        explicitId: productModel.categoryId,
+        rawValue: productModel.category,
+        tableName: 'product_categories',
+      );
+      final publisherId = await _resolveMasterDataId(
+        explicitId: productModel.publisherId,
+        rawValue: productModel.publisher,
+        tableName: 'publishers',
+      );
+      final purchaseSaleModeId = await _resolveMasterDataId(
+        explicitId: productModel.purchaseSaleModeId,
+        rawValue: productModel.purchaseSaleMode,
+        tableName: 'purchase_sale_modes',
+      );
       final product = ProductsCompanion(
         title: Value(_normalizeRequiredText(productModel.title)),
         author: Value(_normalizeRequiredText(productModel.author)),
@@ -157,8 +242,10 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
           _normalizeOptionalText(productModel.isbn, nullPlaceholders: {}),
         ),
         category: Value(_normalizeOptionalText(productModel.category)),
+        categoryId: Value(categoryId),
         price: Value(productModel.price),
         publisher: Value(_normalizeOptionalText(productModel.publisher)),
+        publisherId: Value(publisherId),
         productId: Value(_normalizeRequiredText(productModel.productId)),
         internalPricing: Value(productModel.internalPricing),
         selfEncoding: Value(_resolveSelfEncoding(productModel)),
@@ -171,12 +258,17 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
         purchaseSaleMode: Value(
           _normalizeOptionalText(productModel.purchaseSaleMode),
         ),
+        purchaseSaleModeId: Value(purchaseSaleModeId),
         bookmark: Value(_normalizeOptionalText(productModel.bookmark)),
         packaging: Value(_normalizeOptionalText(productModel.packaging)),
         properity: Value(_normalizeOptionalText(productModel.properity)),
         statisticalClass: Value(
           _normalizeOptionalText(productModel.statisticalClass),
         ),
+        status: Value(productModel.status),
+        stockUnit: Value(_resolveStockUnit(productModel.stockUnit)),
+        minStockAlertQty: Value(productModel.minStockAlertQty),
+        maxStockAlertQty: Value(productModel.maxStockAlertQty),
         createdBy: Value(productModel.createdBy),
         updatedBy: Value(operatorUserId ?? productModel.updatedBy),
         createdAt: Value(productModel.createdAt ?? DateTime.now()),

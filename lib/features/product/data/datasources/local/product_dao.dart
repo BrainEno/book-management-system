@@ -29,6 +29,10 @@ class Products extends Table {
     'CHECK (wholesale_discount IS NULL OR wholesale_discount BETWEEN 0 AND 10000)',
     'CHECK (wholesale_price IS NULL OR wholesale_price >= 0)',
     'CHECK (member_discount IS NULL OR member_discount BETWEEN 0 AND 10000)',
+    'CHECK (status BETWEEN 0 AND 2)',
+    'CHECK (min_stock_alert_qty IS NULL OR min_stock_alert_qty >= 0)',
+    'CHECK (max_stock_alert_qty IS NULL OR max_stock_alert_qty >= 0)',
+    'CHECK (max_stock_alert_qty IS NULL OR min_stock_alert_qty IS NULL OR max_stock_alert_qty >= min_stock_alert_qty)',
   ];
 
   IntColumn get id => integer().autoIncrement()();
@@ -37,8 +41,18 @@ class Products extends Table {
   TextColumn get isbn =>
       text().withLength(min: 1, max: 32).nullable().unique()();
   TextColumn get category => text().withLength(min: 1, max: 128).nullable()();
+  IntColumn get categoryId => integer()
+      .nullable()
+      .customConstraint(
+        'NULL REFERENCES product_categories(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      )();
   IntColumn get price => integer().map(moneyAsCentsConverter)();
   TextColumn get publisher => text().withLength(min: 1, max: 255).nullable()();
+  IntColumn get publisherId => integer()
+      .nullable()
+      .customConstraint(
+        'NULL REFERENCES publishers(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      )();
   TextColumn get productId => text().withLength(min: 1, max: 64).unique()();
   IntColumn get internalPricing =>
       integer().map(nullableMoneyAsCentsConverter).nullable()();
@@ -56,11 +70,21 @@ class Products extends Table {
       integer().map(nullableDiscountAsBasisPointsConverter).nullable()();
   TextColumn get purchaseSaleMode =>
       text().withLength(min: 1, max: 32).nullable()();
+  IntColumn get purchaseSaleModeId => integer()
+      .nullable()
+      .customConstraint(
+        'NULL REFERENCES purchase_sale_modes(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      )();
   TextColumn get bookmark => text().withLength(min: 1, max: 64).nullable()();
   TextColumn get packaging => text().withLength(min: 1, max: 32).nullable()();
   TextColumn get properity => text().withLength(min: 1, max: 64).nullable()();
   TextColumn get statisticalClass =>
       text().withLength(min: 1, max: 64).nullable()();
+  IntColumn get status => integer().withDefault(const Constant(1))();
+  TextColumn get stockUnit =>
+      text().withLength(min: 1, max: 16).withDefault(const Constant('册'))();
+  IntColumn get minStockAlertQty => integer().nullable()();
+  IntColumn get maxStockAlertQty => integer().nullable()();
   @ReferenceName('createdProducts')
   IntColumn get createdBy => integer().nullable().references(
     Users,

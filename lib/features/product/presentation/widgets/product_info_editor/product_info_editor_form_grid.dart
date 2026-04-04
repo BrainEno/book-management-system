@@ -68,6 +68,13 @@ class ProductInfoEditorFormGrid extends StatelessWidget {
                     ),
                   ),
                   _GridFieldSpec(
+                    child: _EditorTextField(
+                      controllers.operatorController,
+                      '操作人员',
+                      readOnly: true,
+                    ),
+                  ),
+                  _GridFieldSpec(
                     span: 2,
                     child: _EditorTextField(
                       controllers.isbnController,
@@ -342,6 +349,7 @@ class _EditorTextField extends StatelessWidget {
     this.label, {
     this.type = TextInputType.text,
     this.required = false,
+    this.readOnly = false,
     this.suffixIcon,
     this.hintText,
   });
@@ -350,6 +358,7 @@ class _EditorTextField extends StatelessWidget {
   final String label;
   final TextInputType type;
   final bool required;
+  final bool readOnly;
   final Widget? suffixIcon;
   final String? hintText;
 
@@ -358,6 +367,8 @@ class _EditorTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: type,
+      readOnly: readOnly,
+      showCursor: !readOnly,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         hintText: hintText,

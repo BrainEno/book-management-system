@@ -1,9 +1,50 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <iostream>
 
 #include "flutter/generated_plugin_registrant.h"
 #include "desktop_multi_window/desktop_multi_window_plugin.h"
+#include <webview_windows/webview_windows_plugin.h>
+#include <window_manager/window_manager_plugin.h>
+
+namespace {
+
+void RegisterSubWindowPlugins(flutter::PluginRegistry* registry) {
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.begin"
+            << std::endl;
+
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step audioplayers.skipped reason=unsupported_in_windows_subwindow"
+            << std::endl;
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step bonsoir.skipped reason=unused_in_subwindow"
+            << std::endl;
+
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step desktop_multi_window.begin"
+            << std::endl;
+  DesktopMultiWindowPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("DesktopMultiWindowPlugin"));
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step desktop_multi_window.end"
+            << std::endl;
+
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step webview.begin"
+            << std::endl;
+  WebviewWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("WebviewWindowsPlugin"));
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step webview.end"
+            << std::endl;
+
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step window_manager.begin"
+            << std::endl;
+  WindowManagerPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("WindowManagerPlugin"));
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.step window_manager.end"
+            << std::endl;
+
+  std::cout << "[desktop_multi_window] RegisterSubWindowPlugins.end"
+            << std::endl;
+}
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -30,7 +71,7 @@ bool FlutterWindow::OnCreate() {
     auto* flutter_view_controller =
         reinterpret_cast<flutter::FlutterViewController*>(controller);
     auto* registry = flutter_view_controller->engine();
-    RegisterPlugins(registry);
+    RegisterSubWindowPlugins(registry);
   });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 

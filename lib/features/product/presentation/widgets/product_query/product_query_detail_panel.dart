@@ -1,6 +1,5 @@
 import 'package:bookstore_management_system/core/theme/app_pallete.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
-import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_utils.dart';
 import 'package:flutter/material.dart';
 
 class ProductQueryDetailPanel extends StatelessWidget {
@@ -13,15 +12,24 @@ class ProductQueryDetailPanel extends StatelessWidget {
     required this.isbnController,
     required this.authorController,
     required this.priceController,
+    required this.publicationYearController,
+    required this.purchaseSaleModeController,
+    required this.packagingController,
+    required this.statisticalClassController,
     required this.publisherController,
     required this.categoryController,
     required this.selfEncodingController,
     required this.categoryOptions,
     required this.publisherOptions,
+    required this.isAdminModeEnabled,
+    required this.adminModeTimeoutLabel,
     required this.isSaving,
     required this.onSave,
+    required this.onRequestAdminMode,
     required this.onOpenFullEditor,
     required this.formatDate,
+    this.onDisableAdminMode,
+    this.adminModeUserLabel,
   });
 
   final GlobalKey<FormState> formKey;
@@ -31,15 +39,24 @@ class ProductQueryDetailPanel extends StatelessWidget {
   final TextEditingController isbnController;
   final TextEditingController authorController;
   final TextEditingController priceController;
+  final TextEditingController publicationYearController;
+  final TextEditingController purchaseSaleModeController;
+  final TextEditingController packagingController;
+  final TextEditingController statisticalClassController;
   final TextEditingController publisherController;
   final TextEditingController categoryController;
   final TextEditingController selfEncodingController;
   final List<String> categoryOptions;
   final List<String> publisherOptions;
+  final bool isAdminModeEnabled;
+  final String adminModeTimeoutLabel;
   final bool isSaving;
   final VoidCallback onSave;
+  final VoidCallback onRequestAdminMode;
+  final VoidCallback? onDisableAdminMode;
   final VoidCallback? onOpenFullEditor;
   final String Function(DateTime?) formatDate;
+  final String? adminModeUserLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -69,29 +86,12 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                selectedProduct.title,
-                                style: theme.textTheme.headlineSmall?.copyWith(
+                                '基本信息',
+                                style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  BadgeLabel(
-                                    label: '商品编码 ${selectedProduct.productId}',
-                                  ),
-                                  BadgeLabel(
-                                    label:
-                                        '类别 ${selectedProduct.category ?? '--'}',
-                                  ),
-                                  BadgeLabel(
-                                    label:
-                                        '库存 ${formatInventory(selectedProduct)}',
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
                         ),
@@ -104,43 +104,106 @@ class ProductQueryDetailPanel extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
+                    Row(
                       children: [
-                        MetricCard(
-                          label: '售价',
-                          value:
-                              '¥${formatProductPrice(selectedProduct.price)}',
-                          color: const Color(0xFF2E5B4E),
+                        Expanded(
+                          child: MetricCard(
+                            key: const ValueKey('product-query-metric-isbn'),
+                            label: 'ISBN',
+                            value: selectedProduct.isbn ?? '--',
+                            color: const Color(0xFF8A5A2B),
+                          ),
                         ),
-                        MetricCard(
-                          label: '自编码',
-                          value: selectedProduct.selfEncoding.isEmpty
-                              ? '--'
-                              : selectedProduct.selfEncoding,
-                          color: const Color(0xFF8A5A2B),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: MetricCard(
+                            key: const ValueKey(
+                              'product-query-metric-operator',
+                            ),
+                            label: '操作人',
+                            value: selectedProduct.operator ?? '--',
+                            color: const Color(0xFF8A5A2B),
+                          ),
                         ),
-                        MetricCard(
-                          label: '更新时间',
-                          value: formatDate(selectedProduct.updatedAt),
-                          color: const Color(0xFF5C6270),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: MetricCard(
+                            key: const ValueKey(
+                              'product-query-metric-created-at',
+                            ),
+                            label: '创建时间',
+                            value: formatDate(selectedProduct.createdAt),
+                            color: const Color(0xFF5C6270),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: MetricCard(
+                            key: const ValueKey(
+                              'product-query-metric-updated-at',
+                            ),
+                            label: '更新时间',
+                            value: formatDate(selectedProduct.updatedAt),
+                            color: const Color(0xFF5C6270),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 22),
-                    Text(
-                      '关键资料编辑',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '关键资料编辑',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAdminModeEnabled
+                                    ? '管理员模式已开启，可直接编辑 ISBN 与售价；关键字段修改会记录审计日志，$adminModeTimeoutLabel无操作会自动退出。'
+                                    : '右侧可以快速修改常用资料；ISBN 与售价需要管理员模式后才能编辑。',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppPallete.lightGreyText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        if (isAdminModeEnabled)
+                          TextButton.icon(
+                            onPressed: onDisableAdminMode,
+                            icon: const Icon(Icons.lock_open_outlined),
+                            label: const Text('退出管理员模式'),
+                          )
+                        else
+                          OutlinedButton.icon(
+                            onPressed: onRequestAdminMode,
+                            icon: const Icon(
+                              Icons.admin_panel_settings_outlined,
+                            ),
+                            label: const Text('管理员模式'),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '表格里看到的是基础字段，右侧可以快速修改常用资料；导出时会带上完整商品信息。',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppPallete.lightGreyText,
-                      ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        BadgeLabel(
+                          label: isAdminModeEnabled
+                              ? '管理员模式：${adminModeUserLabel ?? '已开启'} · $adminModeTimeoutLabel自动退出'
+                              : 'ISBN 与售价受保护',
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 18),
                     LayoutBuilder(
@@ -157,6 +220,9 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-title-field',
+                                ),
                                 controller: titleController,
                                 label: '书名',
                                 validator: requiredValidator('书名'),
@@ -165,6 +231,9 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-author-field',
+                                ),
                                 controller: authorController,
                                 label: '作者',
                                 validator: requiredValidator('作者'),
@@ -173,6 +242,9 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-product-id-field',
+                                ),
                                 controller: productIdController,
                                 label: '商品编码',
                                 validator: requiredValidator('商品编码'),
@@ -181,14 +253,29 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-isbn-field',
+                                ),
                                 controller: isbnController,
                                 label: 'ISBN',
-                                validator: requiredValidator('ISBN'),
+                                readOnly: !isAdminModeEnabled,
+                                onTap: isAdminModeEnabled
+                                    ? null
+                                    : onRequestAdminMode,
+                                suffixIcon: isAdminModeEnabled
+                                    ? const Icon(Icons.lock_open_outlined)
+                                    : const Icon(Icons.lock_outline),
+                                validator: isAdminModeEnabled
+                                    ? requiredValidator('ISBN')
+                                    : null,
                               ),
                             ),
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditDropdownField(
+                                fieldKey: const ValueKey(
+                                  'product-query-publisher-field',
+                                ),
                                 controller: publisherController,
                                 label: '出版社',
                                 options: publisherOptions,
@@ -197,6 +284,9 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditDropdownField(
+                                fieldKey: const ValueKey(
+                                  'product-query-category-field',
+                                ),
                                 controller: categoryController,
                                 label: '商品类别',
                                 options: categoryOptions,
@@ -205,6 +295,9 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-self-encoding-field',
+                                ),
                                 controller: selfEncodingController,
                                 label: '自编码',
                               ),
@@ -212,57 +305,72 @@ class ProductQueryDetailPanel extends StatelessWidget {
                             SizedBox(
                               width: fieldWidth,
                               child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-price-field',
+                                ),
                                 controller: priceController,
                                 label: '售价',
+                                readOnly: !isAdminModeEnabled,
+                                onTap: isAdminModeEnabled
+                                    ? null
+                                    : onRequestAdminMode,
+                                suffixIcon: isAdminModeEnabled
+                                    ? const Icon(Icons.lock_open_outlined)
+                                    : const Icon(Icons.lock_outline),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,
                                     ),
-                                validator: requiredValidator('售价'),
+                                validator: isAdminModeEnabled
+                                    ? requiredValidator('售价')
+                                    : null,
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-publication-year-field',
+                                ),
+                                controller: publicationYearController,
+                                label: '出版年',
+                                keyboardType: TextInputType.number,
+                                validator: optionalIntegerValidator('出版年'),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-purchase-sale-mode-field',
+                                ),
+                                controller: purchaseSaleModeController,
+                                label: '购销方式',
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-packaging-field',
+                                ),
+                                controller: packagingController,
+                                label: '包装',
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: QuickEditTextField(
+                                fieldKey: const ValueKey(
+                                  'product-query-statistical-class-field',
+                                ),
+                                controller: statisticalClassController,
+                                label: '统计分类',
                               ),
                             ),
                           ],
                         );
                       },
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7F2EA),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Wrap(
-                        spacing: 18,
-                        runSpacing: 14,
-                        children: [
-                          MetaText(
-                            label: '内部 ID',
-                            value: '${selectedProduct.id}',
-                          ),
-                          MetaText(
-                            label: '出版年',
-                            value: '${selectedProduct.publicationYear}',
-                          ),
-                          MetaText(
-                            label: '购销方式',
-                            value: selectedProduct.purchaseSaleMode ?? '--',
-                          ),
-                          MetaText(
-                            label: '包装',
-                            value: selectedProduct.packaging ?? '--',
-                          ),
-                          MetaText(
-                            label: '统计分类',
-                            value: selectedProduct.statisticalClass ?? '--',
-                          ),
-                          MetaText(
-                            label: '创建时间',
-                            value: formatDate(selectedProduct.createdAt),
-                          ),
-                        ],
-                      ),
                     ),
                     const SizedBox(height: 20),
                     Row(
@@ -302,6 +410,19 @@ String? Function(String?) requiredValidator(String label) {
   };
 }
 
+String? Function(String?) optionalIntegerValidator(String label) {
+  return (value) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    if (int.tryParse(normalized) == null) {
+      return '$label格式不正确';
+    }
+    return null;
+  };
+}
+
 class MetricCard extends StatelessWidget {
   const MetricCard({
     super.key,
@@ -317,7 +438,6 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 120),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.09),
@@ -328,6 +448,8 @@ class MetricCard extends StatelessWidget {
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: color.withValues(alpha: 0.85),
             ),
@@ -335,6 +457,8 @@ class MetricCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: color,
@@ -372,27 +496,40 @@ class BadgeLabel extends StatelessWidget {
 class QuickEditTextField extends StatelessWidget {
   const QuickEditTextField({
     super.key,
+    this.fieldKey,
     required this.controller,
     required this.label,
     this.keyboardType,
     this.validator,
+    this.readOnly = false,
+    this.onTap,
+    this.suffixIcon,
   });
 
+  final Key? fieldKey;
   final TextEditingController controller;
   final String label;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      key: fieldKey,
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
+      readOnly: readOnly,
+      showCursor: !readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: const Color(0xFFF8F3EA),
+        fillColor: readOnly ? const Color(0xFFF1ECE3) : const Color(0xFFF8F3EA),
+        suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -405,11 +542,13 @@ class QuickEditTextField extends StatelessWidget {
 class QuickEditDropdownField extends StatelessWidget {
   const QuickEditDropdownField({
     super.key,
+    this.fieldKey,
     required this.controller,
     required this.label,
     required this.options,
   });
 
+  final Key? fieldKey;
   final TextEditingController controller;
   final String label;
   final List<String> options;
@@ -422,7 +561,7 @@ class QuickEditDropdownField extends StatelessWidget {
         : controller.text;
 
     return DropdownButtonFormField<String>(
-      key: ValueKey('$label:${controller.text}'),
+      key: fieldKey ?? ValueKey('$label:${controller.text}'),
       initialValue: selectedValue,
       decoration: InputDecoration(
         labelText: label,
@@ -447,68 +586,36 @@ class QuickEditDropdownField extends StatelessWidget {
   }
 }
 
-class MetaText extends StatelessWidget {
-  const MetaText({super.key, required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 160,
-      child: RichText(
-        text: TextSpan(
-          style: Theme.of(context).textTheme.bodyMedium,
-          children: [
-            TextSpan(
-              text: '$label\n',
-              style: TextStyle(color: AppPallete.lightGreyText),
-            ),
-            TextSpan(
-              text: value,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyDetailState extends StatelessWidget {
   const _EmptyDetailState();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.touch_app_outlined,
-              size: 52,
-              color: Color(0xFFB9A690),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '从表格中选择一条商品记录',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '点击行可快速编辑关键信息，勾选多条后可按当前查询结果导出。',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppPallete.lightGreyText),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.menu_book_outlined,
+            size: 42,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '请选择左侧商品查看详情',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '选中商品后，这里会显示基础信息、快速编辑表单以及导出入口。',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppPallete.lightGreyText),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

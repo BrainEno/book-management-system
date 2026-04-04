@@ -60,22 +60,14 @@ void main() {
     );
   });
 
-  test('AppWindowPayload keeps editor draft through json conversion', () {
-    const payload = AppWindowPayload(
-      productEditorDraft: {'title': '草稿标题', 'price': '68.5'},
-    );
+  test(
+    'AppWindowPayload keeps current operator username through json conversion',
+    () {
+      const payload = AppWindowPayload(currentOperatorUsername: 'tester');
 
-    final decoded = AppWindowPayload.fromJson(payload.toJson());
+      final decoded = AppWindowPayload.fromJson(payload.toJson());
 
-    expect(decoded.productEditorDraft?['title'], '草稿标题');
-    expect(decoded.productEditorDraft?['price'], '68.5');
-  });
-
-  test('AppWindowPayload keeps current operator username through json conversion', () {
-    const payload = AppWindowPayload(currentOperatorUsername: 'tester');
-
-    final decoded = AppWindowPayload.fromJson(payload.toJson());
-
-    expect(decoded.currentOperatorUsername, 'tester');
-  });
+      expect(decoded.currentOperatorUsername, 'tester');
+    },
+  );
 }

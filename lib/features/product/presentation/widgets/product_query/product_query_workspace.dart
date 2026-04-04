@@ -1,5 +1,9 @@
 import 'package:bookstore_management_system/features/product/data/mappers/product_entity_mapper.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
+import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
+import 'package:bookstore_management_system/core/di/service_locator.dart';
+import 'package:bookstore_management_system/features/auth/core/error/auth_exceptions.dart';
+import 'package:bookstore_management_system/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor/product_info_editor_form_state.dart';
@@ -24,15 +28,35 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
+typedef AdminModeVerifier =
+    Future<AppUser> Function({
+      required String username,
+      required String password,
+    });
+
 class ProductQueryWorkspace extends StatefulWidget {
   const ProductQueryWorkspace({
     super.key,
     this.initialProducts,
     this.windowPopOutService = const DesktopWindowPopOutService(),
+    this.adminModeVerifier = ProductQueryWorkspace._defaultAdminModeVerifier,
+    this.adminModeTimeout = const Duration(minutes: 5),
   });
 
   final List<ProductModel>? initialProducts;
   final WindowPopOutService windowPopOutService;
+  final AdminModeVerifier adminModeVerifier;
+  final Duration adminModeTimeout;
+
+  static Future<AppUser> _defaultAdminModeVerifier({
+    required String username,
+    required String password,
+  }) {
+    return sl<AuthLocalDataSource>().verifyAdminCredentials(
+      username: username,
+      password: password,
+    );
+  }
 
   @override
   State<ProductQueryWorkspace> createState() => _ProductQueryWorkspaceState();
@@ -58,12 +82,21 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   bool _isFetching = false;
   bool _isSaving = false;
   bool _isExporting = false;
+  bool _isAdminModeEnabled = false;
   int? _selectionAfterRefreshId;
+  AppUser? _adminModeUser;
+  Timer? _adminModeTimer;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_handleQueryInputsChanged);
+    _detailFormController.isbnController.addListener(
+      _handleSensitiveFieldEdited,
+    );
+    _detailFormController.priceController.addListener(
+      _handleSensitiveFieldEdited,
+    );
     unawaited(_editorChannel.setMethodCallHandler(_handleWindowMessage));
 
     if (widget.initialProducts != null && widget.initialProducts!.isNotEmpty) {
@@ -82,6 +115,16 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   @override
   void dispose() {
     _searchController.removeListener(_handleQueryInputsChanged);
+    _detailFormController.isbnController.removeListener(
+      _handleSensitiveFieldEdited,
+    );
+    _detailFormController.priceController.removeListener(
+      _handleSensitiveFieldEdited,
+    );
+    _adminModeTimer?.cancel();
+    if (_isAdminModeEnabled) {
+      _logAdminAudit('admin-mode.ended', reason: 'workspace-disposed');
+    }
     _searchController.dispose();
     _dataGridController.dispose();
     _detailFormController.dispose();
@@ -91,6 +134,153 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
 
   void _handleQueryInputsChanged() {
     _syncSelectionWithVisibleProducts();
+  }
+
+  void _handleSensitiveFieldEdited() {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+    _restartAdminModeTimer();
+  }
+
+  String _currentOperatorUsername() {
+    final authState = context.read<AuthBloc>().state;
+    return authState is AuthSuccess ? authState.user.username : '当前操作员';
+  }
+
+  String get _adminModeTimeoutLabel {
+    final duration = widget.adminModeTimeout;
+    if (duration.inMinutes >= 1 && duration.inSeconds % 60 == 0) {
+      return '${duration.inMinutes}分钟';
+    }
+    return '${duration.inSeconds}秒';
+  }
+
+  void _logAdminAudit(
+    String event, {
+    ProductModel? product,
+    String? reason,
+    Map<String, Object?> extras = const {},
+  }) {
+    final selected = product ?? _selectedProduct;
+    final fields = <String, Object?>{
+      'event': event,
+      'operator': _currentOperatorUsername(),
+      'admin': _adminModeUser?.username,
+      'productId': selected?.id,
+      'businessId': selected?.productId,
+      if (reason != null) 'reason': reason,
+      ...extras,
+    };
+    final serialized = fields.entries
+        .map((entry) => '${entry.key}=${entry.value ?? '-'}')
+        .join(', ');
+    _logger.i('Product query admin audit: $serialized');
+  }
+
+  void _restartAdminModeTimer() {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+    _adminModeTimer?.cancel();
+    _adminModeTimer = Timer(widget.adminModeTimeout, _handleAdminModeTimeout);
+  }
+
+  void _handleAdminModeTimeout() {
+    if (!_isAdminModeEnabled || !mounted) {
+      return;
+    }
+    _disableAdminMode(reason: 'timeout', showSnackBar: true);
+  }
+
+  Future<void> _requestAdminMode() async {
+    if (_isAdminModeEnabled) {
+      _restartAdminModeTimer();
+      return;
+    }
+
+    _logAdminAudit(
+      'admin-mode.requested',
+      reason: 'sensitive-field-edit',
+      extras: {'timeout': _adminModeTimeoutLabel},
+    );
+
+    final shouldContinue = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.admin_panel_settings_outlined),
+        title: const Text('需要管理员权限'),
+        content: Text(
+          '编辑 ISBN 和售价需要管理员权限。\n\n当前操作员：${_currentOperatorUsername()}\n\n是否进入管理员模式？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('暂不'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('进入管理员模式'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || shouldContinue != true) {
+      _logAdminAudit('admin-mode.request-cancelled');
+      return;
+    }
+
+    final verifiedUser = await showDialog<AppUser>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) =>
+          _AdminModeCredentialsDialog(verifier: widget.adminModeVerifier),
+    );
+
+    if (!mounted || verifiedUser == null) {
+      _logAdminAudit('admin-mode.verification-cancelled');
+      return;
+    }
+
+    setState(() {
+      _isAdminModeEnabled = true;
+      _adminModeUser = verifiedUser;
+    });
+    _restartAdminModeTimer();
+    _logAdminAudit(
+      'admin-mode.granted',
+      extras: {'timeout': _adminModeTimeoutLabel},
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('管理员模式已开启：${verifiedUser.username}')),
+    );
+  }
+
+  void _disableAdminMode({String reason = 'manual', bool showSnackBar = true}) {
+    if (!_isAdminModeEnabled) {
+      return;
+    }
+
+    _adminModeTimer?.cancel();
+    _logAdminAudit('admin-mode.ended', reason: reason);
+    setState(() {
+      _isAdminModeEnabled = false;
+      _adminModeUser = null;
+    });
+
+    if (!showSnackBar || !mounted) {
+      return;
+    }
+
+    final message = switch (reason) {
+      'timeout' => '管理员模式已因长时间未操作自动退出',
+      _ => '已退出管理员模式',
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _handleQueryModeChanged(ProductQueryMode? mode) {
@@ -346,8 +536,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
       return;
     }
 
-    final price = _detailFormController.parsePrice();
-    if (price == null) {
+    if (_isAdminModeEnabled && _detailFormController.parsePrice() == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('售价格式不正确')));
@@ -356,7 +545,26 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
 
     final updatedProduct = _detailFormController.buildUpdatedProduct(
       selectedProduct,
+      allowSensitiveFieldUpdates: _isAdminModeEnabled,
     );
+
+    if (_isAdminModeEnabled) {
+      final isbnChanged = updatedProduct.isbn != selectedProduct.isbn;
+      final priceChanged = updatedProduct.price != selectedProduct.price;
+      if (isbnChanged || priceChanged) {
+        _logAdminAudit(
+          'sensitive-fields.updated',
+          product: updatedProduct,
+          extras: {
+            'isbnBefore': selectedProduct.isbn,
+            'isbnAfter': updatedProduct.isbn,
+            'priceBefore': selectedProduct.price,
+            'priceAfter': updatedProduct.price,
+          },
+        );
+      }
+      _restartAdminModeTimer();
+    }
 
     setState(() {
       _isSaving = true;
@@ -534,6 +742,14 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                                   _detailFormController.authorController,
                               priceController:
                                   _detailFormController.priceController,
+                              publicationYearController: _detailFormController
+                                  .publicationYearController,
+                              purchaseSaleModeController: _detailFormController
+                                  .purchaseSaleModeController,
+                              packagingController:
+                                  _detailFormController.packagingController,
+                              statisticalClassController: _detailFormController
+                                  .statisticalClassController,
                               publisherController:
                                   _detailFormController.publisherController,
                               categoryController:
@@ -542,8 +758,13 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                                   _detailFormController.selfEncodingController,
                               categoryOptions: categoryOptions,
                               publisherOptions: publisherOptions,
+                              isAdminModeEnabled: _isAdminModeEnabled,
+                              adminModeTimeoutLabel: _adminModeTimeoutLabel,
                               isSaving: _isSaving,
                               onSave: _saveSelectedProduct,
+                              onRequestAdminMode: _requestAdminMode,
+                              onDisableAdminMode: _disableAdminMode,
+                              adminModeUserLabel: _adminModeUser?.username,
                               onOpenFullEditor: selectedProduct == null
                                   ? null
                                   : () => _openFullEditor(
@@ -591,6 +812,14 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                                   _detailFormController.authorController,
                               priceController:
                                   _detailFormController.priceController,
+                              publicationYearController: _detailFormController
+                                  .publicationYearController,
+                              purchaseSaleModeController: _detailFormController
+                                  .purchaseSaleModeController,
+                              packagingController:
+                                  _detailFormController.packagingController,
+                              statisticalClassController: _detailFormController
+                                  .statisticalClassController,
                               publisherController:
                                   _detailFormController.publisherController,
                               categoryController:
@@ -599,8 +828,13 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
                                   _detailFormController.selfEncodingController,
                               categoryOptions: categoryOptions,
                               publisherOptions: publisherOptions,
+                              isAdminModeEnabled: _isAdminModeEnabled,
+                              adminModeTimeoutLabel: _adminModeTimeoutLabel,
                               isSaving: _isSaving,
                               onSave: _saveSelectedProduct,
+                              onRequestAdminMode: _requestAdminMode,
+                              onDisableAdminMode: _disableAdminMode,
+                              adminModeUserLabel: _adminModeUser?.username,
                               onOpenFullEditor: selectedProduct == null
                                   ? null
                                   : () => _openFullEditor(
@@ -616,6 +850,167 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AdminModeCredentialsDialog extends StatefulWidget {
+  const _AdminModeCredentialsDialog({required this.verifier});
+
+  final AdminModeVerifier verifier;
+
+  @override
+  State<_AdminModeCredentialsDialog> createState() =>
+      _AdminModeCredentialsDialogState();
+}
+
+class _AdminModeCredentialsDialogState
+    extends State<_AdminModeCredentialsDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _isSubmitting = false;
+  bool _obscurePassword = true;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting || !_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final verifiedUser = await widget.verifier(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(verifiedUser);
+    } catch (error) {
+      final message = error is AuthException
+          ? error.message
+          : '管理员权限验证失败，请稍后重试。';
+      AppLogger.logger.w(
+        'Product query admin audit: event=admin-mode.verification-failed, username=${_usernameController.text.trim()}, message=$message',
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = message;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      icon: const Icon(Icons.lock_outline),
+      title: const Text('验证管理员权限'),
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '请输入管理员级别账户的名称和密码。验证通过后，本次商品查询页会进入管理员模式，允许编辑 ISBN 和售价。',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const ValueKey('product-query-admin-username'),
+                controller: _usernameController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: '管理员账户',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '请输入管理员账户';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('product-query-admin-password'),
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                onFieldSubmitted: (_) => _submit(),
+                decoration: InputDecoration(
+                  labelText: '管理员密码',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入管理员密码';
+                  }
+                  return null;
+                },
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessage!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSubmitting
+              ? null
+              : () => Navigator.of(context).pop<AppUser?>(null),
+          child: const Text('取消'),
+        ),
+        FilledButton.icon(
+          onPressed: _isSubmitting ? null : _submit,
+          icon: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.verified_user_outlined),
+          label: Text(_isSubmitting ? '验证中...' : '验证并开启'),
+        ),
+      ],
     );
   }
 }

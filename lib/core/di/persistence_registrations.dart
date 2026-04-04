@@ -24,10 +24,8 @@ Future<void> _registerHiveBoxes({required bool isMultiWindow}) async {
       'secure_storage',
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
-    final bookDraftBox = await Hive.openBox<Map<String, String>>('book_drafts');
 
     sl.registerSingleton<Box<String>>(secureStorageBox);
-    sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
     return;
   }
 
@@ -38,12 +36,8 @@ Future<void> _registerHiveBoxes({required bool isMultiWindow}) async {
   Hive.init(subWindowPath);
 
   final secureStorageBox = await Hive.openBox<String>('secure_storage_dummy');
-  final bookDraftBox = await Hive.openBox<Map<String, String>>(
-    'book_drafts_dummy',
-  );
 
   sl.registerSingleton<Box<String>>(secureStorageBox);
-  sl.registerSingleton<Box<Map<String, String>>>(bookDraftBox);
 
   AppLogger.logger.i('Initialized Hive for multi-window at $subWindowPath');
 }
