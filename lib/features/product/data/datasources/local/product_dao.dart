@@ -1,3 +1,5 @@
+import 'package:bookstore_management_system/core/database/bookstore_tables.dart'
+    show ProductCategories, Publishers, PurchaseSaleModes;
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/core/database/sqlite_type_converters.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart'
@@ -41,18 +43,20 @@ class Products extends Table {
   TextColumn get isbn =>
       text().withLength(min: 1, max: 32).nullable().unique()();
   TextColumn get category => text().withLength(min: 1, max: 128).nullable()();
-  IntColumn get categoryId => integer()
-      .nullable()
-      .customConstraint(
-        'NULL REFERENCES product_categories(id) ON DELETE SET NULL ON UPDATE CASCADE',
-      )();
+  IntColumn get categoryId => integer().nullable().references(
+    ProductCategories,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   IntColumn get price => integer().map(moneyAsCentsConverter)();
   TextColumn get publisher => text().withLength(min: 1, max: 255).nullable()();
-  IntColumn get publisherId => integer()
-      .nullable()
-      .customConstraint(
-        'NULL REFERENCES publishers(id) ON DELETE SET NULL ON UPDATE CASCADE',
-      )();
+  IntColumn get publisherId => integer().nullable().references(
+    Publishers,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   TextColumn get productId => text().withLength(min: 1, max: 64).unique()();
   IntColumn get internalPricing =>
       integer().map(nullableMoneyAsCentsConverter).nullable()();
@@ -70,11 +74,12 @@ class Products extends Table {
       integer().map(nullableDiscountAsBasisPointsConverter).nullable()();
   TextColumn get purchaseSaleMode =>
       text().withLength(min: 1, max: 32).nullable()();
-  IntColumn get purchaseSaleModeId => integer()
-      .nullable()
-      .customConstraint(
-        'NULL REFERENCES purchase_sale_modes(id) ON DELETE SET NULL ON UPDATE CASCADE',
-      )();
+  IntColumn get purchaseSaleModeId => integer().nullable().references(
+    PurchaseSaleModes,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   TextColumn get bookmark => text().withLength(min: 1, max: 64).nullable()();
   TextColumn get packaging => text().withLength(min: 1, max: 32).nullable()();
   TextColumn get properity => text().withLength(min: 1, max: 64).nullable()();

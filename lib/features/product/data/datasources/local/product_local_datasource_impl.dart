@@ -71,8 +71,9 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       return null;
     }
 
-    final row = await database.customSelect(
-      '''
+    final row = await database
+        .customSelect(
+          '''
       SELECT id
       FROM $tableName
       WHERE code = ?
@@ -80,12 +81,13 @@ class BookLocalDataSourceImpl implements ProductLocalDataSource {
       ORDER BY CASE WHEN code = ? THEN 0 ELSE 1 END
       LIMIT 1
       ''',
-      variables: [
-        Variable.withString(normalized),
-        Variable.withString(normalized),
-        Variable.withString(normalized),
-      ],
-    ).getSingleOrNull();
+          variables: [
+            Variable.withString(normalized),
+            Variable.withString(normalized),
+            Variable.withString(normalized),
+          ],
+        )
+        .getSingleOrNull();
 
     return row?.read<int>('id');
   }

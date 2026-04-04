@@ -1,3 +1,5 @@
+import 'package:bookstore_management_system/core/database/bookstore_tables.dart'
+    show PurchaseOrderItems, PurchaseOrders, Suppliers, Warehouses;
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/features/product/data/datasources/local/product_dao.dart'
     show Products;
@@ -7,15 +9,10 @@ import 'package:drift/drift.dart';
 part 'purchase_dao.g.dart';
 
 @DriftAccessor(
-  tables: [
-    PurchaseOrders,
-    PurchaseOrderItems,
-    Suppliers,
-    Warehouses,
-    Products,
-  ],
+  tables: [PurchaseOrders, PurchaseOrderItems, Suppliers, Warehouses, Products],
 )
-class PurchaseDao extends DatabaseAccessor<AppDatabase> with _$PurchaseDaoMixin {
+class PurchaseDao extends DatabaseAccessor<AppDatabase>
+    with _$PurchaseDaoMixin {
   PurchaseDao(super.db);
 
   DateTime? _readDateTime(QueryRow row, String columnName) {
@@ -33,27 +30,25 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase> with _$PurchaseDaoMixin 
   }
 
   Future<PurchaseOrder?> getPurchaseOrderById(int id) {
-    return (select(purchaseOrders)..where((tbl) => tbl.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      purchaseOrders,
+    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> insertPurchaseOrder(PurchaseOrdersCompanion companion) {
     return into(purchaseOrders).insert(companion);
   }
 
-  Future<void> updatePurchaseOrder(
-    int id,
-    PurchaseOrdersCompanion companion,
-  ) {
-    return (update(purchaseOrders)..where((tbl) => tbl.id.equals(id))).write(
-      companion,
-    );
+  Future<void> updatePurchaseOrder(int id, PurchaseOrdersCompanion companion) {
+    return (update(
+      purchaseOrders,
+    )..where((tbl) => tbl.id.equals(id))).write(companion);
   }
 
   Future<void> deleteItemsByOrderId(int purchaseOrderId) {
-    return (delete(purchaseOrderItems)
-          ..where((tbl) => tbl.purchaseOrderId.equals(purchaseOrderId)))
-        .go();
+    return (delete(
+      purchaseOrderItems,
+    )..where((tbl) => tbl.purchaseOrderId.equals(purchaseOrderId))).go();
   }
 
   Future<int> insertPurchaseOrderItem(PurchaseOrderItemsCompanion companion) {
@@ -144,7 +139,8 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase> with _$PurchaseDaoMixin 
       warehouseName: header.read<String>('warehouse_name'),
       status: header.read<int>('status'),
       orderedAt:
-          _readDateTime(header, 'ordered_at') ?? DateTime.fromMillisecondsSinceEpoch(0),
+          _readDateTime(header, 'ordered_at') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       expectedAt: _readDateTime(header, 'expected_at'),
       totalAmountCent: header.read<int>('total_amount_cent'),
       paidAmountCent: header.read<int>('paid_amount_cent'),

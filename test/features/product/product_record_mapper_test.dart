@@ -26,6 +26,8 @@ void main() {
       packaging: '精装',
       properity: '普通图书',
       statisticalClass: '小说',
+      status: 1,
+      stockUnit: '册',
       createdBy: 3,
       updatedBy: 5,
       createdAt: DateTime(2026, 4, 1, 10, 0),

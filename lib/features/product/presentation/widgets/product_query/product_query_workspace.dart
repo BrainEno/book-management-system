@@ -86,6 +86,8 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   int? _selectionAfterRefreshId;
   AppUser? _adminModeUser;
   Timer? _adminModeTimer;
+  ScaffoldMessengerState? _scaffoldMessenger;
+  String _operatorUsername = '当前操作员';
 
   @override
   void initState() {
@@ -113,7 +115,21 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger ??= ScaffoldMessenger.maybeOf(context);
+    final authState = context.read<AuthBloc>().state;
+    _operatorUsername = authState is AuthSuccess
+        ? authState.user.username
+        : '当前操作员';
+  }
+
+  @override
   void dispose() {
+    _scaffoldMessenger?.removeCurrentSnackBar(
+      reason: SnackBarClosedReason.remove,
+    );
+    _scaffoldMessenger?.clearSnackBars();
     _searchController.removeListener(_handleQueryInputsChanged);
     _detailFormController.isbnController.removeListener(
       _handleSensitiveFieldEdited,
@@ -144,8 +160,7 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
   }
 
   String _currentOperatorUsername() {
-    final authState = context.read<AuthBloc>().state;
-    return authState is AuthSuccess ? authState.user.username : '当前操作员';
+    return _operatorUsername;
   }
 
   String get _adminModeTimeoutLabel {
@@ -308,8 +323,10 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     final nextSelectedIds = _selectedProductIds.intersection(visibleIds);
 
     ProductModel? nextSelection = _selectedProduct;
+    // Don't auto-select the first visible product. If current selection
+    // is missing or not visible, clear selection (keep user-driven state null).
     if (nextSelection == null || !visibleIds.contains(nextSelection.id)) {
-      nextSelection = visibleProducts.isNotEmpty ? visibleProducts.first : null;
+      nextSelection = null;
     }
 
     setState(() {
@@ -336,7 +353,8 @@ class _ProductQueryWorkspaceState extends State<ProductQueryWorkspace> {
     if (selectionId != null) {
       nextSelection = _findById(visibleProducts, selectionId);
     }
-    nextSelection ??= visibleProducts.isNotEmpty ? visibleProducts.first : null;
+    // Do not default to the first item when no selectionId is provided.
+    // Leave nextSelection null so the table has no active selection by default.
 
     setState(() {
       _products = List<ProductModel>.from(products);

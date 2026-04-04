@@ -199,9 +199,9 @@ class PurchaseLocalDataSourceImpl implements PurchaseLocalDataSource {
           ),
         );
 
-        await (_database.update(_database.purchaseOrderItems)
-              ..where((tbl) => tbl.id.equals(item.id)))
-            .write(
+        await (_database.update(
+          _database.purchaseOrderItems,
+        )..where((tbl) => tbl.id.equals(item.id))).write(
           PurchaseOrderItemsCompanion(
             receivedQty: Value(item.qty),
             shelfCode: item.shelfCode == null

@@ -108,9 +108,8 @@ void _registerMasterDataDependencies() {
       () => MasterDataLookupLocalDataSourceImpl(sl<MasterDataLookupDao>()),
     )
     ..registerFactory<MasterDataLookupRepository>(
-      () => MasterDataLookupRepositoryImpl(
-        sl<MasterDataLookupLocalDataSource>(),
-      ),
+      () =>
+          MasterDataLookupRepositoryImpl(sl<MasterDataLookupLocalDataSource>()),
     );
 }
 
@@ -118,10 +117,7 @@ void _registerInventoryDependencies() {
   sl
     ..registerFactory(() => InventoryDao(sl<AppDatabase>()))
     ..registerFactory<InventoryLocalDataSource>(
-      () => InventoryLocalDataSourceImpl(
-        sl<AppDatabase>(),
-        sl<InventoryDao>(),
-      ),
+      () => InventoryLocalDataSourceImpl(sl<AppDatabase>(), sl<InventoryDao>()),
     )
     ..registerFactory<InventoryRepository>(
       () => InventoryRepositoryImpl(sl<InventoryLocalDataSource>()),

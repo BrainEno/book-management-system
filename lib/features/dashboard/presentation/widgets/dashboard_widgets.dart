@@ -98,7 +98,7 @@ class DashboardHeroPanel extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                '$greeting，欢迎回到溪川书店主控台',
+                '$greeting，欢迎回到无浪潮主控台',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: AppPallete.ink,
                   fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class DashboardHeroPanel extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                '今天先看经营体温，再决定去收货、补资料还是盯住库存预警。主页面把老系统的一眼可达保留下来，但换成更适合现代单店书店经营的层级。',
+                '今天先看经营体温，再决定去收货、补资料还是盯住库存预警。',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppPallete.mutedInk,
                   height: 1.55,

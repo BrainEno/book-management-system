@@ -17,14 +17,12 @@ void main() {
   test('fresh database creates the recommended support tables', () async {
     database = AppDatabase(NativeDatabase.memory());
 
-    final tableRows = await database.customSelect(
-      '''
+    final tableRows = await database.customSelect('''
       SELECT name
       FROM sqlite_master
       WHERE type = 'table'
       ORDER BY name
-      ''',
-    ).get();
+      ''').get();
     final tableNames = tableRows.map((row) => row.read<String>('name')).toSet();
 
     expect(
@@ -34,6 +32,7 @@ void main() {
         'products',
         'product_categories',
         'publishers',
+        'purchase_sale_modes',
         'suppliers',
         'customers',
         'warehouses',
@@ -46,44 +45,59 @@ void main() {
       ]),
     );
 
-    final userId = await database.into(database.users).insert(
-      UsersCompanion.insert(
-        username: 'admin',
-        password: 'hashed-password',
-        role: 'admin',
-        salt: 'salt-value',
-      ),
-    );
-
-    await database.into(database.productCategories).insert(
-      ProductCategoriesCompanion.insert(
-        code: 'BOOK',
-        name: 'Books',
-      ),
-    );
-
-    await database.into(database.publishers).insert(
-      PublishersCompanion.insert(
-        code: const Value('PUB-001'),
-        name: 'Test Publisher',
-      ),
-    );
-
-    final supplierId = await database.into(database.suppliers).insert(
-          SuppliersCompanion.insert(
-            code: 'SUP-001',
-            name: 'Main Supplier',
+    final userId = await database
+        .into(database.users)
+        .insert(
+          UsersCompanion.insert(
+            username: 'admin',
+            password: 'hashed-password',
+            role: 'admin',
+            salt: 'salt-value',
           ),
         );
 
-    final customerId = await database.into(database.customers).insert(
-          CustomersCompanion.insert(
-            code: 'CUST-001',
-            name: 'Walk-in Customer',
+    final categoryId = await database
+        .into(database.productCategories)
+        .insert(ProductCategoriesCompanion.insert(code: 'BOOK', name: 'Books'));
+
+    final publisherId = await database
+        .into(database.publishers)
+        .insert(
+          PublishersCompanion.insert(
+            code: const Value('PUB-001'),
+            name: 'Test Publisher',
           ),
         );
 
-    final warehouseId = await database.into(database.warehouses).insert(
+    final saleModeRows = await database.customSelect('''
+      SELECT id, code, name
+      FROM purchase_sale_modes
+      ORDER BY id
+      ''').get();
+    expect(saleModeRows, isNotEmpty);
+    expect(
+      saleModeRows.map((row) => row.read<String>('code')).toSet(),
+      contains('retail'),
+    );
+    final retailSaleModeId = saleModeRows
+        .firstWhere((row) => row.read<String>('code') == 'retail')
+        .read<int>('id');
+
+    final supplierId = await database
+        .into(database.suppliers)
+        .insert(
+          SuppliersCompanion.insert(code: 'SUP-001', name: 'Main Supplier'),
+        );
+
+    final customerId = await database
+        .into(database.customers)
+        .insert(
+          CustomersCompanion.insert(code: 'CUST-001', name: 'Walk-in Customer'),
+        );
+
+    final warehouseId = await database
+        .into(database.warehouses)
+        .insert(
           WarehousesCompanion.insert(
             code: 'WH-001',
             name: 'Main Warehouse',
@@ -91,7 +105,9 @@ void main() {
           ),
         );
 
-    final productId = await database.into(database.products).insert(
+    final productId = await database
+        .into(database.products)
+        .insert(
           ProductsCompanion.insert(
             title: 'Support Table Sample',
             author: 'Library Team',
@@ -99,7 +115,12 @@ void main() {
             productId: 'SKU-001',
             selfEncoding: 'CODE-001',
             category: Value('BOOK'),
+            categoryId: Value(categoryId),
             publisher: Value('Test Publisher'),
+            publisherId: Value(publisherId),
+            purchaseSaleMode: const Value('普通零售'),
+            purchaseSaleModeId: Value(retailSaleModeId),
+            stockUnit: const Value('册'),
             createdBy: Value(userId),
             updatedBy: Value(userId),
             publicationYear: const Value(2026),
@@ -109,14 +130,18 @@ void main() {
           ),
         );
 
-    final stockBalanceId = await database.into(database.stockBalances).insert(
+    final stockBalanceId = await database
+        .into(database.stockBalances)
+        .insert(
           StockBalancesCompanion.insert(
             warehouseId: warehouseId,
             productId: productId,
           ),
         );
 
-    final movementId = await database.into(database.stockMovements).insert(
+    final movementId = await database
+        .into(database.stockMovements)
+        .insert(
           StockMovementsCompanion.insert(
             movementNo: 'MV-001',
             movementType: 'purchase_in',
@@ -128,7 +153,9 @@ void main() {
           ),
         );
 
-    final purchaseOrderId = await database.into(database.purchaseOrders).insert(
+    final purchaseOrderId = await database
+        .into(database.purchaseOrders)
+        .insert(
           PurchaseOrdersCompanion.insert(
             orderNo: 'PO-001',
             supplierId: supplierId,
@@ -152,7 +179,9 @@ void main() {
           ),
         );
 
-    final salesOrderId = await database.into(database.salesOrders).insert(
+    final salesOrderId = await database
+        .into(database.salesOrders)
+        .insert(
           SalesOrdersCompanion.insert(
             orderNo: 'SO-001',
             customerId: Value(customerId),
@@ -162,7 +191,9 @@ void main() {
           ),
         );
 
-    final salesItemId = await database.into(database.salesOrderItems).insert(
+    final salesItemId = await database
+        .into(database.salesOrderItems)
+        .insert(
           SalesOrderItemsCompanion.insert(
             salesOrderId: salesOrderId,
             lineNo: 1,
@@ -174,103 +205,154 @@ void main() {
           ),
         );
 
-    final customerDefaults = await database.customSelect(
-      '''
+    final customerDefaults = await database
+        .customSelect(
+          '''
       SELECT customer_type, status
       FROM customers
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(customerId)],
-    ).getSingle();
+          variables: [Variable.withInt(customerId)],
+        )
+        .getSingle();
     expect(customerDefaults.read<String>('customer_type'), 'retail');
     expect(customerDefaults.read<int>('status'), 1);
 
-    final warehouseForeignKeys = await database.customSelect(
-      "PRAGMA foreign_key_list('warehouses')",
-    ).get();
+    final warehouseForeignKeys = await database
+        .customSelect("PRAGMA foreign_key_list('warehouses')")
+        .get();
     expect(
-      warehouseForeignKeys
-          .map((row) => row.read<String>('table'))
-          .toSet(),
+      warehouseForeignKeys.map((row) => row.read<String>('table')).toSet(),
       contains('users'),
     );
 
-    final stockBalanceDefaults = await database.customSelect(
-      '''
+    final stockBalanceDefaults = await database
+        .customSelect(
+          '''
       SELECT on_hand_qty, reserved_qty, safety_stock_qty
       FROM stock_balances
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(stockBalanceId)],
-    ).getSingle();
+          variables: [Variable.withInt(stockBalanceId)],
+        )
+        .getSingle();
     expect(stockBalanceDefaults.read<int>('on_hand_qty'), 0);
     expect(stockBalanceDefaults.read<int>('reserved_qty'), 0);
     expect(stockBalanceDefaults.read<int>('safety_stock_qty'), 0);
 
-    final salesOrderDefaults = await database.customSelect(
-      '''
+    final salesOrderDefaults = await database
+        .customSelect(
+          '''
       SELECT sales_channel, status
       FROM sales_orders
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(salesOrderId)],
-    ).getSingle();
+          variables: [Variable.withInt(salesOrderId)],
+        )
+        .getSingle();
     expect(salesOrderDefaults.read<String>('sales_channel'), 'store');
     expect(salesOrderDefaults.read<int>('status'), 0);
 
-    final movementRow = await database.customSelect(
-      '''
+    final movementRow = await database
+        .customSelect(
+          '''
       SELECT movement_type, qty_delta
       FROM stock_movements
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(movementId)],
-    ).getSingle();
+          variables: [Variable.withInt(movementId)],
+        )
+        .getSingle();
     expect(movementRow.read<String>('movement_type'), 'purchase_in');
     expect(movementRow.read<int>('qty_delta'), 12);
 
-    final purchaseItemRow = await database.customSelect(
-      '''
+    final purchaseItemRow = await database
+        .customSelect(
+          '''
       SELECT qty, line_amount_cent
       FROM purchase_order_items
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(purchaseItemId)],
-    ).getSingle();
+          variables: [Variable.withInt(purchaseItemId)],
+        )
+        .getSingle();
     expect(purchaseItemRow.read<int>('qty'), 12);
     expect(purchaseItemRow.read<int>('line_amount_cent'), 42600);
 
-    final salesItemRow = await database.customSelect(
-      '''
+    final salesItemRow = await database
+        .customSelect(
+          '''
       SELECT qty, line_amount_cent
       FROM sales_order_items
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(salesItemId)],
-    ).getSingle();
+          variables: [Variable.withInt(salesItemId)],
+        )
+        .getSingle();
     expect(salesItemRow.read<int>('qty'), 2);
     expect(salesItemRow.read<int>('line_amount_cent'), 7900);
 
-    final productRow = await database.customSelect(
-      '''
+    final productRow = await database
+        .customSelect(
+          '''
       SELECT title, author, typeof(price) AS price_type, price
       FROM products
       WHERE id = ?
       ''',
-      variables: [Variable.withInt(productId)],
-    ).getSingle();
+          variables: [Variable.withInt(productId)],
+        )
+        .getSingle();
     expect(productRow.read<String>('title'), 'Support Table Sample');
     expect(productRow.read<String>('author'), 'Library Team');
     expect(productRow.read<String>('price_type'), 'integer');
     expect(productRow.read<int>('price'), 3950);
+
+    final productFoundationRow = await database
+        .customSelect(
+          '''
+      SELECT
+        status,
+        stock_unit,
+        category_id,
+        publisher_id,
+        purchase_sale_mode_id
+      FROM products
+      WHERE id = ?
+      ''',
+          variables: [Variable.withInt(productId)],
+        )
+        .getSingle();
+    expect(productFoundationRow.read<int>('status'), 1);
+    expect(productFoundationRow.read<String>('stock_unit'), '册');
+    expect(productFoundationRow.read<int>('category_id'), categoryId);
+    expect(productFoundationRow.read<int>('publisher_id'), publisherId);
+    expect(
+      productFoundationRow.read<int>('purchase_sale_mode_id'),
+      retailSaleModeId,
+    );
+
+    final purchaseFoundationRow = await database
+        .customSelect(
+          '''
+      SELECT posted_by, posted_at
+      FROM purchase_orders
+      WHERE id = ?
+      ''',
+          variables: [Variable.withInt(purchaseOrderId)],
+        )
+        .getSingle();
+    expect(purchaseFoundationRow.data['posted_by'], isNull);
+    expect(purchaseFoundationRow.data['posted_at'], isNull);
   });
 
-  test('legacy v5 databases upgrade to v6 without losing product data', () async {
-    final tempDir = await Directory.systemTemp.createTemp('bookstore_v5_');
+  test(
+    'legacy v5 databases upgrade to v6 without losing product data',
+    () async {
+      final tempDir = await Directory.systemTemp.createTemp('bookstore_v5_');
 
-    final dbFile = File(p.join(tempDir.path, 'legacy_v5.sqlite'));
-    final rawDb = sqlite3.open(dbFile.path);
-    rawDb.execute('''
+      final dbFile = File(p.join(tempDir.path, 'legacy_v5.sqlite'));
+      final rawDb = sqlite3.open(dbFile.path);
+      rawDb.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
@@ -285,7 +367,7 @@ void main() {
         status INTEGER NOT NULL DEFAULT 1
       );
     ''');
-    rawDb.execute('''
+      rawDb.execute('''
       CREATE TABLE products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -316,8 +398,8 @@ void main() {
         FOREIGN KEY(updated_by) REFERENCES users(id)
       );
     ''');
-    rawDb.execute('PRAGMA user_version = 5');
-    rawDb.execute('''
+      rawDb.execute('PRAGMA user_version = 5');
+      rawDb.execute('''
       INSERT INTO users (
         id,
         username,
@@ -344,7 +426,7 @@ void main() {
         1
       );
     ''');
-    rawDb.execute('''
+      rawDb.execute('''
       INSERT INTO products (
         id,
         title,
@@ -399,61 +481,62 @@ void main() {
         1712103600
       );
     ''');
-    rawDb.close();
+      rawDb.close();
 
-    database = AppDatabase(NativeDatabase.createInBackground(dbFile));
+      database = AppDatabase(NativeDatabase.createInBackground(dbFile));
 
-    final tableRows = await database.customSelect(
-      '''
+      final tableRows = await database.customSelect('''
       SELECT name
       FROM sqlite_master
       WHERE type = 'table'
       ORDER BY name
-      ''',
-    ).get();
-    final tableNames = tableRows.map((row) => row.read<String>('name')).toSet();
+      ''').get();
+      final tableNames = tableRows
+          .map((row) => row.read<String>('name'))
+          .toSet();
 
-    expect(tableNames, containsAll(['product_categories', 'warehouses']));
+      expect(
+        tableNames,
+        containsAll([
+          'product_categories',
+          'warehouses',
+          'purchase_sale_modes',
+        ]),
+      );
 
-    final productRow = await database.customSelect(
-      '''
+      final productRow = await database.customSelect('''
       SELECT title, author, price, created_by, updated_by
       FROM products
       WHERE id = 10
-      ''',
-    ).getSingle();
-    expect(productRow.read<String>('title'), 'Legacy Product');
-    expect(productRow.read<String>('author'), 'Legacy Author');
-    expect(productRow.read<int>('price'), 4250);
-    expect(productRow.read<int>('created_by'), 1);
-    expect(productRow.read<int>('updated_by'), 1);
+      ''').getSingle();
+      expect(productRow.read<String>('title'), 'Legacy Product');
+      expect(productRow.read<String>('author'), 'Legacy Author');
+      expect(productRow.read<int>('price'), 4250);
+      expect(productRow.read<int>('created_by'), 1);
+      expect(productRow.read<int>('updated_by'), 1);
 
-    final userRow = await database.customSelect(
-      '''
+      final userRow = await database.customSelect('''
       SELECT username, status
       FROM users
       WHERE id = 1
-      ''',
-    ).getSingle();
-    expect(userRow.read<String>('username'), 'legacy-admin');
-    expect(userRow.read<int>('status'), 1);
+      ''').getSingle();
+      expect(userRow.read<String>('username'), 'legacy-admin');
+      expect(userRow.read<int>('status'), 1);
 
-    final publisherRow = await database.customSelect(
-      '''
+      final publisherRow = await database.customSelect('''
       SELECT COUNT(*) AS count
       FROM publishers
-      ''',
-    ).getSingle();
-    expect(publisherRow.read<int>('count'), 0);
+      ''').getSingle();
+      expect(publisherRow.read<int>('count'), 0);
 
-    final supportTables = await database.customSelect(
-      '''
+      final supportTables = await database.customSelect('''
       SELECT name
       FROM sqlite_master
       WHERE type = 'table'
         AND name IN (
           'product_categories',
           'publishers',
+          'purchase_sale_modes',
           'suppliers',
           'customers',
           'warehouses',
@@ -464,8 +547,33 @@ void main() {
           'sales_orders',
           'sales_order_items'
         )
-      ''',
-    ).get();
-    expect(supportTables, hasLength(11));
-  });
+      ''').get();
+      expect(supportTables, hasLength(12));
+
+      final saleModeCount = await database.customSelect('''
+      SELECT COUNT(*) AS count
+      FROM purchase_sale_modes
+      ''').getSingle();
+      expect(saleModeCount.read<int>('count'), greaterThanOrEqualTo(5));
+
+      final productFoundationColumns = await database
+          .customSelect("PRAGMA table_info('products')")
+          .get();
+      final productColumnNames = productFoundationColumns
+          .map((row) => row.read<String>('name'))
+          .toSet();
+      expect(
+        productColumnNames,
+        containsAll([
+          'category_id',
+          'publisher_id',
+          'purchase_sale_mode_id',
+          'status',
+          'stock_unit',
+          'min_stock_alert_qty',
+          'max_stock_alert_qty',
+        ]),
+      );
+    },
+  );
 }
