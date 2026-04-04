@@ -45,25 +45,25 @@ class InventoryStockSnapshot extends Equatable {
 
   @override
   List<Object?> get props => [
-        balanceId,
-        productId,
-        productCode,
-        productTitle,
-        author,
-        isbn,
-        category,
-        publisher,
-        warehouseId,
-        warehouseName,
-        onHandQty,
-        reservedQty,
-        safetyStockQty,
-        stockUnit,
-        shelfCode,
-        minStockAlertQty,
-        maxStockAlertQty,
-        updatedAt,
-      ];
+    balanceId,
+    productId,
+    productCode,
+    productTitle,
+    author,
+    isbn,
+    category,
+    publisher,
+    warehouseId,
+    warehouseName,
+    onHandQty,
+    reservedQty,
+    safetyStockQty,
+    stockUnit,
+    shelfCode,
+    minStockAlertQty,
+    maxStockAlertQty,
+    updatedAt,
+  ];
 }
 
 class InventoryMovementEntry extends Equatable {
@@ -107,24 +107,24 @@ class InventoryMovementEntry extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        movementNo,
-        movementType,
-        refType,
-        refId,
-        productId,
-        productCode,
-        productTitle,
-        warehouseId,
-        warehouseName,
-        qtyDelta,
-        unitCostCent,
-        amountCent,
-        occurredAt,
-        operatorUserId,
-        operatorUsername,
-        note,
-      ];
+    id,
+    movementNo,
+    movementType,
+    refType,
+    refId,
+    productId,
+    productCode,
+    productTitle,
+    warehouseId,
+    warehouseName,
+    qtyDelta,
+    unitCostCent,
+    amountCent,
+    occurredAt,
+    operatorUserId,
+    operatorUsername,
+    note,
+  ];
 }
 
 class StockMovementDraft extends Equatable {
@@ -160,18 +160,18 @@ class StockMovementDraft extends Equatable {
 
   @override
   List<Object?> get props => [
-        movementNo,
-        movementType,
-        refType,
-        refId,
-        warehouseId,
-        productId,
-        qtyDelta,
-        unitCostCent,
-        amountCent,
-        occurredAt,
-        operatorUserId,
-        note,
-        shelfCode,
-      ];
+    movementNo,
+    movementType,
+    refType,
+    refId,
+    warehouseId,
+    productId,
+    qtyDelta,
+    unitCostCent,
+    amountCent,
+    occurredAt,
+    operatorUserId,
+    note,
+    shelfCode,
+  ];
 }

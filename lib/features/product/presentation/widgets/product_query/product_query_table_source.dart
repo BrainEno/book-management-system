@@ -1,6 +1,7 @@
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_query/product_query_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:bookstore_management_system/core/theme/theme.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 class ProductQueryTableSource extends DataGridSource {
@@ -47,11 +48,13 @@ class ProductQueryTableSource extends DataGridSource {
     final isActive = product.id == activeProductId;
     final textStyle = TextStyle(
       color: const Color(0xFF2C3036),
-      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+      fontFamily: AppTheme.appFontFamily,
+      fontFamilyFallback: AppTheme.appFontFamilyFallback,
+      fontWeight: FontWeight.w500,
     );
 
     return DataGridRowAdapter(
-      color: isActive ? const Color(0xFFF8F0E4) : Colors.white,
+      color: isActive ? const Color(0xFFFFF7EE) : Colors.white,
       cells: [
         _buildCell(product.title, textStyle, alignment: Alignment.centerLeft),
         _buildCell(

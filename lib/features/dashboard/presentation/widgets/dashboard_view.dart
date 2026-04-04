@@ -108,7 +108,7 @@ class DashboardView extends StatelessWidget {
                 const SizedBox(height: 18),
                 DashboardSection(
                   title: '快捷操作',
-                  subtitle: '保留老系统一眼可达的业务感，但用更现代的卡片和优先级组织高频动作。',
+                  subtitle: '优先高频动作。',
                   child: Column(
                     children: [
                       Wrap(

@@ -14,14 +14,12 @@ class ProductCategories extends Table {
   // 主键，自增编号。
   IntColumn get id => integer().autoIncrement()();
   // 上级分类ID，用于构建树状分类；顶级分类可为空。
-  IntColumn get parentId => integer()
-      .nullable()
-      .references(
-        ProductCategories,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get parentId => integer().nullable().references(
+    ProductCategories,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 分类编码，便于程序和报表引用。
   TextColumn get code => text().withLength(min: 1, max: 64).unique()();
   // 分类名称。
@@ -46,7 +44,8 @@ class Publishers extends Table {
   // 主键，自增编号。
   IntColumn get id => integer().autoIncrement()();
   // 出版社编码，可选但建议填写，便于外部系统对接。
-  TextColumn get code => text().nullable().withLength(min: 1, max: 64).unique()();
+  TextColumn get code =>
+      text().nullable().withLength(min: 1, max: 64).unique()();
   // 出版社名称。
   TextColumn get name => text().withLength(min: 1, max: 255).unique()();
   // 联系人姓名。
@@ -179,14 +178,12 @@ class Warehouses extends Table {
   TextColumn get address => text().nullable()();
   // 仓库负责人，关联用户表。
   @ReferenceName('warehouseManagers')
-  IntColumn get managerUserId => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get managerUserId => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 状态：0=停用，1=启用，2=挂起，3=删除。
   IntColumn get status => integer().withDefault(const Constant(1))();
   // 创建时间。
@@ -209,18 +206,18 @@ class StockBalances extends Table {
   IntColumn get id => integer().autoIncrement()();
   // 仓库ID。
   IntColumn get warehouseId => integer().references(
-        Warehouses,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    Warehouses,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 商品ID。
   IntColumn get productId => integer().references(
-        Products,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    Products,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 实际可用库存。
   IntColumn get onHandQty => integer().withDefault(const Constant(0))();
   // 已预留但未出库的数量。
@@ -254,18 +251,18 @@ class StockMovements extends Table {
   IntColumn get refId => integer().nullable()();
   // 仓库ID。
   IntColumn get warehouseId => integer().references(
-        Warehouses,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    Warehouses,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 商品ID。
   IntColumn get productId => integer().references(
-        Products,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    Products,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 数量变化值，正数表示增加，负数表示减少。
   IntColumn get qtyDelta => integer()();
   // 单位成本，按分存储。
@@ -276,14 +273,12 @@ class StockMovements extends Table {
   DateTimeColumn get occurredAt => dateTime()();
   // 操作人，关联用户表。
   @ReferenceName('stockMovementOperators')
-  IntColumn get operatorUserId => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get operatorUserId => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 备注信息。
   TextColumn get note => text().nullable()();
   // 创建时间。
@@ -305,18 +300,18 @@ class PurchaseOrders extends Table {
   TextColumn get orderNo => text().withLength(min: 1, max: 64).unique()();
   // 供应商ID。
   IntColumn get supplierId => integer().references(
-        Suppliers,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+    Suppliers,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
   // 入库仓库ID。
   IntColumn get warehouseId => integer().references(
-        Warehouses,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+    Warehouses,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
   // 单据状态：0=草稿，1=已审核，2=部分收货，3=已完成，4=已取消。
   IntColumn get status => integer().withDefault(const Constant(0))();
   // 下单时间。
@@ -329,34 +324,28 @@ class PurchaseOrders extends Table {
   IntColumn get paidAmountCent => integer().withDefault(const Constant(0))();
   // 创建人，关联用户表。
   @ReferenceName('purchaseOrdersCreatedBy')
-  IntColumn get createdBy => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get createdBy => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 审核人，关联用户表。
   @ReferenceName('purchaseOrdersApprovedBy')
-  IntColumn get approvedBy => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get approvedBy => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 过账人，关联用户表。
   @ReferenceName('purchaseOrdersPostedBy')
-  IntColumn get postedBy => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get postedBy => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 过账时间。
   DateTimeColumn get postedAt => dateTime().nullable()();
   // 备注信息。
@@ -383,20 +372,20 @@ class PurchaseOrderItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   // 采购单ID。
   IntColumn get purchaseOrderId => integer().references(
-        PurchaseOrders,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    PurchaseOrders,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 行号，便于同单据内排序。
   IntColumn get lineNo => integer()();
   // 商品ID。
   IntColumn get productId => integer().references(
-        Products,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+    Products,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
   // 采购数量。
   IntColumn get qty => integer()();
   // 采购单价，按分存储。
@@ -428,21 +417,19 @@ class SalesOrders extends Table {
   // 销售单号，唯一。
   TextColumn get orderNo => text().withLength(min: 1, max: 64).unique()();
   // 客户ID，零售场景下可为空。
-  IntColumn get customerId => integer()
-      .nullable()
-      .references(
-        Customers,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get customerId => integer().nullable().references(
+    Customers,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 出库仓库ID。
   IntColumn get warehouseId => integer().references(
-        Warehouses,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+    Warehouses,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
   // 单据状态：0=草稿，1=已确认，2=已完成，3=已取消，4=已退款。
   IntColumn get status => integer().withDefault(const Constant(0))();
   // 销售渠道：store / online 等。
@@ -456,17 +443,16 @@ class SalesOrders extends Table {
   IntColumn get receivableAmountCent =>
       integer().withDefault(const Constant(0))();
   // 已收金额，按分存储。
-  IntColumn get receivedAmountCent => integer().withDefault(const Constant(0))();
+  IntColumn get receivedAmountCent =>
+      integer().withDefault(const Constant(0))();
   // 创建人，关联用户表。
   @ReferenceName('salesOrdersCreatedBy')
-  IntColumn get createdBy => integer()
-      .nullable()
-      .references(
-        Users,
-        #id,
-        onDelete: KeyAction.setNull,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get createdBy => integer().nullable().references(
+    Users,
+    #id,
+    onDelete: KeyAction.setNull,
+    onUpdate: KeyAction.cascade,
+  )();
   // 备注信息。
   TextColumn get note => text().nullable()();
   // 创建时间。
@@ -490,20 +476,20 @@ class SalesOrderItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   // 销售单ID。
   IntColumn get salesOrderId => integer().references(
-        SalesOrders,
-        #id,
-        onDelete: KeyAction.cascade,
-        onUpdate: KeyAction.cascade,
-      )();
+    SalesOrders,
+    #id,
+    onDelete: KeyAction.cascade,
+    onUpdate: KeyAction.cascade,
+  )();
   // 行号，便于同单据内排序。
   IntColumn get lineNo => integer()();
   // 商品ID。
   IntColumn get productId => integer().references(
-        Products,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+    Products,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
   // 销售数量。
   IntColumn get qty => integer()();
   // 销售价，按分存储。

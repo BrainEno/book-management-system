@@ -1,3 +1,5 @@
+import 'package:bookstore_management_system/core/database/bookstore_tables.dart'
+    show StockBalances, StockMovements, Warehouses;
 import 'package:bookstore_management_system/core/database/database.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart'
     show Users;
@@ -9,15 +11,10 @@ import 'package:drift/drift.dart';
 part 'inventory_dao.g.dart';
 
 @DriftAccessor(
-  tables: [
-    StockBalances,
-    StockMovements,
-    Warehouses,
-    Users,
-    Products,
-  ],
+  tables: [StockBalances, StockMovements, Warehouses, Users, Products],
 )
-class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixin {
+class InventoryDao extends DatabaseAccessor<AppDatabase>
+    with _$InventoryDaoMixin {
   InventoryDao(super.db);
 
   DateTime? _readDateTime(QueryRow row, String columnName) {
@@ -48,16 +45,14 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
 
     final normalizedKeyword = keyword?.trim();
     if (normalizedKeyword != null && normalizedKeyword.isNotEmpty) {
-      conditions.add(
-        '''
+      conditions.add('''
         (
           p.title LIKE ?
           OR p.product_id LIKE ?
           OR p.isbn LIKE ?
           OR p.author LIKE ?
         )
-        ''',
-      );
+        ''');
       final pattern = '%$normalizedKeyword%';
       variables.addAll([
         Variable.withString(pattern),
@@ -71,8 +66,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
         ? ''
         : 'WHERE ${conditions.join(' AND ')}';
 
-    final rows = await customSelect(
-      '''
+    final rows = await customSelect('''
       SELECT
         sb.id AS balance_id,
         p.id AS product_row_id,
@@ -97,9 +91,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
       INNER JOIN warehouses w ON w.id = sb.warehouse_id
       $whereClause
       ORDER BY w.name ASC, p.title ASC, p.id ASC
-      ''',
-      variables: variables,
-    ).get();
+      ''', variables: variables).get();
 
     return rows
         .map(
@@ -150,8 +142,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
 
     variables.add(Variable.withInt(limit));
 
-    final rows = await customSelect(
-      '''
+    final rows = await customSelect('''
       SELECT
         sm.id,
         sm.movement_no,
@@ -177,9 +168,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
       $whereClause
       ORDER BY sm.occurred_at DESC, sm.id DESC
       LIMIT ?
-      ''',
-      variables: variables,
-    ).get();
+      ''', variables: variables).get();
 
     return rows
         .map(
@@ -198,7 +187,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
             unitCostCent: row.data['unit_cost_cent'] as int?,
             amountCent: row.data['amount_cent'] as int?,
             occurredAt:
-                _readDateTime(row, 'occurred_at') ?? DateTime.fromMillisecondsSinceEpoch(0),
+                _readDateTime(row, 'occurred_at') ??
+                DateTime.fromMillisecondsSinceEpoch(0),
             operatorUserId: row.data['operator_user_id'] as int?,
             operatorUsername: row.data['operator_username']?.toString(),
             note: row.data['note']?.toString(),
@@ -224,9 +214,9 @@ class InventoryDao extends DatabaseAccessor<AppDatabase> with _$InventoryDaoMixi
     int id,
     StockBalancesCompanion companion,
   ) {
-    return (update(stockBalances)..where((tbl) => tbl.id.equals(id))).write(
-      companion,
-    );
+    return (update(
+      stockBalances,
+    )..where((tbl) => tbl.id.equals(id))).write(companion);
   }
 
   Future<int> insertStockMovement(StockMovementsCompanion companion) {

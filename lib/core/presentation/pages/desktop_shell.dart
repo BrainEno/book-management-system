@@ -149,7 +149,7 @@ class _DesktopShellState extends State<DesktopShell> with WindowListener {
                         ),
                         SizedBox(height: 10),
                         Text(
-                          '溪川书店',
+                          '无浪潮',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppPallete.ink,

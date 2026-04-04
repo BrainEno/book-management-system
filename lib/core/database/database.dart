@@ -616,76 +616,138 @@ END
     }
   }
 
+  Future<int?> _lookupReferenceIdByCodeOrName(
+    String tableName,
+    String value,
+  ) async {
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+
+    final row = await customSelect(
+      '''
+      SELECT id
+      FROM $tableName
+      WHERE code = ?
+         OR name = ?
+      ORDER BY CASE WHEN code = ? THEN 0 ELSE 1 END
+      LIMIT 1
+      ''',
+      variables: [
+        Variable.withString(normalized),
+        Variable.withString(normalized),
+        Variable.withString(normalized),
+      ],
+    ).getSingleOrNull();
+
+    return row?.read<int>('id');
+  }
+
   Future<void> _backfillProductReferenceIds() async {
     if (!await _tableExists(products.actualTableName)) {
       return;
     }
 
-    if (await _columnExists(products.actualTableName, 'category_id')) {
-      await customStatement('''
-        UPDATE products
-        SET category_id = (
-          SELECT id
-          FROM product_categories
-          WHERE code = TRIM(products.category)
-             OR name = TRIM(products.category)
-          ORDER BY CASE WHEN code = TRIM(products.category) THEN 0 ELSE 1 END
-          LIMIT 1
-        )
-        WHERE category_id IS NULL
-          AND NULLIF(TRIM(COALESCE(category, '')), '') IS NOT NULL
-      ''');
-    }
+    final hasCategoryId = await _columnExists(
+      products.actualTableName,
+      'category_id',
+    );
+    final hasPublisherId = await _columnExists(
+      products.actualTableName,
+      'publisher_id',
+    );
+    final hasPurchaseSaleModeId = await _columnExists(
+      products.actualTableName,
+      'purchase_sale_mode_id',
+    );
+    final hasStatus = await _columnExists(products.actualTableName, 'status');
+    final hasStockUnit = await _columnExists(
+      products.actualTableName,
+      'stock_unit',
+    );
 
-    if (await _columnExists(products.actualTableName, 'publisher_id')) {
-      await customStatement('''
-        UPDATE products
-        SET publisher_id = (
-          SELECT id
-          FROM publishers
-          WHERE code = TRIM(products.publisher)
-             OR name = TRIM(products.publisher)
-          ORDER BY CASE WHEN code = TRIM(products.publisher) THEN 0 ELSE 1 END
-          LIMIT 1
-        )
-        WHERE publisher_id IS NULL
-          AND NULLIF(TRIM(COALESCE(publisher, '')), '') IS NOT NULL
-      ''');
-    }
+    final rows = await customSelect('''
+      SELECT
+        id,
+        category,
+        category_id,
+        publisher,
+        publisher_id,
+        purchase_sale_mode,
+        purchase_sale_mode_id,
+        status,
+        stock_unit
+      FROM products
+      ''').get();
 
-    if (await _columnExists(products.actualTableName, 'purchase_sale_mode_id')) {
-      await customStatement('''
-        UPDATE products
-        SET purchase_sale_mode_id = (
-          SELECT id
-          FROM purchase_sale_modes
-          WHERE code = TRIM(products.purchase_sale_mode)
-             OR name = TRIM(products.purchase_sale_mode)
-          ORDER BY CASE
-            WHEN code = TRIM(products.purchase_sale_mode) THEN 0
-            ELSE 1
-          END
-          LIMIT 1
-        )
-        WHERE purchase_sale_mode_id IS NULL
-          AND NULLIF(TRIM(COALESCE(purchase_sale_mode, '')), '') IS NOT NULL
-      ''');
-    }
+    for (final row in rows) {
+      final productIdValue = row.read<int>('id');
+      final categoryValue = row.data['category']?.toString();
+      final publisherValue = row.data['publisher']?.toString();
+      final purchaseSaleModeValue = row.data['purchase_sale_mode']?.toString();
+      final stockUnitValue = row.data['stock_unit']?.toString();
+      final currentCategoryId = row.data['category_id'] as int?;
+      final currentPublisherId = row.data['publisher_id'] as int?;
+      final currentPurchaseSaleModeId =
+          row.data['purchase_sale_mode_id'] as int?;
+      final currentStatus = row.data['status'] as int?;
 
-    if (await _columnExists(products.actualTableName, 'status')) {
-      await customStatement('''
-        UPDATE products
-        SET status = ${ProductStatuses.active}
-        WHERE status IS NULL
-      ''');
-    }
+      final resolvedCategoryId =
+          hasCategoryId &&
+              currentCategoryId == null &&
+              categoryValue != null &&
+              categoryValue.trim().isNotEmpty
+          ? await _lookupReferenceIdByCodeOrName(
+              'product_categories',
+              categoryValue,
+            )
+          : null;
+      final resolvedPublisherId =
+          hasPublisherId &&
+              currentPublisherId == null &&
+              publisherValue != null &&
+              publisherValue.trim().isNotEmpty
+          ? await _lookupReferenceIdByCodeOrName('publishers', publisherValue)
+          : null;
+      final resolvedPurchaseSaleModeId =
+          hasPurchaseSaleModeId &&
+              currentPurchaseSaleModeId == null &&
+              purchaseSaleModeValue != null &&
+              purchaseSaleModeValue.trim().isNotEmpty
+          ? await _lookupReferenceIdByCodeOrName(
+              'purchase_sale_modes',
+              purchaseSaleModeValue,
+            )
+          : null;
 
-    if (await _columnExists(products.actualTableName, 'stock_unit')) {
-      await customStatement('''
-        UPDATE products
-        SET stock_unit = '册'
-        WHERE NULLIF(TRIM(COALESCE(stock_unit, '')), '') IS NULL
-      ''');
+      final companion = ProductsCompanion(
+        categoryId: resolvedCategoryId == null
+            ? const Value.absent()
+            : Value(resolvedCategoryId),
+        publisherId: resolvedPublisherId == null
+            ? const Value.absent()
+            : Value(resolvedPublisherId),
+        purchaseSaleModeId: resolvedPurchaseSaleModeId == null
+            ? const Value.absent()
+            : Value(resolvedPurchaseSaleModeId),
+        status: hasStatus && currentStatus == null
+            ? const Value(ProductStatuses.active)
+            : const Value.absent(),
+        stockUnit:
+            hasStockUnit &&
+                (stockUnitValue == null || stockUnitValue.trim().isEmpty)
+            ? const Value('册')
+            : const Value.absent(),
+      );
+
+      if (companion.toColumns(false).isEmpty) {
+        continue;
+      }
+
+      await (update(
+        products,
+      )..where((tbl) => tbl.id.equals(productIdValue))).write(companion);
     }
   }
 

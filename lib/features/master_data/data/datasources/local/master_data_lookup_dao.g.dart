@@ -1,22 +1,23 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'product_dao.dart';
+part of 'master_data_lookup_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$ProductDaoMixin on DatabaseAccessor<AppDatabase> {
+mixin _$MasterDataLookupDaoMixin on DatabaseAccessor<AppDatabase> {
   $ProductCategoriesTable get productCategories =>
       attachedDatabase.productCategories;
   $PublishersTable get publishers => attachedDatabase.publishers;
   $PurchaseSaleModesTable get purchaseSaleModes =>
       attachedDatabase.purchaseSaleModes;
+  $SuppliersTable get suppliers => attachedDatabase.suppliers;
   $UsersTable get users => attachedDatabase.users;
-  $ProductsTable get products => attachedDatabase.products;
-  ProductDaoManager get managers => ProductDaoManager(this);
+  $WarehousesTable get warehouses => attachedDatabase.warehouses;
+  MasterDataLookupDaoManager get managers => MasterDataLookupDaoManager(this);
 }
 
-class ProductDaoManager {
-  final _$ProductDaoMixin _db;
-  ProductDaoManager(this._db);
+class MasterDataLookupDaoManager {
+  final _$MasterDataLookupDaoMixin _db;
+  MasterDataLookupDaoManager(this._db);
   $$ProductCategoriesTableTableManager get productCategories =>
       $$ProductCategoriesTableTableManager(
         _db.attachedDatabase,
@@ -29,8 +30,10 @@ class ProductDaoManager {
         _db.attachedDatabase,
         _db.purchaseSaleModes,
       );
+  $$SuppliersTableTableManager get suppliers =>
+      $$SuppliersTableTableManager(_db.attachedDatabase, _db.suppliers);
   $$UsersTableTableManager get users =>
       $$UsersTableTableManager(_db.attachedDatabase, _db.users);
-  $$ProductsTableTableManager get products =>
-      $$ProductsTableTableManager(_db.attachedDatabase, _db.products);
+  $$WarehousesTableTableManager get warehouses =>
+      $$WarehousesTableTableManager(_db.attachedDatabase, _db.warehouses);
 }

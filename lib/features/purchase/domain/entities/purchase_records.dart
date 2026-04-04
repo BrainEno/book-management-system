@@ -17,17 +17,18 @@ class PurchaseOrderLineDraft extends Equatable {
   final String? note;
   final String? shelfCode;
 
-  int get lineAmountCent => ((qty * unitPriceCent) * (discountBp / 10000)).round();
+  int get lineAmountCent =>
+      ((qty * unitPriceCent) * (discountBp / 10000)).round();
 
   @override
   List<Object?> get props => [
-        productId,
-        qty,
-        unitPriceCent,
-        discountBp,
-        note,
-        shelfCode,
-      ];
+    productId,
+    qty,
+    unitPriceCent,
+    discountBp,
+    note,
+    shelfCode,
+  ];
 }
 
 class PurchaseOrderDraft extends Equatable {
@@ -68,21 +69,21 @@ class PurchaseOrderDraft extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        orderNo,
-        supplierId,
-        warehouseId,
-        status,
-        orderedAt,
-        expectedAt,
-        paidAmountCent,
-        createdBy,
-        approvedBy,
-        postedBy,
-        postedAt,
-        note,
-        lines,
-      ];
+    id,
+    orderNo,
+    supplierId,
+    warehouseId,
+    status,
+    orderedAt,
+    expectedAt,
+    paidAmountCent,
+    createdBy,
+    approvedBy,
+    postedBy,
+    postedAt,
+    note,
+    lines,
+  ];
 }
 
 class PurchaseOrderLine extends Equatable {
@@ -116,19 +117,19 @@ class PurchaseOrderLine extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        lineNo,
-        productId,
-        productCode,
-        productTitle,
-        qty,
-        unitPriceCent,
-        discountBp,
-        lineAmountCent,
-        receivedQty,
-        note,
-        shelfCode,
-      ];
+    id,
+    lineNo,
+    productId,
+    productCode,
+    productTitle,
+    qty,
+    unitPriceCent,
+    discountBp,
+    lineAmountCent,
+    receivedQty,
+    note,
+    shelfCode,
+  ];
 }
 
 class PurchaseOrderDetail extends Equatable {
@@ -172,22 +173,22 @@ class PurchaseOrderDetail extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        orderNo,
-        supplierId,
-        supplierName,
-        warehouseId,
-        warehouseName,
-        status,
-        orderedAt,
-        expectedAt,
-        totalAmountCent,
-        paidAmountCent,
-        createdBy,
-        approvedBy,
-        postedBy,
-        postedAt,
-        note,
-        items,
-      ];
+    id,
+    orderNo,
+    supplierId,
+    supplierName,
+    warehouseId,
+    warehouseName,
+    status,
+    orderedAt,
+    expectedAt,
+    totalAmountCent,
+    paidAmountCent,
+    createdBy,
+    approvedBy,
+    postedBy,
+    postedAt,
+    note,
+    items,
+  ];
 }

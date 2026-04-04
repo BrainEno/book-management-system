@@ -75,7 +75,8 @@ class InventoryLocalDataSourceImpl implements InventoryLocalDataSource {
             ),
           );
         } else {
-          final nextOnHandQty = existingBalance.onHandQty + movementDraft.qtyDelta;
+          final nextOnHandQty =
+              existingBalance.onHandQty + movementDraft.qtyDelta;
           if (nextOnHandQty < 0) {
             throw const ServerException('库存不足，当前操作会导致库存变成负数。');
           }
