@@ -16,7 +16,7 @@ bool shouldRegisterSharedSubWindowEventHandler({
 SubWindowTerminationMethod resolveSubWindowTerminationMethod({
   required bool fromNativeCloseRequest,
 }) {
-  return fromNativeCloseRequest
-      ? SubWindowTerminationMethod.destroy
-      : SubWindowTerminationMethod.close;
+  // On Windows, `window_manager.destroy()` posts a process-level quit message,
+  // so sub-windows must always terminate through the normal close path.
+  return SubWindowTerminationMethod.close;
 }

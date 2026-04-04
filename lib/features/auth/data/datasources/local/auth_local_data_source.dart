@@ -31,6 +31,11 @@ abstract interface class AuthLocalDataSource {
     required String password,
   });
 
+  Future<AppUserModel> verifyAdminCredentials({
+    required String username,
+    required String password,
+  });
+
   Future<void> logout();
 
   Future<AppUserModel?> currentUser();
@@ -158,6 +163,45 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       throw AuthDatabaseException("Database error during login: ${e.message}");
     } catch (e) {
       throw AuthException("An unexpected error occurred during login: $e");
+    }
+  }
+
+  @override
+  Future<AppUserModel> verifyAdminCredentials({
+    required String username,
+    required String password,
+  }) async {
+    try {
+      final userDao = database.userDao;
+      final existingUser = await userDao.getUserByUsername(username.trim());
+      if (existingUser == null) {
+        throw InvalidCredentialsException('管理员账户名或密码错误');
+      }
+
+      if (existingUser.status != 1) {
+        throw InvalidCredentialsException('管理员账户不可用');
+      }
+
+      if (existingUser.role.trim().toLowerCase() != 'admin') {
+        throw InvalidCredentialsException('该账户没有管理员权限');
+      }
+
+      final passwordMatches = BCrypt.checkpw(password, existingUser.password);
+      if (!passwordMatches) {
+        throw InvalidCredentialsException('管理员账户名或密码错误');
+      }
+
+      return AppUserModel.fromJson(existingUser.toJson());
+    } on AuthException {
+      rethrow;
+    } on SqliteException catch (e) {
+      throw AuthDatabaseException(
+        "Database error during admin verification: ${e.message}",
+      );
+    } catch (e) {
+      throw AuthException(
+        "An unexpected error occurred during admin verification: $e",
+      );
     }
   }
 

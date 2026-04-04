@@ -11,26 +11,22 @@ class AppWindowPayload {
   const AppWindowPayload({
     this.initialProducts,
     this.initialProduct,
-    this.productEditorDraft,
     this.currentOperatorUsername,
   });
 
   final List<ProductModel>? initialProducts;
   final ProductModel? initialProduct;
-  final Map<String, String>? productEditorDraft;
   final String? currentOperatorUsername;
 
   bool get isEmpty =>
       (initialProducts == null || initialProducts!.isEmpty) &&
       initialProduct == null &&
-      (productEditorDraft == null || productEditorDraft!.isEmpty) &&
       currentOperatorUsername == null;
 
   Map<String, dynamic> toJson() => {
     if (initialProducts != null)
       'products': initialProducts!.map((product) => product.toJson()).toList(),
     if (initialProduct != null) 'product': initialProduct!.toJson(),
-    if (productEditorDraft != null) 'productEditorDraft': productEditorDraft,
     if (currentOperatorUsername != null)
       'currentOperatorUsername': currentOperatorUsername,
   };
@@ -38,7 +34,6 @@ class AppWindowPayload {
   factory AppWindowPayload.fromJson(Map<String, dynamic> json) {
     final rawProducts = json['products'];
     final rawProduct = json['product'];
-    final rawDraft = json['productEditorDraft'];
     final rawOperatorUsername = json['currentOperatorUsername'];
 
     return AppWindowPayload(
@@ -54,13 +49,6 @@ class AppWindowPayload {
       initialProduct: rawProduct is Map
           ? ProductModel.fromJson(Map<String, dynamic>.from(rawProduct))
           : null,
-      productEditorDraft: rawDraft is Map<String, String>
-          ? rawDraft
-          : rawDraft is Map
-          ? rawDraft.map(
-              (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
-            )
-          : null,
       currentOperatorUsername: rawOperatorUsername?.toString(),
     );
   }
@@ -68,11 +56,9 @@ class AppWindowPayload {
   AppWindowPayload copyWith({
     List<ProductModel>? initialProducts,
     ProductModel? initialProduct,
-    Map<String, String>? productEditorDraft,
     String? currentOperatorUsername,
     bool clearInitialProducts = false,
     bool clearInitialProduct = false,
-    bool clearProductEditorDraft = false,
     bool clearCurrentOperatorUsername = false,
   }) {
     return AppWindowPayload(
@@ -82,9 +68,6 @@ class AppWindowPayload {
       initialProduct: clearInitialProduct
           ? null
           : (initialProduct ?? this.initialProduct),
-      productEditorDraft: clearProductEditorDraft
-          ? null
-          : (productEditorDraft ?? this.productEditorDraft),
       currentOperatorUsername: clearCurrentOperatorUsername
           ? null
           : (currentOperatorUsername ?? this.currentOperatorUsername),
@@ -144,12 +127,10 @@ final List<AppWindowDestination> floatingWindowDestinations = [
     title: '商品编辑',
     label: '商品编辑',
     icon: Icons.edit_outlined,
-    builder: (_, payload) =>
-        ProductInfoEditorView(
-          product: payload.initialProduct,
-          initialDraft: payload.productEditorDraft,
-          initialOperatorUsername: payload.currentOperatorUsername,
-        ),
+    builder: (_, payload) => ProductInfoEditorView(
+      product: payload.initialProduct,
+      initialOperatorUsername: payload.currentOperatorUsername,
+    ),
   ),
 ];
 

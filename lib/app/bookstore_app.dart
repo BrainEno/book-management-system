@@ -473,13 +473,16 @@ class _SubWindowLifecycleHostState extends State<_SubWindowLifecycleHost>
       await Future<void>.delayed(Duration.zero);
       switch (terminationMethod) {
         case SubWindowTerminationMethod.close:
-          await windowManager.close();
+          unawaited(windowManager.close());
           break;
         case SubWindowTerminationMethod.destroy:
           await windowManager.destroy();
           break;
       }
-      _logLifecycleEvent('current-window.close.end', data: {'reason': reason});
+      _logLifecycleEvent(
+        'current-window.close.dispatched',
+        data: {'reason': reason, 'terminationMethod': terminationMethod.name},
+      );
     } catch (error, stackTrace) {
       _logger.e(
         'Failed to close current sub-window after close request',

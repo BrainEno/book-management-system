@@ -8,8 +8,12 @@ class Product {
   final double price;
   //商品分类
   final String? category;
+  //商品分类主数据 ID
+  final int? categoryId;
   //出版社
   final String? publisher;
+  //出版社主数据 ID
+  final int? publisherId;
   //自编码
   final String selfEncoding;
   //创建人用户 ID
@@ -32,6 +36,8 @@ class Product {
   final double? memberDiscount;
   //购销方式*
   final String? purchaseSaleMode;
+  //购销方式主数据 ID
+  final int? purchaseSaleModeId;
   //书标
   final String? bookmark;
   //包装*
@@ -40,6 +46,14 @@ class Product {
   final String? properity;
   //统计分类
   final String? statisticalClass;
+  //商品状态，0=停用，1=启用，2=作废
+  final int status;
+  //库存单位
+  final String stockUnit;
+  //库存下限预警
+  final int? minStockAlertQty;
+  //库存上限预警
+  final int? maxStockAlertQty;
   //当前界面展示的操作人员名称
   final String? operator;
   final DateTime? createdAt;
@@ -55,8 +69,10 @@ class Product {
     required this.price,
     //商品分类
     this.category,
+    this.categoryId,
     //出版社
     this.publisher,
+    this.publisherId,
     //自编码
     required this.selfEncoding,
     this.createdBy,
@@ -79,6 +95,7 @@ class Product {
     this.memberDiscount,
     //购销方式*
     this.purchaseSaleMode,
+    this.purchaseSaleModeId,
     //书标
     this.bookmark,
     //包装*
@@ -87,6 +104,10 @@ class Product {
     this.properity,
     //统计分类
     this.statisticalClass,
+    this.status = 1,
+    this.stockUnit = '册',
+    this.minStockAlertQty,
+    this.maxStockAlertQty,
 
     this.createdAt,
     this.updatedAt,

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bookstore_management_system/app/bootstrap/app_runtime.dart';
 import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/domain/entities/app_user.dart';
@@ -7,24 +5,21 @@ import 'package:bookstore_management_system/core/error/failures.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
 import 'package:bookstore_management_system/features/product/domain/entities/product.dart';
-import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/domain/repositories/product_repository.dart';
 import 'package:bookstore_management_system/features/product/domain/usecase/add_product_usecase.dart';
 import 'package:bookstore_management_system/features/product/domain/usecase/delete_product_usecase.dart';
 import 'package:bookstore_management_system/features/product/domain/usecase/get_all_products_usecase.dart';
 import 'package:bookstore_management_system/features/product/domain/usecase/update_product_usecase.dart';
+import 'package:bookstore_management_system/features/product/presentation/blocs/product_bloc.dart';
 import 'package:bookstore_management_system/features/product/presentation/widgets/product_info_editor_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
-
-class MockDraftBox extends Mock implements Box<Map<String, String>> {}
 
 class FakeAuthEvent extends Fake implements AuthEvent {}
 
@@ -67,16 +62,26 @@ class FakeProductRepository implements ProductRepository {
   }
 }
 
+Finder _fieldByLabel(String label) {
+  return find.ancestor(
+    of: find.text(label),
+    matching: find.byType(TextFormField),
+  );
+}
+
+Finder _editableFieldByLabel(String label) {
+  return find.descendant(
+    of: _fieldByLabel(label),
+    matching: find.byType(EditableText),
+  );
+}
+
 void main() {
   late ProductBloc productBloc;
   late FakeProductRepository productRepository;
   late MockAuthBloc authBloc;
-  late MockDraftBox draftBox;
 
-  Widget buildSubject({
-    Map<String, String>? initialDraft,
-    String? initialOperatorUsername = 'tester',
-  }) {
+  Widget buildSubject({String? initialOperatorUsername = 'tester'}) {
     return MaterialApp(
       home: MultiBlocProvider(
         providers: [
@@ -84,7 +89,6 @@ void main() {
           BlocProvider<ProductBloc>.value(value: productBloc),
         ],
         child: ProductInfoEditorView(
-          initialDraft: initialDraft,
           initialOperatorUsername: initialOperatorUsername,
         ),
       ),
@@ -105,11 +109,6 @@ void main() {
         hostWindowId: 'host-window',
       ),
     );
-
-    draftBox = MockDraftBox();
-    when(() => draftBox.put(any(), any())).thenAnswer((_) async {});
-    when(() => draftBox.delete(any())).thenAnswer((_) async {});
-    sl.registerSingleton<Box<Map<String, String>>>(draftBox);
 
     productRepository = FakeProductRepository();
     productBloc = ProductBloc(
@@ -142,42 +141,49 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      buildSubject(
-        initialDraft: const {
-          'title': '布局验证图书',
-          'productId': 'BOOK-001',
-          'author': '测试作者',
-          'price': '58',
-          'isbn': '9787300001001',
-        },
-      ),
-    );
+    await tester.pumpWidget(buildSubject());
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     expect(find.text('新建商品资料'), findsOneWidget);
   });
 
+  testWidgets('hides draft action and shows operator in a read-only field', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(buildSubject());
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(OutlinedButton, '保存草稿'), findsNothing);
+
+    final operatorField = tester.widget<EditableText>(
+      _editableFieldByLabel('操作人员'),
+    );
+    expect(operatorField.readOnly, isTrue);
+    expect(operatorField.controller.text, 'tester');
+
+    final selfEncodingPosition = tester.getTopLeft(find.text('自编码'));
+    final operatorPosition = tester.getTopLeft(find.text('操作人员'));
+    expect(operatorPosition.dy, closeTo(selfEncodingPosition.dy, 2));
+    expect(operatorPosition.dx, greaterThan(selfEncodingPosition.dx));
+  });
+
   testWidgets(
     'saving a new product submits data without window-channel crashes',
     (tester) async {
-      await tester.pumpWidget(
-        buildSubject(
-          initialDraft: const {
-            'title': '保存成功测试图书',
-            'productId': 'BOOK-002',
-            'author': '测试作者',
-            'price': '66',
-            'isbn': '9787300001002',
-            'operator': 'tester',
-          },
-        ),
-      );
+      await tester.pumpWidget(buildSubject());
       await tester.pumpAndSettle();
 
-      expect(find.text('保存成功测试图书'), findsOneWidget);
-      expect(find.text('9787300001002'), findsOneWidget);
+      await tester.enterText(_fieldByLabel('书名 *'), '保存成功测试图书');
+      await tester.enterText(_fieldByLabel('商品编码 *'), 'BOOK-002');
+      await tester.enterText(_fieldByLabel('作者 *'), '测试作者');
+      await tester.enterText(_fieldByLabel('售价 *'), '66');
+      await tester.enterText(_fieldByLabel('ISBN *'), '9787300001002');
 
       await tester.tap(find.widgetWithText(FilledButton, '保存资料'));
       await tester.pump();
@@ -185,6 +191,7 @@ void main() {
 
       expect(productRepository.lastCreatedProduct?.title, '保存成功测试图书');
       expect(productRepository.lastCreatedProduct?.isbn, '9787300001002');
+      expect(productRepository.lastCreatedProduct?.operator, 'tester');
       expect(tester.takeException(), isNull);
     },
   );

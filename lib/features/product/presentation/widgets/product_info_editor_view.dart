@@ -8,6 +8,7 @@ import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/di/service_locator.dart';
 import 'package:bookstore_management_system/core/window/app_window_manager.dart';
 import 'package:bookstore_management_system/core/window/current_app_window.dart';
+import 'package:bookstore_management_system/core/window/sub_window_feature_policy.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:bookstore_management_system/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:bookstore_management_system/features/product/data/models/product_model.dart';
@@ -20,7 +21,7 @@ import 'package:bookstore_management_system/features/product/utils/isbn_scanner_
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -28,12 +29,10 @@ class ProductInfoEditorView extends StatefulWidget {
   const ProductInfoEditorView({
     super.key,
     this.product,
-    this.initialDraft,
     this.initialOperatorUsername,
   });
 
   final ProductModel? product;
-  final Map<String, String>? initialDraft;
   final String? initialOperatorUsername;
 
   @override
@@ -43,31 +42,33 @@ class ProductInfoEditorView extends StatefulWidget {
 class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   final _logger = AppLogger.logger;
   final _formKey = GlobalKey<FormState>();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  AudioPlayer? _audioPlayer;
 
   late final ProductInfoEditorFormControllers _formControllers;
-  late final Box<Map<String, String>> _draftBox;
   late final ProductEditorIsbnReceiverService _isbnReceiverService;
   late final AppRuntime _appRuntime;
   final _editorChannel = const WindowMethodChannel(
     'bookstore_product_editor',
     mode: ChannelMode.unidirectional,
   );
-  final _subWindowEvents = const WindowMethodChannel(
-    'bookstore_sub_window_events',
-    mode: ChannelMode.unidirectional,
-  );
-  Timer? _draftSyncDebounce;
+  Timer? _feedbackClearTimer;
+  _EditorFeedbackState? _feedbackState;
 
   @override
   void initState() {
     super.initState();
     _formControllers = ProductInfoEditorFormControllers();
-    _draftBox = sl<Box<Map<String, String>>>();
     _isbnReceiverService = ProductEditorIsbnReceiverService();
     _appRuntime = sl<AppRuntime>();
+    if (_supportsAudioFeedback) {
+      _audioPlayer = AudioPlayer();
+    } else {
+      _logger.i(
+        'Audio feedback disabled for Windows sub-window product editor to '
+        'avoid child-engine plugin instability.',
+      );
+    }
     _applyInitialFormData();
-    _registerDraftListeners();
     _startIsbnReceiverService();
     _seedOperatorFromAuthStateIfAvailable();
     if (context.read<AuthBloc>().state is! AuthSuccess &&
@@ -78,13 +79,29 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
   @override
   void dispose() {
-    _draftSyncDebounce?.cancel();
-    _unregisterDraftListeners();
+    _feedbackClearTimer?.cancel();
     _isbnReceiverService.stop();
-    _audioPlayer.dispose();
+    final audioPlayer = _audioPlayer;
+    if (audioPlayer != null) {
+      unawaited(
+        audioPlayer.dispose().catchError((Object error, StackTrace stackTrace) {
+          _logger.w(
+            'Ignoring audio player dispose failure in product editor: $error',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }),
+      );
+    }
     _formControllers.dispose();
     super.dispose();
   }
+
+  bool get _supportsAudioFeedback =>
+      SubWindowFeaturePolicy.supportsAudioFeedback(
+        isSubWindow: _appRuntime.isSubWindow,
+        isWindows: !kIsWeb && Platform.isWindows,
+      );
 
   void _applyInitialFormData() {
     if (widget.product != null) {
@@ -93,10 +110,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     final initialOperatorUsername = widget.initialOperatorUsername?.trim();
     if (initialOperatorUsername != null && initialOperatorUsername.isNotEmpty) {
       _formControllers.setOperator(initialOperatorUsername);
-    }
-    final draft = widget.initialDraft;
-    if (draft != null && draft.isNotEmpty) {
-      _formControllers.applyDraftData(draft);
     }
   }
 
@@ -107,47 +120,42 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     }
   }
 
-  void _registerDraftListeners() {
-    for (final controller in _formControllers.allControllers) {
-      controller.addListener(_scheduleDraftSync);
-    }
-  }
-
-  void _unregisterDraftListeners() {
-    for (final controller in _formControllers.allControllers) {
-      controller.removeListener(_scheduleDraftSync);
-    }
-  }
-
-  void _scheduleDraftSync() {
-    if (!_appRuntime.isSubWindow || _appRuntime.hostWindowId == null) {
-      return;
-    }
-
-    _draftSyncDebounce?.cancel();
-    _draftSyncDebounce = Timer(const Duration(milliseconds: 180), () {
-      unawaited(_syncDraftToParent());
-    });
-  }
-
-  Future<void> _syncDraftToParent() async {
-    final hostWindowId = _appRuntime.hostWindowId;
-    if (!_appRuntime.isSubWindow || hostWindowId == null) {
-      return;
-    }
-
-    try {
-      await _subWindowEvents.invokeMethod('sync-editor-draft', {
-        'windowId': hostWindowId,
-        'draft': _formControllers.buildDraftData(),
-      });
-    } catch (_) {
-      // Best effort.
-    }
-  }
-
   void _dismissTextInput() {
     FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  void _showEditorFeedback(
+    String message, {
+    bool isError = false,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    _logger.i(
+      'Product editor feedback: isSubWindow=${_appRuntime.isSubWindow}, '
+      'kind=${isError ? 'error' : 'info'}, message=$message',
+    );
+    if (_appRuntime.isSubWindow) {
+      _feedbackClearTimer?.cancel();
+      setState(() {
+        _feedbackState = _EditorFeedbackState(
+          message: message,
+          isError: isError,
+        );
+      });
+      _feedbackClearTimer = Timer(duration, () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _feedbackState = null;
+        });
+      });
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _startIsbnReceiverService() async {
@@ -166,9 +174,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
           '端口绑定失败 (errno 10013)。请检查：1. 当前服务端口是否被其他进程占用；2. Windows 防火墙/杀毒软件是否阻挡；3. 以管理员身份运行应用。',
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('HTTP 服务启动失败，请检查防火墙或端口占用')),
-        );
+        _showEditorFeedback('HTTP 服务启动失败，请检查防火墙或端口占用', isError: true);
       } else {
         _logger.e('Error starting HTTP server and Bonsoir broadcast: $e');
       }
@@ -180,9 +186,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   Future<void> _openDesktopScanner() async {
     if (kIsWeb || !(Platform.isWindows || Platform.isMacOS)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('当前平台不支持桌面摄像头扫码')));
+      _showEditorFeedback('当前平台不支持桌面摄像头扫码', isError: true);
       return;
     }
 
@@ -199,20 +203,43 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
 
       final isbn = normalizeIsbn(result);
       if (!isLikelyIsbn(isbn)) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('识别结果不是有效 ISBN：$result')));
+        _showEditorFeedback('识别结果不是有效 ISBN：$result', isError: true);
         return;
       }
 
       _formControllers.updateIsbn(isbn);
-      await _audioPlayer.play(AssetSource('sounds/scan_success.mp3'));
+      await _playSuccessSound();
     } catch (e) {
       _logger.e('Desktop scanner error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('扫码失败：$e')));
+      _showEditorFeedback('扫码失败：$e', isError: true);
+    }
+  }
+
+  Future<void> _playSuccessSound() async {
+    final audioPlayer = _audioPlayer;
+    if (audioPlayer == null) {
+      _logger.i(
+        'Skipping product editor success audio because the current '
+        'sub-window profile does not register the audio plugin.',
+      );
+      return;
+    }
+
+    try {
+      await audioPlayer.play(AssetSource('sounds/scan_success.mp3'));
+    } on MissingPluginException catch (error, stackTrace) {
+      _logger.w(
+        'Audio feedback plugin unavailable in product editor window: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    } catch (error, stackTrace) {
+      _logger.w(
+        'Product editor success audio failed: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -230,23 +257,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     } else {
       context.read<ProductBloc>().add(AddBookEvent(product));
     }
-  }
-
-  void _saveDraft() {
-    _dismissTextInput();
-    final isbn = _formControllers.isbnController.text;
-    if (isbn.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先填写 ISBN 再保存草稿')));
-      return;
-    }
-
-    _draftBox.put(isbn, _formControllers.buildDraftData());
-    unawaited(_syncDraftToParent());
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('草稿已保存')));
   }
 
   String? _resolveOperatorForReset() {
@@ -289,20 +299,14 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     }
   }
 
-  Future<void> _clearDraftAfterSave() async {
-    final isbn = _formControllers.isbnController.text.trim();
-    if (isbn.isNotEmpty) {
-      await _draftBox.delete(isbn);
-    }
-  }
-
   void _handleAuthSuccess(AuthSuccess authState) {
     setState(() {
-      final hasDraftOperator =
-          widget.initialDraft?['operator']?.trim().isNotEmpty == true;
       final hasInitialOperator =
           widget.initialOperatorUsername?.trim().isNotEmpty == true;
-      if (!hasDraftOperator && !hasInitialOperator) {
+      final hasResolvedOperator = _formControllers.operatorController.text
+          .trim()
+          .isNotEmpty;
+      if (!hasInitialOperator && !hasResolvedOperator) {
         _formControllers.setOperator(authState.user.username);
       }
     });
@@ -332,15 +336,11 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     if (state is ProductAdded) {
       _dismissTextInput();
       await _notifyEditorSaved(productId: state.product.id);
-      await _clearDraftAfterSave();
       _resetEditorAfterCreate();
-      await _syncDraftToParent();
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('商品资料已保存并清空表单')));
+      _showEditorFeedback('商品资料已保存并清空表单');
       return;
     }
 
@@ -355,9 +355,7 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
     }
 
     if (state is ProductError) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('错误: ${state.message}')));
+      _showEditorFeedback('错误: ${state.message}', isError: true);
     }
   }
 
@@ -365,7 +363,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
   Widget build(BuildContext context) {
     final isUpdate = widget.product != null;
     final theme = Theme.of(context);
-    final operatorName = _formControllers.operatorController.text.trim();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2EBDD),
@@ -449,14 +446,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
                                                 fontWeight: FontWeight.w800,
                                               ),
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          '操作人员：${operatorName.isEmpty ? (widget.initialOperatorUsername ?? '-') : operatorName}',
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                color: const Color(0xFF6F6B65),
-                                              ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -466,13 +455,6 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
                                     runSpacing: 12,
                                     alignment: WrapAlignment.end,
                                     children: [
-                                      OutlinedButton.icon(
-                                        onPressed: _saveDraft,
-                                        icon: const Icon(
-                                          Icons.note_add_outlined,
-                                        ),
-                                        label: const Text('保存草稿'),
-                                      ),
                                       FilledButton.icon(
                                         onPressed: _saveOrUpdateBook,
                                         icon: const Icon(Icons.save_outlined),
@@ -482,6 +464,17 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
                                   ),
                                 ],
                               ),
+                            ),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              child: _feedbackState == null
+                                  ? const SizedBox.shrink()
+                                  : _EditorFeedbackBanner(
+                                      key: ValueKey(
+                                        '${_feedbackState!.isError}:${_feedbackState!.message}',
+                                      ),
+                                      state: _feedbackState!,
+                                    ),
                             ),
                             Expanded(
                               child: SingleChildScrollView(
@@ -504,6 +497,66 @@ class _ProductInfoEditorViewState extends State<ProductInfoEditorView> {
                 );
               },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorFeedbackState {
+  const _EditorFeedbackState({required this.message, required this.isError});
+
+  final String message;
+  final bool isError;
+}
+
+class _EditorFeedbackBanner extends StatelessWidget {
+  const _EditorFeedbackBanner({super.key, required this.state});
+
+  final _EditorFeedbackState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final backgroundColor = state.isError
+        ? const Color(0xFFFDE8E6)
+        : const Color(0xFFE8F3E8);
+    final borderColor = state.isError
+        ? const Color(0xFFE8B4AF)
+        : const Color(0xFFB7D8B7);
+    final iconColor = state.isError
+        ? const Color(0xFFB4473C)
+        : const Color(0xFF3E7A45);
+    final icon = state.isError
+        ? Icons.warning_amber_rounded
+        : Icons.check_circle;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  state.message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF3E3A36),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

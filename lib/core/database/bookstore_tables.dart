@@ -63,6 +63,42 @@ class Publishers extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+// 购销方式表：把商品和业务单据上的购销方式统一沉淀为主数据。
+class PurchaseSaleModes extends Table {
+  @override
+  List<String> get customConstraints => const [
+    'CHECK (default_discount_bp BETWEEN 0 AND 10000)',
+    'CHECK (allow_member_discount IN (0, 1))',
+    'CHECK (allow_returns IN (0, 1))',
+    'CHECK (requires_approval IN (0, 1))',
+    'CHECK (status BETWEEN 0 AND 3)',
+  ];
+
+  // 主键，自增编号。
+  IntColumn get id => integer().autoIncrement()();
+  // 购销方式编码。
+  TextColumn get code => text().withLength(min: 1, max: 64).unique()();
+  // 购销方式名称。
+  TextColumn get name => text().withLength(min: 1, max: 128).unique()();
+  // 默认折扣基点，10000 表示 100%。
+  IntColumn get defaultDiscountBp =>
+      integer().withDefault(const Constant(10000))();
+  // 是否允许叠加会员折扣。
+  BoolColumn get allowMemberDiscount =>
+      boolean().withDefault(const Constant(true))();
+  // 是否允许退货。
+  BoolColumn get allowReturns => boolean().withDefault(const Constant(true))();
+  // 是否需要审批。
+  BoolColumn get requiresApproval =>
+      boolean().withDefault(const Constant(false))();
+  // 状态：0=停用，1=启用，2=挂起，3=删除。
+  IntColumn get status => integer().withDefault(const Constant(1))();
+  // 创建时间。
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  // 更新时间。
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 // 供应商表：用于维护采购来源和结算对象等基础资料。
 class Suppliers extends Table {
   @override
@@ -201,7 +237,7 @@ class StockBalances extends Table {
 class StockMovements extends Table {
   @override
   List<String> get customConstraints => const [
-    "CHECK (movement_type IN ('purchase_in', 'sale_out', 'return_in', 'return_out', 'adjust_in', 'adjust_out'))",
+    "CHECK (movement_type IN ('purchase_in', 'purchase_return_out', 'sale_out', 'sale_return_in', 'adjust_in', 'adjust_out', 'stock_take_gain', 'stock_take_loss', 'return_in', 'return_out'))",
     'CHECK (qty_delta <> 0)',
   ];
 
@@ -209,7 +245,8 @@ class StockMovements extends Table {
   IntColumn get id => integer().autoIncrement()();
   // 流水单号，唯一标识一次库存变化。
   TextColumn get movementNo => text().withLength(min: 1, max: 64).unique()();
-  // 流水类型：purchase_in / sale_out / return_in / return_out / adjust_in / adjust_out。
+  // 流水类型：purchase_in / purchase_return_out / sale_out / sale_return_in /
+  // adjust_in / adjust_out / stock_take_gain / stock_take_loss。
   TextColumn get movementType => text().withLength(min: 1, max: 32)();
   // 来源单据类型，例如 purchase_order / sales_order。
   TextColumn get refType => text().nullable()();
@@ -310,6 +347,18 @@ class PurchaseOrders extends Table {
         onDelete: KeyAction.setNull,
         onUpdate: KeyAction.cascade,
       )();
+  // 过账人，关联用户表。
+  @ReferenceName('purchaseOrdersPostedBy')
+  IntColumn get postedBy => integer()
+      .nullable()
+      .references(
+        Users,
+        #id,
+        onDelete: KeyAction.setNull,
+        onUpdate: KeyAction.cascade,
+      )();
+  // 过账时间。
+  DateTimeColumn get postedAt => dateTime().nullable()();
   // 备注信息。
   TextColumn get note => text().nullable()();
   // 创建时间。
@@ -358,6 +407,8 @@ class PurchaseOrderItems extends Table {
   IntColumn get lineAmountCent => integer()();
   // 已收货数量。
   IntColumn get receivedQty => integer().withDefault(const Constant(0))();
+  // 实际上架货位。
+  TextColumn get shelfCode => text().nullable()();
   // 备注信息。
   TextColumn get note => text().nullable()();
 }

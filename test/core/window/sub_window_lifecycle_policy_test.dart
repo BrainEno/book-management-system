@@ -32,10 +32,10 @@ void main() {
     );
   });
 
-  test('native close requests use destroy to avoid re-entrant close handling', () {
+  test('sub-window termination always uses close to avoid quitting the app loop', () {
     expect(
       resolveSubWindowTerminationMethod(fromNativeCloseRequest: true),
-      SubWindowTerminationMethod.destroy,
+      SubWindowTerminationMethod.close,
     );
     expect(
       resolveSubWindowTerminationMethod(fromNativeCloseRequest: false),

@@ -1,5 +1,6 @@
 import 'package:bookstore_management_system/app/navigation/app_window_destination.dart';
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
+import 'package:bookstore_management_system/core/window/sub_window_close_coordinator.dart';
 import 'package:bookstore_management_system/core/window/sub_window_launch_data.dart';
 import 'package:bookstore_management_system/core/window/window_info.dart';
 import 'package:bookstore_management_system/features/product/data/mappers/product_entity_mapper.dart';
@@ -14,13 +15,31 @@ abstract interface class WindowPopOutService {
   Future<void> hideSubWindow(String windowId);
 
   Future<void> closeSubWindow(String windowId);
+
+  void trackClosingWindow(String windowId);
 }
 
 class DesktopWindowPopOutService implements WindowPopOutService {
   const DesktopWindowPopOutService();
 
+  static final SubWindowCloseCoordinator _closeCoordinator =
+      SubWindowCloseCoordinator(
+        listOpenWindowIds: () async =>
+            (await WindowController.getAll())
+                .map((controller) => controller.windowId)
+                .toList(),
+      );
+
   @override
   Future<String> openSubWindow(SubWindowLaunchData launchData) async {
+    final readyToOpen = await _closeCoordinator.waitForPendingClosures();
+    if (!readyToOpen) {
+      final pending = _closeCoordinator.pendingClosingWindowIds.join(', ');
+      AppLogger.logger.w(
+        'Refusing to open floating sub-window while previous windows are still closing: $pending',
+      );
+      throw StateError('仍有子窗口正在关闭，请稍后再试');
+    }
     AppLogger.logger.i(
       'Opening floating sub-window: page=${launchData.page}, host=${launchData.hostWindowId}, title=${launchData.title}',
     );
@@ -43,9 +62,15 @@ class DesktopWindowPopOutService implements WindowPopOutService {
 
   @override
   Future<void> closeSubWindow(String windowId) async {
+    trackClosingWindow(windowId);
     AppLogger.logger.i('Closing floating sub-window: child=$windowId');
     final controller = WindowController.fromWindowId(windowId);
     await controller.invokeMethod<void>('window_close');
+  }
+
+  @override
+  void trackClosingWindow(String windowId) {
+    _closeCoordinator.markClosing(windowId);
   }
 }
 

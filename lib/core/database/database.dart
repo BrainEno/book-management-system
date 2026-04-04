@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bookstore_management_system/core/common/logger/app_logger.dart';
 import 'package:bookstore_management_system/core/common/secrets/app_secrets.dart';
+import 'package:bookstore_management_system/core/database/bookstore_codes.dart';
 import 'package:bookstore_management_system/core/database/bookstore_tables.dart';
 import 'package:bookstore_management_system/core/database/sqlite_type_converters.dart';
 import 'package:bookstore_management_system/features/auth/data/datasources/local/user_dao.dart';
@@ -22,6 +23,7 @@ part 'database.g.dart';
     Users,
     ProductCategories,
     Publishers,
+    PurchaseSaleModes,
     Suppliers,
     Customers,
     Warehouses,
@@ -50,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,10 +74,16 @@ class AppDatabase extends _$AppDatabase {
         await _migrateSupportTablesToV6(m);
       }
 
+      if (from < 7) {
+        await _migrateInventoryFoundationToV7(m);
+      }
+
       await _ensureRequiredTables(m);
     },
     beforeOpen: (details) async {
       await _ensureRequiredTables(migrator);
+      await _seedPurchaseSaleModes();
+      await _backfillProductReferenceIds();
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
@@ -119,6 +127,19 @@ class AppDatabase extends _$AppDatabase {
     return declaredType.contains('INT');
   }
 
+  Future<void> _addColumnIfMissing(
+    String tableName,
+    String columnName,
+    String sqlDefinition,
+  ) async {
+    if (await _columnExists(tableName, columnName)) {
+      return;
+    }
+    await customStatement(
+      'ALTER TABLE $tableName ADD COLUMN $columnName $sqlDefinition',
+    );
+  }
+
   String _normalizeRequiredTextSql(String columnName) {
     return "TRIM(COALESCE($columnName, ''))";
   }
@@ -159,6 +180,7 @@ END
     await _createTableIfMissing(m, users);
     await _createTableIfMissing(m, productCategories);
     await _createTableIfMissing(m, publishers);
+    await _createTableIfMissing(m, purchaseSaleModes);
     await _createTableIfMissing(m, suppliers);
     await _createTableIfMissing(m, customers);
     await _createTableIfMissing(m, warehouses);
@@ -444,6 +466,227 @@ END
 
   Future<void> _migrateSupportTablesToV6(Migrator m) async {
     await _ensureRequiredTables(m);
+  }
+
+  Future<void> _migrateInventoryFoundationToV7(Migrator m) async {
+    await _createTableIfMissing(m, purchaseSaleModes);
+
+    if (await _tableExists(stockMovements.actualTableName)) {
+      await _recreateStockMovementsForV7(m);
+    } else {
+      await _createTableIfMissing(m, stockMovements);
+    }
+
+    if (await _tableExists(products.actualTableName)) {
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'category_id',
+        'INTEGER NULL REFERENCES product_categories(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'publisher_id',
+        'INTEGER NULL REFERENCES publishers(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'purchase_sale_mode_id',
+        'INTEGER NULL REFERENCES purchase_sale_modes(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'status',
+        'INTEGER NOT NULL DEFAULT 1 CHECK (status BETWEEN 0 AND 2)',
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'stock_unit',
+        "TEXT NOT NULL DEFAULT '册'",
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'min_stock_alert_qty',
+        'INTEGER NULL CHECK (min_stock_alert_qty >= 0)',
+      );
+      await _addColumnIfMissing(
+        products.actualTableName,
+        'max_stock_alert_qty',
+        'INTEGER NULL CHECK (max_stock_alert_qty >= 0)',
+      );
+    }
+
+    if (await _tableExists(purchaseOrders.actualTableName)) {
+      await _addColumnIfMissing(
+        purchaseOrders.actualTableName,
+        'posted_by',
+        'INTEGER NULL REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE',
+      );
+      await _addColumnIfMissing(
+        purchaseOrders.actualTableName,
+        'posted_at',
+        'INTEGER NULL',
+      );
+    }
+
+    if (await _tableExists(purchaseOrderItems.actualTableName)) {
+      await _addColumnIfMissing(
+        purchaseOrderItems.actualTableName,
+        'shelf_code',
+        'TEXT NULL',
+      );
+    }
+
+    await _seedPurchaseSaleModes();
+    await _backfillProductReferenceIds();
+  }
+
+  Future<void> _recreateStockMovementsForV7(Migrator m) async {
+    await customStatement('''
+      ALTER TABLE stock_movements
+      RENAME TO stock_movements_v6_backup
+    ''');
+    await m.createTable(stockMovements);
+    await customStatement('''
+      INSERT INTO stock_movements (
+        id,
+        movement_no,
+        movement_type,
+        ref_type,
+        ref_id,
+        warehouse_id,
+        product_id,
+        qty_delta,
+        unit_cost_cent,
+        amount_cent,
+        occurred_at,
+        operator_user_id,
+        note,
+        created_at
+      )
+      SELECT
+        id,
+        movement_no,
+        movement_type,
+        ref_type,
+        ref_id,
+        warehouse_id,
+        product_id,
+        qty_delta,
+        unit_cost_cent,
+        amount_cent,
+        occurred_at,
+        operator_user_id,
+        note,
+        created_at
+      FROM stock_movements_v6_backup
+    ''');
+    await customStatement('DROP TABLE stock_movements_v6_backup');
+  }
+
+  Future<void> _seedPurchaseSaleModes() async {
+    if (!await _tableExists(purchaseSaleModes.actualTableName)) {
+      return;
+    }
+
+    for (final seed in defaultPurchaseSaleModes) {
+      final existing = await customSelect(
+        '''
+        SELECT id
+        FROM purchase_sale_modes
+        WHERE code = ?
+        LIMIT 1
+        ''',
+        variables: [Variable.withString(seed.code)],
+      ).getSingleOrNull();
+      if (existing != null) {
+        continue;
+      }
+
+      await into(purchaseSaleModes).insert(
+        PurchaseSaleModesCompanion.insert(
+          code: seed.code,
+          name: seed.name,
+          defaultDiscountBp: Value(seed.defaultDiscountBp),
+          allowMemberDiscount: Value(seed.allowMemberDiscount),
+          allowReturns: Value(seed.allowReturns),
+          requiresApproval: Value(seed.requiresApproval),
+          status: Value(seed.status),
+        ),
+      );
+    }
+  }
+
+  Future<void> _backfillProductReferenceIds() async {
+    if (!await _tableExists(products.actualTableName)) {
+      return;
+    }
+
+    if (await _columnExists(products.actualTableName, 'category_id')) {
+      await customStatement('''
+        UPDATE products
+        SET category_id = (
+          SELECT id
+          FROM product_categories
+          WHERE code = TRIM(products.category)
+             OR name = TRIM(products.category)
+          ORDER BY CASE WHEN code = TRIM(products.category) THEN 0 ELSE 1 END
+          LIMIT 1
+        )
+        WHERE category_id IS NULL
+          AND NULLIF(TRIM(COALESCE(category, '')), '') IS NOT NULL
+      ''');
+    }
+
+    if (await _columnExists(products.actualTableName, 'publisher_id')) {
+      await customStatement('''
+        UPDATE products
+        SET publisher_id = (
+          SELECT id
+          FROM publishers
+          WHERE code = TRIM(products.publisher)
+             OR name = TRIM(products.publisher)
+          ORDER BY CASE WHEN code = TRIM(products.publisher) THEN 0 ELSE 1 END
+          LIMIT 1
+        )
+        WHERE publisher_id IS NULL
+          AND NULLIF(TRIM(COALESCE(publisher, '')), '') IS NOT NULL
+      ''');
+    }
+
+    if (await _columnExists(products.actualTableName, 'purchase_sale_mode_id')) {
+      await customStatement('''
+        UPDATE products
+        SET purchase_sale_mode_id = (
+          SELECT id
+          FROM purchase_sale_modes
+          WHERE code = TRIM(products.purchase_sale_mode)
+             OR name = TRIM(products.purchase_sale_mode)
+          ORDER BY CASE
+            WHEN code = TRIM(products.purchase_sale_mode) THEN 0
+            ELSE 1
+          END
+          LIMIT 1
+        )
+        WHERE purchase_sale_mode_id IS NULL
+          AND NULLIF(TRIM(COALESCE(purchase_sale_mode, '')), '') IS NOT NULL
+      ''');
+    }
+
+    if (await _columnExists(products.actualTableName, 'status')) {
+      await customStatement('''
+        UPDATE products
+        SET status = ${ProductStatuses.active}
+        WHERE status IS NULL
+      ''');
+    }
+
+    if (await _columnExists(products.actualTableName, 'stock_unit')) {
+      await customStatement('''
+        UPDATE products
+        SET stock_unit = '册'
+        WHERE NULLIF(TRIM(COALESCE(stock_unit, '')), '') IS NULL
+      ''');
+    }
   }
 
   Future<void> _migrateUsersTableToV4(Migrator m) async {

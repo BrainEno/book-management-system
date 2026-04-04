@@ -363,24 +363,6 @@ class _DesktopShellState extends State<DesktopShell> with WindowListener {
     );
 
     switch (call.method) {
-      case 'sync-editor-draft':
-        final rawDraft = payload['draft'];
-        final window = windowManager.windowById(windowId);
-        if (window == null || rawDraft is! Map) {
-          break;
-        }
-        final draft = rawDraft.map(
-          (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
-        );
-        windowManager.updateWindowPayload(
-          windowId,
-          window.payload.copyWith(productEditorDraft: draft),
-        );
-        _logSubWindowEvent(
-          'draft-synced',
-          data: {'windowId': windowId, 'draftKeys': draft.keys.join('|')},
-        );
-        break;
       case 'dock-window':
         final dockedWindow = windowManager.windowById(windowId);
         final floatingWindowId = dockedWindow?.floatingWindowId;
@@ -401,6 +383,7 @@ class _DesktopShellState extends State<DesktopShell> with WindowListener {
             reason: dockReason,
           );
           if (childDisposition == FloatingChildDisposition.close) {
+            widget.windowPopOutService.trackClosingWindow(floatingWindowId);
             unawaited(
               _closeFloatingWindowSafely(
                 floatingWindowId,
@@ -454,8 +437,11 @@ class _DesktopShellState extends State<DesktopShell> with WindowListener {
             'floatingChild': closingWindow?.floatingWindowId,
           },
         );
+        final floatingWindowId = closingWindow?.floatingWindowId;
+        if (floatingWindowId != null && floatingWindowId.isNotEmpty) {
+          widget.windowPopOutService.trackClosingWindow(floatingWindowId);
+        }
         if (shouldHostCloseFloatingChildFromCloseRequest()) {
-          final floatingWindowId = closingWindow?.floatingWindowId;
           if (floatingWindowId != null && floatingWindowId.isNotEmpty) {
             unawaited(_closeFloatingWindowSafely(floatingWindowId));
           }
